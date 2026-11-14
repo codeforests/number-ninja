@@ -26,9 +26,9 @@ class Draft {
     List<Object> distractors, {
     required this.explanation,
     this.visual,
+    this.check,
   }) : format = QuestionFormat.mcq,
        answer = '$answer',
-       check = null,
        drag = null,
        options = _options(rng, '$answer', distractors);
 
@@ -64,14 +64,17 @@ class Draft {
     topic: topic,
     level: level,
     format: format,
-    prompt: prompt,
+    prompt: _tidy(prompt),
     answer: answer,
-    explanation: explanation,
+    explanation: _tidy(explanation),
     visual: visual,
     options: options,
     drag: drag,
     check: check,
   );
+
+  /// A sentence that ends in "p.m." gets one full stop, not two.
+  static String _tidy(String s) => s.replaceAll('..', '.');
 
   /// Same prompt and visual means the same question (the validator's rule).
   String get key => '$prompt|${jsonEncode(visual)}';

@@ -43,8 +43,9 @@ The question model, the 23 topics from design §2, a seeded generator that write
 - [x] T2 — Generator framework and P1 templates (8 topics): `tool/generate_bank.dart`, `tool/bank/{generator,templates_p1}.dart`.
       Done when: generating P1 only gives at least 40 valid questions per P1 topic, with no validator problems.
       Evidence: `dart run tool/generate_bank.dart p1` → 60 per P1 topic, levels 20/20/20, no problems; `flutter test test/tool` → PASS [7 tests].
-- [ ] T3 — P2 templates (11 topics).
+- [x] T3 — P2 templates (11 topics).
       Done when: same check for the P2 topics, plus the AC-7 regrouping test.
+      Evidence: `dart run tool/generate_bank.dart p2` → 60 per P2 topic, every level present, no problems; `flutter test test/tool` → PASS [10 tests] incl. the AC-7 and D2 tests.
 - [ ] T4 — Olympiad templates and hand-written questions (4 topics).
       Done when: same check for the Olympiad topics.
 - [ ] T5 — Generate `bank_v1.json`, register the asset, add the loader and `bankProvider`, add the shipped-bank test (AC-1, AC-2, AC-4, AC-5), and add a CI step that regenerates the bank and fails if it differs from the committed file.

@@ -2,9 +2,10 @@ import 'package:number_ninja/domain/question.dart';
 
 import 'generator.dart';
 import 'templates_p1.dart';
+import 'templates_p2.dart';
 
 /// Every template, in no meaningful order: each one has its own seed.
-final allTemplates = <Template>[...p1Templates];
+final allTemplates = <Template>[...p1Templates, ...p2Templates];
 
 /// Hand-written questions, appended to only.
 final allHandwritten = <Handwritten>[];

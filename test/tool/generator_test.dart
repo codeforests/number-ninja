@@ -71,7 +71,31 @@ void main() {
     expect(d.drag!.items, isNot(['1', '2']));
   });
 
-  for (final track in ['p1']) {
+  test('p2.regroup: every question regroups or has two steps (AC-7)', () {
+    final qs = buildFor('p2.regroup').questions;
+    expect(qs, isNotEmpty);
+    for (final q in qs) {
+      final check = q.check!.replaceAll(RegExp('[()]'), '');
+      final ops = RegExp(r'[-+*/]').allMatches(check).length;
+      expect(ops >= 2 || regroups(check), isTrue, reason: '${q.id}: $check');
+      expect(int.parse(q.answer as String), greaterThan(0), reason: q.id);
+    }
+  });
+
+  test('P2 sums and differences written as bare numbers regroup (D2)', () {
+    var n = 0;
+    for (final q in buildFor('p2').questions) {
+      final bare = q.prompt.replaceFirst('What is ', '');
+      if (RegExp('[A-Za-z]').hasMatch(bare)) continue; // a word problem
+      final check = q.check ?? '';
+      if (!RegExp(r'^\d+[+-]\d+$').hasMatch(check)) continue;
+      n++;
+      expect(regroups(check), isTrue, reason: '${q.id}: ${q.prompt}');
+    }
+    expect(n, greaterThan(20));
+  });
+
+  for (final track in ['p1', 'p2']) {
     test('$track topics: valid, at least 40 each, all levels', () {
       final bank = buildFor(track);
       final mine = [
@@ -84,4 +108,17 @@ void main() {
       }
     });
   }
+}
+
+/// Whether a single-operation check `a+b` or `a-b` needs regrouping.
+bool regroups(String check) {
+  final m = RegExp(r'^(\d+)([+-])(\d+)$').firstMatch(check)!;
+  var a = int.parse(m[1]!), b = int.parse(m[3]!);
+  final add = m[2] == '+';
+  while (a > 0 || b > 0) {
+    if (add ? a % 10 + b % 10 >= 10 : a % 10 < b % 10) return true;
+    a ~/= 10;
+    b ~/= 10;
+  }
+  return false;
 }
