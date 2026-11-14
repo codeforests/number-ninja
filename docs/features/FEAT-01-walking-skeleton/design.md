@@ -1,7 +1,7 @@
 # FEAT-01: Walking skeleton
 
 > Implements: PAR-01, PAR-02, PAR-03, PAR-04, NFR-01, NFR-06, NFR-07, NFR-08 · Screens: SCR-01, SCR-02 (placeholder), SCR-08, SCR-11 (change PIN only)
-> Status: designed · Branch: `feat/FEAT-01-walking-skeleton` · 2026-11-14
+> Status: developer-done · Branch: `feat/FEAT-01-walking-skeleton` · 2026-11-14
 
 ## Scope
 
@@ -18,6 +18,7 @@ Not in scope: questions, quiz, screen time, dashboard (FEAT-02..08). The daily-l
 - **UI** (`lib/ui/`): `theme.dart` (colours, radii, text sizes), `pin_pad.dart` (big 0–9 keypad with 4 dots, 72 dp keys).
 - **Android:** `minSdk = 24`; the main `AndroidManifest.xml` declares no permissions (NFR-01, NFR-06). Landscape and portrait both allowed.
 - **CI** (`.github/workflows/ci.yml`, on push to `main` and on pull requests): Java 17, Flutter stable pinned to 3.50.0, `flutter pub get`, `dart format --output=none --set-exit-if-changed lib test`, `flutter analyze`, `flutter test`, `flutter build apk --release`, upload the APK as artifact `number-ninja-apk` (NFR-07).
+- **Release signing** (added in build): `android/app/build.gradle.kts` signs release builds with the key described by `android/key.properties` when present. CI writes that file from the repo secrets `ANDROID_KEYSTORE_BASE64` and `ANDROID_KEYSTORE_PASSWORD` (alias `number-ninja`), so every APK has the same signature and installs over the previous one, keeping her progress. Without the secrets CI warns and falls back to the runner's debug key.
 
 ## Acceptance criteria
 
@@ -31,15 +32,16 @@ Not in scope: questions, quiz, screen time, dashboard (FEAT-02..08). The daily-l
 
 ## Tasks
 
-- [ ] T1 — Project: Flutter app `number_ninja` (org `com.codeforests`, Android only), dependencies, layer folders, `analysis_options.yaml`, minSdk 24, app label "Number Ninja", no permissions in the main manifest.
+- [x] T1 — Project: Flutter app `number_ninja` (org `com.codeforests`, Android only), dependencies, layer folders, `analysis_options.yaml`, minSdk 24, app label "Number Ninja", no permissions in the main manifest.
       Done when: `flutter analyze` is clean and `flutter test` passes.
-- [ ] T2 — Database: all tables in design §4 (incl. `rounds.level`, `rounds.stars`, `pin_lockout`), settings row on create, generated code committed.
+- [x] T2 — Database: all tables in design §4 (incl. `rounds.level`, `rounds.stars`, `pin_lockout`), settings row on create, generated code committed.
       Done when: `test/data/database_test.dart` passes (fresh DB has one settings row with limit 20 and no PIN; lockout row starts at 0).
-- [ ] T3 — Domain: `clock.dart`, `pin.dart` (`PinHasher`, `isValidPin`, `PinLockoutPolicy`).
+- [x] T3 — Domain: `clock.dart`, `pin.dart` (`PinHasher`, `isValidPin`, `PinLockoutPolicy`).
       Done when: `test/domain/pin_test.dart` passes (hash ≠ PIN, verify right/wrong, two salts differ, policy locks on the 5th failure and unlocks at +60 s with a fake clock).
-- [ ] T4 — Data: `PinRepository`.
+- [x] T4 — Data: `PinRepository`.
       Done when: `test/data/pin_repository_test.dart` passes (set/verify, wrong → attemptsLeft, 5 wrong → locked, still locked from a new repository on the same DB, unlocked after 60 s, success resets the count, changePin needs the current PIN).
-- [ ] T5 — UI: theme, PIN pad, router with redirects, SCR-01, SCR-02 placeholder, SCR-08, SCR-11 with Change PIN.
+- [x] T5 — UI: theme, PIN pad, router with redirects, SCR-01, SCR-02 placeholder, SCR-08, SCR-11 with Change PIN.
       Done when: `test/features/pin_flow_test.dart` passes AC-1, AC-2, AC-4 and the lockout message of AC-3 on an in-memory DB with a fake clock.
-- [ ] T6 — CI workflow and README install note.
+- [x] T6 — CI workflow and README install note.
       Done when: the workflow passes on the PR and the APK artifact exists (AC-5 checked from the build's merged manifest).
+      Note (build): no Android SDK in the cloud session, so the APK build, signing and manifest check run only in CI. Local evidence: `flutter analyze` clean, `flutter test` 26 passed.
