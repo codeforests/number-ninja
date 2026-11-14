@@ -95,7 +95,7 @@ void main() {
     expect(n, greaterThan(20));
   });
 
-  for (final track in ['p1', 'p2']) {
+  for (final track in ['p1', 'p2', 'oly']) {
     test('$track topics: valid, at least 40 each, all levels', () {
       final bank = buildFor(track);
       final mine = [
