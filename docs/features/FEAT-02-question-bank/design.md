@@ -40,8 +40,9 @@ The question model, the 23 topics from design §2, a seeded generator that write
 - [x] T1 — Domain: `topics.dart`, `question.dart` (JSON round-trip), `answers.dart`, expression evaluator, `bank_validator.dart`.
       Done when: `test/domain/question_test.dart`, `answers_test.dart` and `bank_validator_test.dart` pass (AC-3 rule cases, AC-6).
       Evidence: `scripts/check.sh 'flutter test test/domain'` → PASS [25 tests]; `flutter analyze` clean.
-- [ ] T2 — Generator framework and P1 templates (8 topics): `tool/generate_bank.dart`, `tool/bank/{generator,templates_p1}.dart`.
+- [x] T2 — Generator framework and P1 templates (8 topics): `tool/generate_bank.dart`, `tool/bank/{generator,templates_p1}.dart`.
       Done when: generating P1 only gives at least 40 valid questions per P1 topic, with no validator problems.
+      Evidence: `dart run tool/generate_bank.dart p1` → 60 per P1 topic, levels 20/20/20, no problems; `flutter test test/tool` → PASS [7 tests].
 - [ ] T3 — P2 templates (11 topics).
       Done when: same check for the P2 topics, plus the AC-7 regrouping test.
 - [ ] T4 — Olympiad templates and hand-written questions (4 topics).
