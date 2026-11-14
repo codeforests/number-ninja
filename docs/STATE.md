@@ -2,7 +2,7 @@
 
 > The first file a build or verify thread reads. Keep it under 40 lines.
 
-- **Phase:** planning (requirements, design and plan waiting for Ken's sign-off).
+- **Phase:** construction. Requirements, design and plan signed off by Ken 2026-11-14 (PR #1).
 - **Next feature:** FEAT-01 walking skeleton.
 - **Remaining order:** FEAT-02 → 03 (M1) → 04 → 05 (M2) → 06 → 07 → 08 (M3) → 09 (M4).
 - **Merged:** none yet.

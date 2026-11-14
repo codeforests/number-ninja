@@ -1,6 +1,6 @@
 # Number Ninja: Plan
 
-> Version 1.0 (draft for Ken's sign-off) · 2026-11-14 · From [01-requirements.md](01-requirements.md) and [02-design.md](02-design.md)
+> Version 1.0 (signed off by Ken 2026-11-14) · 2026-11-14 · From [01-requirements.md](01-requirements.md) and [02-design.md](02-design.md)
 
 ## 1. Features in build order
 

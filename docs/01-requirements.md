@@ -1,6 +1,6 @@
 # Number Ninja: Requirements
 
-> Version 1.0 (draft for Ken's sign-off) · 2026-11-14
+> Version 1.0 (signed off by Ken 2026-11-14) · 2026-11-14
 > This file is also the traceability matrix: the **Feature** column is filled by planning, **Verified by** by each feature's verify step. IDs are permanent and never reused; a dropped requirement keeps its row marked *Removed*.
 
 ## 1. Purpose and scope
