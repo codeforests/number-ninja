@@ -1,7 +1,7 @@
 # FEAT-02: Question bank v1
 
 > Implements: BNK-01, BNK-02, BNK-03, BNK-04, BNK-05, BNK-06 · Screens: none
-> Status: built (T1–T5), waiting for verify · Branch: `feat/FEAT-02-question-bank` · 2026-11-14
+> Status: verified (accepted 2026-11-14) · Branch: `feat/FEAT-02-question-bank` · 2026-11-14
 
 ## Scope
 

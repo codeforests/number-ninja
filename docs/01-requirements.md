@@ -37,12 +37,12 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| BNK-01 | The app shall ship a versioned question bank as a bundled asset and load questions only from it. | M | FEAT-02 | |
-| BNK-02 | The bank shall cover every topic in the design's topic list (P1 revision, P2, Olympiad), each tagged with track, topic and difficulty level 1–3. | M | FEAT-02 | |
-| BNK-03 | The bank shall hold at least 40 questions per topic. | M | FEAT-02 | |
-| BNK-04 | A generator script in the repo shall produce the bank reproducibly (same seed, same file) and fail if any question has a wrong answer, a duplicate, or an MCQ option list without exactly one correct option. | M | FEAT-02 | |
-| BNK-05 | Every question shall have a stable id that never changes between bank versions, so old results stay readable. | M | FEAT-02 | |
-| BNK-06 | Every question shall carry a short explanation of the answer shown after she answers. | S | FEAT-02 | |
+| BNK-01 | The app shall ship a versioned question bank as a bundled asset and load questions only from it. | M | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
+| BNK-02 | The bank shall cover every topic in the design's topic list (P1 revision, P2, Olympiad), each tagged with track, topic and difficulty level 1–3. | M | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
+| BNK-03 | The bank shall hold at least 40 questions per topic. | M | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
+| BNK-04 | A generator script in the repo shall produce the bank reproducibly (same seed, same file) and fail if any question has a wrong answer, a duplicate, or an MCQ option list without exactly one correct option. | M | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
+| BNK-05 | Every question shall have a stable id that never changes between bank versions, so old results stay readable. | M | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
+| BNK-06 | Every question shall carry a short explanation of the answer shown after she answers. | S | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
 
 ### Practice (PRC)
 
