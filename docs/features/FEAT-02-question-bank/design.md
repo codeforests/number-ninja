@@ -1,7 +1,7 @@
 # FEAT-02: Question bank v1
 
 > Implements: BNK-01, BNK-02, BNK-03, BNK-04, BNK-05, BNK-06 · Screens: none
-> Status: in build (T1 done) · Branch: `feat/FEAT-02-question-bank` · 2026-11-14
+> Status: built (T1–T5), waiting for verify · Branch: `feat/FEAT-02-question-bank` · 2026-11-14
 
 ## Scope
 
@@ -49,5 +49,6 @@ The question model, the 23 topics from design §2, a seeded generator that write
 - [x] T4 — Olympiad templates and hand-written questions (4 topics).
       Done when: same check for the Olympiad topics.
       Evidence: `dart run tool/generate_bank.dart oly` → patterns 60, logic 63 (15 hand-written), counting 71 (15 hand-written), models 60, no problems; `flutter test test/tool` → PASS [11 tests].
-- [ ] T5 — Generate `bank_v1.json`, register the asset, add the loader and `bankProvider`, add the shipped-bank test (AC-1, AC-2, AC-4, AC-5), and add a CI step that regenerates the bank and fails if it differs from the committed file.
+- [x] T5 — Generate `bank_v1.json`, register the asset, add the loader and `bankProvider`, add the shipped-bank test (AC-1, AC-2, AC-4, AC-5), and add a CI step that regenerates the bank and fails if it differs from the committed file.
       Done when: `flutter test` passes, and `git diff --exit-code assets/` is clean after regeneration.
+      Evidence: 1,394 questions (mcq 29%, number 62%, drag 9%); `scripts/check.sh` → format, analyze, test all PASS [61 tests]; second `dart run tool/generate_bank.dart` → `git diff --exit-code assets/` clean.

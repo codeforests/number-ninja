@@ -1,13 +1,21 @@
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'data/database.dart';
 import 'data/pin_repository.dart';
+import 'data/question_bank_loader.dart';
+import 'domain/question.dart';
 import 'domain/clock.dart';
 
 /// Overridden in main() and in tests.
 final databaseProvider = Provider<AppDatabase>(
   (ref) => throw UnimplementedError('databaseProvider must be overridden'),
+);
+
+/// The bundled question bank (BNK-01), loaded once.
+final bankProvider = FutureProvider<QuestionBank>(
+  (ref) => loadBank(rootBundle),
 );
 
 final clockProvider = Provider<Clock>((ref) => systemClock);
