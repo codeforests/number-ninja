@@ -9,4 +9,8 @@ An offline Android tablet app that helps a Singapore primary school child practi
 
 ## Install on the tablet
 
-Each CI run on `main` uploads `app-release.apk` as a build artifact. Download it on the tablet (or copy it over USB), allow "Install unknown apps" for your file manager, and open the APK.
+1. Open the repo's **Actions** tab, pick the latest green **CI** run on `main` (or on a PR you want to try), and download the `number-ninja-apk` artifact. It is a zip holding `app-release.apk`.
+2. Copy the APK to the tablet (download it there, or over USB), unzip it if needed, and allow **Install unknown apps** for the file manager or browser you open it with.
+3. Tap the APK to install. On first launch, set your parent PIN.
+
+Installing a newer APK over the old one keeps her progress. Uninstalling the app deletes it (there is no backup, by design).

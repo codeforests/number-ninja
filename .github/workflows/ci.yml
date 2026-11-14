@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.50.0
+          cache: true
+
+      - name: SQLite for Drift tests
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libsqlite3-dev
+
+      - run: flutter pub get
+
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Check release manifest (NFR-01, NFR-06)
+        run: |
+          set -euo pipefail
+          m=$(find build/app/intermediates -path '*release*' -name AndroidManifest.xml | grep -i merged | head -1)
+          echo "Merged manifest: $m"
+          if grep -q 'android.permission.INTERNET' "$m"; then
+            echo "::error::Release manifest requests INTERNET"; exit 1
+          fi
+          grep -o 'android:minSdkVersion="[0-9]*"' "$m"
+          grep -q 'android:minSdkVersion="24"' "$m"
+          grep -o 'android.permission.[A-Z_]*' "$m" | sort -u || echo "No permissions"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: number-ninja-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
