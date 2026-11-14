@@ -1,5 +1,5 @@
 # Handoff: FEAT-02 — Question bank v1
-Branch: feat/FEAT-02-question-bank · PR: PRLINK · Updated: 2026-11-14 by build T2–T5
+Branch: feat/FEAT-02-question-bank · PR: [#3](https://github.com/codeforests/number-ninja/pull/3) (draft) · Updated: 2026-11-14 by build T2–T5
 Stage done: build (T1–T5 of 5)
 Next: verify — kickoff: "Verify FEAT-02 on branch feat/FEAT-02-question-bank. Read AGENTS.md, docs/STATE.md and the feature's handoff.md, then do docs/03-plan.md §2 steps 3–4."
 
