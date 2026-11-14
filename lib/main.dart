@@ -1,17 +1,25 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-void main() {
-  runApp(const NumberNinjaApp());
-}
+import 'app.dart';
+import 'data/database.dart';
+import 'data/pin_repository.dart';
+import 'domain/clock.dart';
+import 'providers.dart';
 
-class NumberNinjaApp extends StatelessWidget {
-  const NumberNinjaApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'Number Ninja',
-      home: Scaffold(body: Center(child: Text('Number Ninja'))),
-    );
-  }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final db = AppDatabase();
+  final hasPin = await PinRepository(db, clock: systemClock).hasPin();
+  runApp(
+    ProviderScope(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+        appSessionProvider.overrideWithValue(
+          AppSession(hasPin: hasPin, clock: systemClock),
+        ),
+      ],
+      child: const NumberNinjaApp(),
+    ),
+  );
 }
