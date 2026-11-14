@@ -1,7 +1,7 @@
 # FEAT-01: Walking skeleton
 
 > Implements: PAR-01, PAR-02, PAR-03, PAR-04, NFR-01, NFR-06, NFR-07, NFR-08 · Screens: SCR-01, SCR-02 (placeholder), SCR-08, SCR-11 (change PIN only)
-> Status: developer-done · Branch: `feat/FEAT-01-walking-skeleton` · 2026-11-14
+> Status: verified (accepted) · Branch: `feat/FEAT-01-walking-skeleton` · 2026-11-14
 
 ## Scope
 

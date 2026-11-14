@@ -74,10 +74,10 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| PAR-01 | On first launch the app shall ask the parent to set a 4-digit PIN (entered twice) before the child can use it. | M | FEAT-01 | |
-| PAR-02 | The parent area shall open only after the correct PIN; the PIN shall be stored only as a salted hash. | M | FEAT-01 | |
-| PAR-03 | After 5 wrong PIN entries the app shall block PIN entry for 60 seconds. | S | FEAT-01 | |
-| PAR-04 | The parent shall be able to change the PIN after entering the current one. | M | FEAT-01 | |
+| PAR-01 | On first launch the app shall ask the parent to set a 4-digit PIN (entered twice) before the child can use it. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
+| PAR-02 | The parent area shall open only after the correct PIN; the PIN shall be stored only as a salted hash. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
+| PAR-03 | After 5 wrong PIN entries the app shall block PIN entry for 60 seconds. | S | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
+| PAR-04 | The parent shall be able to change the PIN after entering the current one. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | PAR-05 | The dashboard shall show, per topic, accuracy (% correct), average seconds per question and number of attempts, for a chosen period (7 days, 30 days, all time). | M | FEAT-06 | |
 | PAR-06 | The dashboard shall show weekly trends of accuracy and speed per track and per topic. | M | FEAT-06 | |
 | PAR-07 | The dashboard shall list "needs practice" topics: accuracy under 70% or average time above her own overall average, with at least 10 attempts. | S | FEAT-06 | |
@@ -97,11 +97,11 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| NFR-01 | The app shall work fully with no network connection and request no internet permission. | M | FEAT-01 | |
+| NFR-01 | The app shall work fully with no network connection and request no internet permission. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | NFR-02 | Layouts shall fit a 12-inch landscape tablet without scrolling during a question, and stay usable in portrait. | M | FEAT-09 | |
 | NFR-03 | Tap targets on child screens shall be at least 64 × 64 dp; text at least 20 sp. | M | FEAT-03 | |
 | NFR-04 | The next question shall appear within 300 ms of tapping Next on the target tablet. | S | FEAT-03 | |
 | NFR-05 | All progress shall survive the app being killed; an answer is saved before the next question shows. | M | FEAT-03 | |
-| NFR-06 | The app shall run on Android 7.0 (API 24) and later. | M | FEAT-01 | |
-| NFR-07 | CI shall build a release APK on every push to main and every pull request, and run all tests. | M | FEAT-01 | |
-| NFR-08 | Logic with dates or timers shall take the clock as a parameter so tests never depend on today's date. | M | FEAT-01 | |
+| NFR-06 | The app shall run on Android 7.0 (API 24) and later. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
+| NFR-07 | CI shall build a release APK on every push to main and every pull request, and run all tests. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
+| NFR-08 | Logic with dates or timers shall take the clock as a parameter so tests never depend on today's date. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
