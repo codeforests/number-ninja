@@ -50,7 +50,7 @@ class ResultScreen extends StatelessWidget {
                   Text(
                     'Level up! Now level ${summary.nextLevel}',
                     key: const Key('level-up'),
-                    style: theme.headlineMedium?.copyWith(
+                    style: theme.headlineSmall?.copyWith(
                       color: AppColors.sun,
                       fontWeight: FontWeight.bold,
                     ),

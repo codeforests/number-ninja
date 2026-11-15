@@ -5,8 +5,8 @@ import 'package:material_ui/material_ui.dart';
 import 'features/home/home_screen.dart';
 import 'features/quiz/quiz_controller.dart';
 import 'features/quiz/quiz_screen.dart';
+import 'features/topics/topic_map_screen.dart';
 import 'features/quiz/result_screen.dart';
-import 'features/quiz/topic_list_screen.dart';
 import 'features/parent/change_pin_screen.dart';
 import 'features/parent/parent_screen.dart';
 import 'features/parent/pin_entry_screen.dart';
@@ -20,7 +20,7 @@ abstract final class Routes {
   static const pinEntry = '/parent/pin'; // SCR-08
   static const parent = '/parent'; // SCR-11
   static const changePin = '/parent/change-pin'; // SCR-11 (change PIN)
-  static String play(String track) => '/play/$track'; // SCR-03 placeholder
+  static String play(String track) => '/play/$track'; // SCR-03
   static String quiz(String topicId) => '/quiz/$topicId'; // SCR-04
   static const result = '/result'; // SCR-05, the RoundSummary as extra
 }
@@ -54,7 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/play/:track',
         builder: (context, state) =>
-            TopicListScreen(track: state.pathParameters['track']!),
+            TopicMapScreen(track: state.pathParameters['track']!),
       ),
       GoRoute(
         path: '/quiz/:topicId',
