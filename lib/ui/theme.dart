@@ -70,8 +70,13 @@ abstract final class AppPdf {
   static const chartHeight = 140.0;
   static const chartLine = 1.5;
   static const chartDot = 2.0;
+  static const gridLine = 0.5;
   static const gap = 12.0;
   static const cellPadding = 4.0;
+  static const axisWidth = 36.0;
+  static const axisGap = 4.0;
+  static const swatchWidth = 10.0;
+  static const swatchHeight = 3.0;
 }
 
 ThemeData buildTheme() {
