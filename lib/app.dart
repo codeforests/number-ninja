@@ -3,6 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'features/home/home_screen.dart';
+import 'features/quiz/quiz_controller.dart';
+import 'features/quiz/quiz_screen.dart';
+import 'features/quiz/result_screen.dart';
+import 'features/quiz/topic_list_screen.dart';
 import 'features/parent/change_pin_screen.dart';
 import 'features/parent/parent_screen.dart';
 import 'features/parent/pin_entry_screen.dart';
@@ -16,6 +20,9 @@ abstract final class Routes {
   static const pinEntry = '/parent/pin'; // SCR-08
   static const parent = '/parent'; // SCR-11
   static const changePin = '/parent/change-pin'; // SCR-11 (change PIN)
+  static String play(String track) => '/play/$track'; // SCR-03 placeholder
+  static String quiz(String topicId) => '/quiz/$topicId'; // SCR-04
+  static const result = '/result'; // SCR-05, the RoundSummary as extra
 }
 
 /// Where a location should go instead, or null to stay (design: Routing).
@@ -43,6 +50,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.home,
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/play/:track',
+        builder: (context, state) =>
+            TopicListScreen(track: state.pathParameters['track']!),
+      ),
+      GoRoute(
+        path: '/quiz/:topicId',
+        builder: (context, state) =>
+            QuizScreen(topicId: state.pathParameters['topicId']!),
+      ),
+      GoRoute(
+        path: Routes.result,
+        redirect: (context, state) =>
+            state.extra is RoundSummary ? null : Routes.home,
+        builder: (context, state) =>
+            ResultScreen(summary: state.extra! as RoundSummary),
       ),
       GoRoute(
         path: Routes.parent,

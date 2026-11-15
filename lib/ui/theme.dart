@@ -11,6 +11,18 @@ abstract final class AppColors {
   static const paper = Color(0xFFFFFBF2);
   static const muted = Color(0xFF6B6B80);
   static const card = Color(0xFFFFFFFF);
+
+  // Drawn visuals (PRC-10).
+  static const red = Color(0xFFE53935);
+  static const blue = Color(0xFF1E88E5);
+  static const yellow = Color(0xFFFDD835);
+  static const green = Color(0xFF43A047);
+  static const orange = Color(0xFFFB8C00);
+  static const brown = Color(0xFF8D6E63);
+  static const coinGold = Color(0xFFE0B341);
+  static const coinSilver = Color(0xFFC9CDD2);
+  static const wood = Color(0xFFF3D9A4);
+  static const shade = Color(0xFF7E86E8); // shaded fraction parts, bar units
 }
 
 abstract final class AppRadii {

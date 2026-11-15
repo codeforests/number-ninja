@@ -49,15 +49,15 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
 | PRC-01 | The child shall choose a track (School or Olympiad), then a topic, from screens that need no reading beyond short labels. | M | FEAT-04 | |
-| PRC-02 | A round shall have 10 questions from the chosen topic, shown one at a time. | M | FEAT-03 | |
-| PRC-03 | The app shall support multiple-choice, typed-number (on-screen keypad) and drag-and-drop questions. | M | FEAT-03 | |
-| PRC-04 | The app shall record, for every answer, the question id, answer given, correct or not, and time taken in milliseconds. | M | FEAT-03 | |
-| PRC-05 | After each answer the app shall show whether it was right and, if wrong, the correct answer and explanation. | M | FEAT-03 | |
-| PRC-06 | At the end of a round the app shall show score, total time and stars earned (0–3). | M | FEAT-03 | |
+| PRC-02 | A round shall have 10 questions from the chosen topic, shown one at a time. | M | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
+| PRC-03 | The app shall support multiple-choice, typed-number (on-screen keypad) and drag-and-drop questions. | M | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
+| PRC-04 | The app shall record, for every answer, the question id, answer given, correct or not, and time taken in milliseconds. | M | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
+| PRC-05 | After each answer the app shall show whether it was right and, if wrong, the correct answer and explanation. | M | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
+| PRC-06 | At the end of a round the app shall show score, total time and stars earned (0–3). | M | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
 | PRC-07 | The topic map shall show the best stars earned per topic. | S | FEAT-04 | |
-| PRC-08 | Rounds shall avoid repeating a question she answered correctly in her last 3 rounds of that topic, while questions remain. | S | FEAT-03 | |
+| PRC-08 | Rounds shall avoid repeating a question she answered correctly in her last 3 rounds of that topic, while questions remain. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
 | PRC-09 | Difficulty shall step up after a 3-star round and down after a 0–1-star round in that topic. | S | FEAT-04 | |
-| PRC-10 | Pictures (clocks, shapes, coins, bar models, picture graphs) shall be drawn from question data, not image files. | S | FEAT-03 | |
+| PRC-10 | Pictures (clocks, shapes, coins, bar models, picture graphs) shall be drawn from question data, not image files. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
 
 ### Screen time (TIM)
 
@@ -99,9 +99,9 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 |---|---|---|---|---|
 | NFR-01 | The app shall work fully with no network connection and request no internet permission. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | NFR-02 | Layouts shall fit a 12-inch landscape tablet without scrolling during a question, and stay usable in portrait. | M | FEAT-09 | |
-| NFR-03 | Tap targets on child screens shall be at least 64 × 64 dp; text at least 20 sp. | M | FEAT-03 | |
-| NFR-04 | The next question shall appear within 300 ms of tapping Next on the target tablet. | S | FEAT-03 | |
-| NFR-05 | All progress shall survive the app being killed; an answer is saved before the next question shows. | M | FEAT-03 | |
+| NFR-03 | Tap targets on child screens shall be at least 64 × 64 dp; text at least 20 sp. | M | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
+| NFR-04 | The next question shall appear within 300 ms of tapping Next on the target tablet. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15, tests); tablet timing: Ken's M1 check |
+| NFR-05 | All progress shall survive the app being killed; an answer is saved before the next question shows. | M | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
 | NFR-06 | The app shall run on Android 7.0 (API 24) and later. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | NFR-07 | CI shall build a release APK on every push to main and every pull request, and run all tests. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | NFR-08 | Logic with dates or timers shall take the clock as a parameter so tests never depend on today's date. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |

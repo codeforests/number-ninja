@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'data/database.dart';
 import 'data/pin_repository.dart';
 import 'data/question_bank_loader.dart';
+import 'data/round_repository.dart';
 import 'domain/question.dart';
 import 'domain/clock.dart';
 
@@ -22,6 +23,14 @@ final clockProvider = Provider<Clock>((ref) => systemClock);
 
 final pinRepositoryProvider = Provider<PinRepository>(
   (ref) => PinRepository(
+    ref.watch(databaseProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// One per app opening, so its play session is shared by every round.
+final roundRepositoryProvider = Provider<RoundRepository>(
+  (ref) => RoundRepository(
     ref.watch(databaseProvider),
     clock: ref.watch(clockProvider),
   ),

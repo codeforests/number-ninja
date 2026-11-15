@@ -18,7 +18,7 @@ Each feature is a vertical slice that ends in something Ken can install and try.
 | FEAT-08 | Badges and badge shelf | BDG-01..03 | M3 |
 | FEAT-09 | Tablet polish and v1.0 release: layout check on 12-inch landscape and portrait, app icon, release APK | NFR-02 | M4 |
 
-**Milestones:** M1 = she can play a real round (FEAT-01..03). M2 = safe for daily use (04–05). M3 = parent insights and rewards (06–08). M4 = v1.0 (09). Ken tries the APK on the tablet at the end of each milestone and signs it off before the next one starts.
+**Milestones:** M1 = she can play a real round (FEAT-01..03). M2 = safe for daily use (04–05). M3 = parent insights and rewards (06–08). M4 = v1.0 (09). Ken tries the APK on the tablet at the end of each milestone and signs it off before the next one starts. When a milestone's last PR merges, run the CI workflow on `main` with input `release` = `m<N>` (e.g. `m1`): it publishes a GitHub Release with the release-signed `number-ninja-m<N>.apk` for him to install.
 
 ## 2. How each feature is built
 
