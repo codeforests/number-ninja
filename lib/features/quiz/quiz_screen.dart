@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../app.dart';
 import '../../domain/question.dart';
 import '../../domain/quiz.dart';
+import '../../ui/layout.dart';
 import '../../ui/theme.dart';
 import '../../ui/visuals/question_visual.dart';
 import 'answers/drag_answer.dart';
@@ -16,9 +17,6 @@ import 'quiz_controller.dart';
 /// SCR-04: one round of 10 questions in [topicId].
 class QuizScreen extends ConsumerStatefulWidget {
   const QuizScreen({super.key, required this.topicId});
-
-  /// Under this width the two halves stack (portrait).
-  static const wideLayout = 900.0;
 
   final String topicId;
 
@@ -129,6 +127,8 @@ class _TopBar extends StatelessWidget {
   }
 }
 
+/// The question and its answer area. Side by side, each half scrolls on
+/// its own; stacked, the whole body scrolls. Nothing overlaps (NFR-09).
 class _Body extends ConsumerWidget {
   const _Body({required this.quiz, required this.saving, required this.onNext});
 
@@ -136,74 +136,132 @@ class _Body extends ConsumerWidget {
   final bool saving;
   final VoidCallback onNext;
 
+  /// The smallest box a visual is drawn in.
+  static const minVisual = 160.0;
+
+  static const promptStyle = TextStyle(
+    fontSize: AppText.heading,
+    fontWeight: FontWeight.w600,
+    color: AppColors.ink,
+  );
+
+  /// The prompt's laid-out height at [width], as the Text below draws it.
+  static double promptHeight(BuildContext context, String text, double width) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: DefaultTextStyle.of(context).style.merge(promptStyle),
+      ),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout(maxWidth: width);
+    final h = painter.height;
+    painter.dispose();
+    return h;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final q = quiz.current;
-    final left = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          q.prompt,
-          key: const Key('prompt'),
-          style: const TextStyle(
-            fontSize: AppText.heading,
-            fontWeight: FontWeight.w600,
-            color: AppColors.ink,
-          ),
+    final prompt = Text(q.prompt, key: const Key('prompt'), style: promptStyle);
+    Widget visualBox(double height) => SizedBox(
+      key: const Key('visual-box'),
+      height: height,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.gap / 2),
+          child: QuestionVisual(q.visual!),
         ),
-        if (q.visual != null) ...[
-          const SizedBox(height: AppSizes.gap),
-          Expanded(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.gap / 2),
-                child: QuestionVisual(q.visual!),
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-    final result = quiz.lastResult;
-    final right = Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.gap),
-        child: result != null
-            ? FeedbackPanel(
-                question: q,
-                result: result,
-                isLast: quiz.isLast,
-                onNext: onNext,
-              )
-            : IgnorePointer(
-                ignoring: saving,
-                child: _AnswerArea(
-                  key: ValueKey('answer-${quiz.index}-${q.id}'),
-                  question: q,
-                  onSubmit: (given) =>
-                      ref.read(quizControllerProvider.notifier).check(given),
-                ),
-              ),
       ),
     );
-    return LayoutBuilder(
-      builder: (context, c) => c.maxWidth >= QuizScreen.wideLayout
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: left),
-                const SizedBox(width: AppSizes.gap * 2),
-                Expanded(child: right),
-              ],
+    final result = quiz.lastResult;
+    final answer = KeyedSubtree(
+      key: const Key('answer-area'),
+      child: result != null
+          ? FeedbackPanel(
+              question: q,
+              result: result,
+              isLast: quiz.isLast,
+              onNext: onNext,
             )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: left),
-                const SizedBox(height: AppSizes.gap),
-                right,
-              ],
+          : IgnorePointer(
+              ignoring: saving,
+              child: _AnswerArea(
+                key: ValueKey('answer-${quiz.index}-${q.id}'),
+                question: q,
+                onSubmit: (given) =>
+                    ref.read(quizControllerProvider.notifier).check(given),
+              ),
             ),
+    );
+
+    if (!sideBySide(MediaQuery.sizeOf(context))) {
+      final screen = MediaQuery.sizeOf(context).height;
+      return SingleChildScrollView(
+        key: const Key('quiz-scroll'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            prompt,
+            if (q.visual != null) ...[
+              const SizedBox(height: AppSizes.gap),
+              visualBox((screen * 0.35).clamp(minVisual, 400)),
+            ],
+            const SizedBox(height: AppSizes.gap),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSizes.gap),
+                child: answer,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final left = LayoutBuilder(
+      builder: (context, c) {
+        final free =
+            c.maxHeight -
+            promptHeight(context, q.prompt, c.maxWidth) -
+            AppSizes.gap;
+        return SingleChildScrollView(
+          key: const Key('question-scroll'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              prompt,
+              if (q.visual != null) ...[
+                const SizedBox(height: AppSizes.gap),
+                visualBox(free > minVisual ? free : minVisual),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+    final right = LayoutBuilder(
+      builder: (context, c) => SingleChildScrollView(
+        key: const Key('answer-scroll'),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: c.maxHeight),
+          child: Center(
+            child: Padding(
+              // No side padding: the keypad just fits a 640 dp half.
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.gap),
+              child: answer,
+            ),
+          ),
+        ),
+      ),
+    );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: left),
+        const SizedBox(width: AppSizes.gap * 2),
+        Expanded(child: right),
+      ],
     );
   }
 }
