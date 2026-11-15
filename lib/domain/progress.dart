@@ -43,7 +43,10 @@ class TopicProgress {
   });
 
   /// A topic she has never finished a round of.
-  static const none = TopicProgress(bestStars: 0, level: minLevel, rounds: 0);
+  static const none = TopicProgress.fresh(minLevel);
+
+  /// A topic she has never finished, starting at [level] (PRO-03).
+  const TopicProgress.fresh(this.level) : bestStars = 0, rounds = 0;
 
   final int bestStars;
   final int level;
