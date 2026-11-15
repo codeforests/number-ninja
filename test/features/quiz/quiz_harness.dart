@@ -164,7 +164,10 @@ class QuizHarness {
 
   Question current(WidgetTester tester) => round(tester).quiz!.current;
 
+  /// Taps [key], scrolling it into view first: with the test font (Ahem,
+  /// wider than Roboto) a long answer area can need its scroll view.
   Future<void> tap(WidgetTester tester, String key) async {
+    await tester.ensureVisible(find.byKey(Key(key)));
     await tester.tap(find.byKey(Key(key)));
     await tester.pump();
   }

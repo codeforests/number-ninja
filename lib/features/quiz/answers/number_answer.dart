@@ -101,7 +101,11 @@ class _NumberAnswerState extends State<NumberAnswer> {
           ),
           onPressed: isBack ? _back : () => _type(k),
           child: isBack
-              ? const Icon(Icons.backspace_outlined, semanticLabel: 'Delete')
+              ? const Icon(
+                  Icons.backspace_outlined,
+                  size: AppText.heading,
+                  semanticLabel: 'Delete',
+                )
               : Text(k, style: const TextStyle(fontSize: AppText.heading)),
         ),
       ),
