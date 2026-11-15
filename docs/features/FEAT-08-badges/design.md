@@ -68,7 +68,7 @@ Not in scope: sound or confetti (PRC-11 and NFR-10, FEAT-09), badges in the PDF 
       Done when: AC-1 passes: `scripts/check.sh 'flutter test test/domain/badges_test.dart'`.
 - [x] T2 — `BadgeRepository`, providers; open the draft PR so CI runs.
       Done when: AC-2 passes with `flutter test test/data/badge_repository_test.dart`.
-- [ ] T3 — Quiz controller hook, `RoundSummary.newBadges`, SCR-05 celebration, `badge_icons.dart`, theme sizes.
+- [x] T3 — Quiz controller hook, `RoundSummary.newBadges`, SCR-05 celebration, `badge_icons.dart`, theme sizes.
       Done when: AC-3 tests pass with `flutter test test/features/quiz`.
 - [ ] T4 — SCR-06 shelf and `/badges` route (counts as screen time); SCR-02 badge button.
       Done when: AC-4 and AC-5 pass with `flutter test test/features/badges test/features/topics test/features/screen_time` (home tests go in `test/features/badges` if none exist).

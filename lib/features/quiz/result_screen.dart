@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../app.dart';
+import '../../ui/badge_icons.dart';
 import '../../ui/theme.dart';
 import '../screen_time/screen_time_controller.dart';
 import 'quiz_controller.dart';
@@ -98,6 +99,10 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                     ),
                   ),
                 ],
+                if (summary.newBadges.isNotEmpty) ...[
+                  const SizedBox(height: AppSizes.gap * 2),
+                  _NewBadges(summary),
+                ],
                 const SizedBox(height: AppSizes.gap * 2),
                 Text(
                   '${summary.score} / ${summary.total}',
@@ -137,6 +142,12 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                       onPressed: () => _go(Routes.home),
                       child: const Text('Home'),
                     ),
+                    if (summary.newBadges.isNotEmpty)
+                      FilledButton.tonal(
+                        key: const Key('see-badges'),
+                        onPressed: () => _go(Routes.badges),
+                        child: const Text('My badges'),
+                      ),
                   ],
                 ),
               ],
@@ -144,6 +155,64 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The badges a round earned, popping in (BDG-02).
+class _NewBadges extends StatelessWidget {
+  const _NewBadges(this.summary);
+
+  final RoundSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context).textTheme;
+    final many = summary.newBadges.length > 1;
+    return Column(
+      children: [
+        Text(
+          many ? 'New badges!' : 'New badge!',
+          key: const Key('new-badges'),
+          style: theme.headlineSmall?.copyWith(
+            color: AppColors.ninja,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: AppSizes.gap),
+        Wrap(
+          spacing: AppSizes.gap * 2,
+          runSpacing: AppSizes.gap,
+          alignment: WrapAlignment.center,
+          children: [
+            for (final b in summary.newBadges)
+              TweenAnimationBuilder<double>(
+                key: Key('new-badge-${b.id}'),
+                tween: Tween(begin: 0, end: 1),
+                duration: AppMotion.badgePop,
+                curve: Curves.elasticOut,
+                builder: (context, t, child) =>
+                    Transform.scale(scale: t, child: child),
+                child: SizedBox(
+                  width: AppSizes.badge * 1.6,
+                  child: Column(
+                    children: [
+                      BadgeIcon(b.id),
+                      const SizedBox(height: AppSizes.gap / 2),
+                      Text(
+                        b.name,
+                        textAlign: TextAlign.center,
+                        style: theme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
