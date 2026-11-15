@@ -1,5 +1,5 @@
 # Handoff: FEAT-10 — Child profile
-Branch: feat/FEAT-10-child-profile · PR: draft (see STATE) · Updated: 2026-11-15 by design + build
+Branch: feat/FEAT-10-child-profile · PR: https://github.com/codeforests/number-ninja/pull/14 (draft) · Updated: 2026-11-15 by design + build
 Stage done: build (T1–T5 of 5)
 Next: verify — kickoff: "Verify FEAT-10 on branch feat/FEAT-10-child-profile. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
