@@ -248,6 +248,11 @@ void main() {
       eval(rounds: [...some, round(school.first, stars: 0)]),
       contains('school-explorer'),
     );
+    expect(
+      eval(rounds: [for (final t in school) round(t, stars: 0)]),
+      contains('school-explorer'),
+      reason: 'no Olympiad round needed',
+    );
   });
 
   test('ninja-master: 22 vs 23 topics at 3 stars (best of each)', () {
@@ -257,5 +262,7 @@ void main() {
     expect(eval(rounds: rs), contains('ninja-master'));
     final missing = rs.where((r) => r.topicId != 'oly.models' || r.stars != 3);
     expect(eval(rounds: missing.toList()), isNot(contains('ninja-master')));
+    final twoStars = [...missing, round('oly.models', stars: 2)];
+    expect(eval(rounds: twoStars), isNot(contains('ninja-master')));
   });
 }

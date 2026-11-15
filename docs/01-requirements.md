@@ -91,9 +91,9 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| BDG-01 | The app shall award badges by rules defined in code (about 20, listed in the design) and record when each was earned. | M | FEAT-08 | |
-| BDG-02 | A newly earned badge shall be celebrated on the round result screen. | M | FEAT-08 | |
-| BDG-03 | A badge shelf shall show earned badges in colour and unearned ones as silhouettes with their hint. | M | FEAT-08 | |
+| BDG-01 | The app shall award badges by rules defined in code (about 20, listed in the design) and record when each was earned. | M | FEAT-08 | FEAT-08 verify.md (2026-11-15) |
+| BDG-02 | A newly earned badge shall be celebrated on the round result screen. | M | FEAT-08 | FEAT-08 verify.md (2026-11-15) |
+| BDG-03 | A badge shelf shall show earned badges in colour and unearned ones as silhouettes with their hint. | M | FEAT-08 | FEAT-08 verify.md (2026-11-15) |
 
 ## 5. Non-functional requirements
 
