@@ -1,7 +1,7 @@
 # FEAT-03: Quiz engine
 
 > Implements: PRC-02, PRC-03, PRC-04, PRC-05, PRC-06, PRC-08, PRC-10, NFR-03, NFR-04, NFR-05 · Screens: SCR-04, SCR-05, SCR-03 (placeholder)
-> Status: built (T1–T7 done), to verify · Branch: `feat/FEAT-03-quiz-engine` · 2026-11-15
+> Status: verified (accepted) · Branch: `feat/FEAT-03-quiz-engine` · 2026-11-15
 
 ## Scope
 
