@@ -3,9 +3,9 @@
 > The first file a build or verify thread reads. Keep it under 40 lines.
 
 - **Phase:** construction. Requirements, design and plan signed off by Ken 2026-11-14 (PR #1).
-- **In progress:** FEAT-02 question bank on `feat/FEAT-02-question-bank`: verified, **accepted** 2026-11-14 (`verify.md`); PR [#3](https://github.com/codeforests/number-ninja/pull/3) ready for Ken to review and merge. Next after merge: design FEAT-03 (when Ken says so).
-- **Remaining order:** FEAT-02 → 03 (M1) → 04 → 05 (M2) → 06 → 07 → 08 (M3) → 09 (M4).
-- **Merged:** FEAT-01 walking skeleton (PR #2, 2026-11-14, accepted).
+- **In progress:** FEAT-03 quiz engine (completes M1) on `feat/FEAT-03-quiz-engine`: designed 2026-11-15 (`design.md`, AC-1..9, T1–T7). Next: build from T1.
+- **Remaining order:** 03 (M1) → 04 → 05 (M2) → 06 → 07 → 08 (M3) → 09 (M4).
+- **Merged:** FEAT-01 walking skeleton (PR #2, 2026-11-14, accepted). FEAT-02 question bank (PR #3, 2026-11-15, accepted; format mix 29/62/9, not rebalanced).
 - **Environment:** cloud sessions have no Flutter SDK: install the stable tarball listed in `releases_linux.json` (3.50.0) into `~/sdk/flutter`, add `~/sdk/flutter/bin` to PATH, and run `git config --global --add safe.directory ~/sdk/flutter`. There's no Android SDK either, so APK builds and the manifest check run only in GitHub CI (runs on every push to a PR). Material widgets come from `package:material_ui/material_ui.dart`.
 - **Last CI run:** [43605859362](https://github.com/codeforests/number-ninja/actions/runs/43605859362) on PR #3 head `43ee587`, success incl. the bank-up-to-date step, release-signed APK artifact `number-ninja-apk`.
 
