@@ -1,7 +1,7 @@
 # FEAT-04: Home, topic map and difficulty steps
 
 > Implements: PRC-01, PRC-07, PRC-09, NFR-09 · Screens: SCR-02, SCR-03, SCR-04 (layout), SCR-05 (level up)
-> Status: designed · Branch: `feat/FEAT-04-topic-map` · 2026-11-15
+> Status: built · Branch: `feat/FEAT-04-topic-map` · 2026-11-15
 
 ## Scope
 
@@ -43,15 +43,15 @@ Not in scope: minutes left on home (TIM-06, FEAT-05), latest badge on home (FEAT
 
 ## Tasks
 
-- [ ] T1 — Domain: `progress.dart` (`nextLevel`, `FinishedRound`, `TopicProgress`, `progressByTopic`).
+- [x] T1 — Domain: `progress.dart` (`nextLevel`, `FinishedRound`, `TopicProgress`, `progressByTopic`).
       Done when: `scripts/check.sh 'flutter test test/domain'` passes with the AC-1 tests.
-- [ ] T2 — Data: `rounds.finished_at`, schema v2 with migration and backfill, `finishRound` stamps it, `finishedRounds`, `progress`, `levelFor`, `topicProgressProvider`; `dart run build_runner build`.
+- [x] T2 — Data: `rounds.finished_at`, schema v2 with migration and backfill, `finishRound` stamps it, `finishedRounds`, `progress`, `levelFor`, `topicProgressProvider`; `dart run build_runner build`.
       Done when: the AC-2 Drift and migration tests and the existing `test/data` tests pass.
-- [ ] T3 — Controller plays at `levelFor`; `RoundSummary.level/nextLevel`; SCR-05 level-up banner; remove `playLevel`.
+- [x] T3 — Controller plays at `levelFor`; `RoundSummary.level/nextLevel`; SCR-05 level-up banner; remove `playLevel`.
       Done when: the AC-3 widget tests and the existing `test/features/quiz` tests pass.
-- [ ] T4 — SCR-03 topic map with sections, icons, stars, level; SCR-02 track star totals and portrait stacking; delete the placeholder list.
+- [x] T4 — SCR-03 topic map with sections, icons, stars, level; SCR-02 track star totals and portrait stacking; delete the placeholder list.
       Done when: AC-4 and AC-5 widget tests pass and `flutter test test/features` passes.
-- [ ] T5 — Responsive SCR-04 (`lib/ui/layout.dart`, scrolling halves, stacked scroll, layout keys) and the `layout_checks.dart` helper.
+- [x] T5 — Responsive SCR-04 (`lib/ui/layout.dart`, scrolling halves, stacked scroll, layout keys) and the `layout_checks.dart` helper.
       Done when: the SCR-04 part of AC-6 passes at all six sizes and the FEAT-03 layout tests still pass.
-- [ ] T6 — AC-6 for SCR-02, SCR-03, SCR-05 and the NFR-03 sizes; AC-7 no-scroll test with Roboto; full `scripts/check.sh`; draft PR.
+- [x] T6 — AC-6 for SCR-02, SCR-03, SCR-05 and the NFR-03 sizes; AC-7 no-scroll test with Roboto; full `scripts/check.sh`; draft PR.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.

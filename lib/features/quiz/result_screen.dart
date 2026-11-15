@@ -30,20 +30,24 @@ class ResultScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  key: const Key('result-stars'),
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (var i = 0; i < 3; i++)
-                      Icon(
-                        i < summary.stars ? Icons.star : Icons.star_border,
-                        key: Key('star-$i'),
-                        size: AppSizes.minTap * 2,
-                        color: i < summary.stars
-                            ? AppColors.sun
-                            : AppColors.muted,
-                      ),
-                  ],
+                // Shrinks on a narrow phone instead of overflowing (NFR-09).
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    key: const Key('result-stars'),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (var i = 0; i < 3; i++)
+                        Icon(
+                          i < summary.stars ? Icons.star : Icons.star_border,
+                          key: Key('star-$i'),
+                          size: AppSizes.minTap * 2,
+                          color: i < summary.stars
+                              ? AppColors.sun
+                              : AppColors.muted,
+                        ),
+                    ],
+                  ),
                 ),
                 if (summary.levelUp) ...[
                   const SizedBox(height: AppSizes.gap),

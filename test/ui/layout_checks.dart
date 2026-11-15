@@ -1,5 +1,8 @@
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:number_ninja/ui/theme.dart';
+import 'package:number_ninja/ui/visuals/question_visual.dart';
 
 /// Child-screen sizes in dp for NFR-09 (AC-6): phone and small tablet in
 /// both orientations, and the 12-inch tablet.
@@ -52,5 +55,49 @@ void expectNoOverlap(WidgetTester tester, List<String> keys) {
             '${list[j].key} ${list[j].value}',
       );
     }
+  }
+}
+
+/// NFR-03 on the screen as it is: every tap target at least 64 × 64 dp and
+/// every laid-out text at least 20 sp, outside drawn visuals (which scale
+/// their own labels to fit) and icon glyphs. Needs semantics on.
+Future<void> expectChildSizes(WidgetTester tester) async {
+  await expectLater(
+    tester,
+    meetsGuideline(
+      const MinimumTapTargetGuideline(
+        size: Size(AppSizes.minTap, AppSizes.minTap),
+        link: 'NFR-03',
+      ),
+    ),
+  );
+  final skip = {
+    ...find.byType(QuestionVisual).evaluate(),
+    ...find.byType(Icon).evaluate(),
+  };
+  bool skipped(Element e) {
+    var found = false;
+    e.visitAncestorElements((a) {
+      found = skip.contains(a);
+      return !found;
+    });
+    return found;
+  }
+
+  final paragraphs = tester.allElements.where(
+    (e) => e.renderObject is RenderParagraph && !skipped(e),
+  );
+  expect(paragraphs, isNotEmpty);
+  for (final e in paragraphs) {
+    final p = e.renderObject! as RenderParagraph;
+    p.text.visitChildren((span) {
+      final size = span.style?.fontSize ?? 14;
+      expect(
+        p.textScaler.scale(size),
+        greaterThanOrEqualTo(AppText.small),
+        reason: '"${span.toPlainText()}" is $size sp',
+      );
+      return true;
+    });
   }
 }
