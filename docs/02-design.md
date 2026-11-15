@@ -15,7 +15,7 @@ One Flutter app, no server. Three layers, and code only calls downwards:
 
 Shared UI pieces (theme, PIN pad, big buttons, drawn visuals) live in `lib/ui/`. State uses Riverpod providers; navigation uses go_router. The generator lives in `tool/` and is never shipped.
 
-**Stack:** Flutter stable (3.50), Dart 3.14, flutter_riverpod, go_router, drift + drift_flutter (SQLite), fl_chart, pdf + printing, crypto. Exact versions are pinned in `pubspec.lock`.
+**Stack:** Flutter stable (3.50), Dart 3.14, flutter_riverpod, go_router, drift + drift_flutter (SQLite), own `CustomPainter` trend charts (`lib/ui/trend_chart.dart`, no fl_chart), intl, pdf + printing, crypto. Exact versions are pinned in `pubspec.lock`.
 
 ## 2. Topics (BNK-02)
 
@@ -118,3 +118,4 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 | 2026-11-15 | FEAT-05 design: screen time counts only on child screens (not PIN entry or the parent area); route `/locked` for SCR-07; "finish the current question" (TIM-03) ends at the latest 2 minutes after time runs out; parent unlock = extra minutes or a higher limit on SCR-11. No schema change. |
 | 2026-11-15 | FEAT-05 build: SCR-07 itself doesn't count as screen time, so extra minutes a parent grants aren't used up on the lock screen. |
 | 2026-11-15 | FEAT-06 design: stats count each attempt for its question's topic (quit rounds included), per-attempt time capped at 120 s in averages, weeks start Monday; trend charts are a small CustomPainter (`lib/ui/trend_chart.dart`) instead of fl_chart; the mix-in uses 30-day needs practice and counts in the round's score; reset keeps the PIN, limit and `daily_usage`. No schema change. |
+| 2026-11-15 | FEAT-06 build: stack row drops fl_chart; `RoundRepository.forgetSession()` after a reset (its cached `play_sessions` row is deleted); parent-only text sizes `AppText.chartLabel` 14 / `parentBody` 16 (NFR-03 sizes apply to child screens only). |

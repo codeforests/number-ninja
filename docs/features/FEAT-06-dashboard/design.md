@@ -1,7 +1,7 @@
 # FEAT-06: Parent dashboard
 
 > Implements: PAR-05..08, PAR-10, design §5 "needs practice" mix-in (PRC-08) · Screens: SCR-09 (dashboard), SCR-10 (topic detail), SCR-11 (link, reset), SCR-04 (mix-in)
-> Status: designed (T1–T7) · Branch: `feat/FEAT-06-dashboard` · 2026-11-15
+> Status: built (T1–T7) · Branch: `feat/FEAT-06-dashboard` · 2026-11-15
 
 ## Scope
 
@@ -39,6 +39,16 @@ Not in scope: PDF export (PAR-09, FEAT-07, which reuses this feature's stats), b
 - **SCR-11:** "Progress" tile (key `open-dashboard`) at the top; "Reset all progress" tile (key `reset-progress`, error colour) at the bottom. Reset screen `lib/features/parent/reset_screen.dart` with the PIN pad (`lib/ui/pin_pad.dart`).
 - **Theme:** add track colours to `AppColors`; no hard-coded colours or sizes in the new screens.
 
+## Build deviations
+
+- Join in the domain: `withBankTopics(rows, topicOf)` (with a `RawAttempt` record type) in `stats.dart`, so the unknown-id skip is unit-tested (AC-1). `StatsPeriod.includes`, `fromQuery`, `query`, `longLabel` added.
+- `StatsRepository.mixInTopic(roundTopic)` holds the design §5 topic choice (30-day needs practice, School only, not its own); `recordsIn(period)` wraps `records(since:)`.
+- `RoundRepository.forgetSession()`: reset deletes the cached `play_sessions` row, so the reset screen drops it and the next round opens a new session (otherwise a foreign-key error).
+- Screens read one `statsDataProvider` (all records + `now`, `lib/features/parent/stats_view.dart`) and filter by period in memory, so switching period doesn't reload. Shared bits (period picker, cards, `TrendCharts`, formatters) live there.
+- Theme additions: `AppColors.chartGrid`, `AppSizes.chartHeight/chartDot/chartLine`, `AppText.chartLabel` (14) and `parentBody` (16), parent screens only.
+- `Routes.dashboardFor(period)` and `Routes.topicDetail(id, period)`; SCR-10's back goes to SCR-09 with the same period.
+- Track card keys use `Track.name`: `track-p1`, `track-p2`, `track-olympiad`. Topic detail list rows are keyed `q-<questionId>`.
+
 ## Acceptance criteria
 
 - **AC-1** (PAR-05): `stats.dart` unit tests: accuracy, capped average and counts per topic and per track; period filters at exact 7- and 30-day boundaries with an injected clock; attempts of an unknown question id are skipped; a mixed-in question counts for its own topic.
@@ -64,5 +74,5 @@ Not in scope: PDF export (PAR-09, FEAT-07, which reuses this feature's stats), b
       Done when: AC-5 widget tests pass.
 - [x] T6 — SCR-10 topic detail; reset screen and SCR-11 tile.
       Done when: AC-6 and AC-7 widget tests pass.
-- [ ] T7 — AC-8 layout checks; update design §1 stack row and §9; full `scripts/check.sh`; draft PR.
+- [x] T7 — AC-8 layout checks; update design §1 stack row and §9; full `scripts/check.sh`; draft PR.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.
