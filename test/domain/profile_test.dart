@@ -33,11 +33,15 @@ void main() {
       6: [3, 3, 3],
     };
     for (final MapEntry(key: year, value: levels) in expected.entries) {
-      expect([
-        startLevel(prof(year), p1),
-        startLevel(prof(year), p2),
-        startLevel(prof(year), oly),
-      ], levels, reason: 'P$year');
+      expect(
+        [
+          startLevel(prof(year), p1),
+          startLevel(prof(year), p2),
+          startLevel(prof(year), oly),
+        ],
+        levels,
+        reason: 'P$year',
+      );
     }
   });
 

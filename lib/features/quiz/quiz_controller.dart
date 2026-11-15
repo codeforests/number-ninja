@@ -7,10 +7,12 @@ import 'package:material_ui/material_ui.dart' show immutable;
 
 import '../../data/sound_player.dart';
 import '../../domain/badges.dart';
+import '../../domain/profile.dart';
 import '../../domain/progress.dart' as progress;
 import '../../domain/question.dart';
 import '../../domain/quiz.dart';
 import '../../domain/round_builder.dart';
+import '../../domain/topics.dart';
 import '../../providers.dart';
 
 /// Shuffles rounds; overridden with a seeded one in tests.
@@ -97,7 +99,9 @@ class QuizController extends Notifier<RoundState> {
     try {
       final bank = await ref.read(bankProvider.future);
       final repo = ref.read(roundRepositoryProvider);
-      final level = await repo.levelFor(topicId);
+      final profile = await ref.read(profileRepositoryProvider).load();
+      int start(String id) => startLevel(profile, topicsById[id]);
+      final level = await repo.levelFor(topicId, start: start(topicId));
       final recent = await repo.recentCorrectIds(topicId);
       final random = ref.read(quizRandomProvider);
       final stats = await ref.read(statsRepositoryProvider.future);
@@ -106,7 +110,7 @@ class QuizController extends Notifier<RoundState> {
           ? const <Question>[]
           : pickMixIn(
               candidates: bank.byTopic[mixTopic] ?? const [],
-              level: await repo.levelFor(mixTopic),
+              level: await repo.levelFor(mixTopic, start: start(mixTopic)),
               recentCorrect: await repo.recentCorrectIds(mixTopic),
               random: random,
             );

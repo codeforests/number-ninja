@@ -17,10 +17,9 @@ class ProfileRepository {
     )..where((p) => p.id.equals(1))).getSingleOrNull(),
   );
 
-  Stream<ChildProfile?> watch() =>
-      (db.select(db.childProfiles)..where((p) => p.id.equals(1)))
-          .watchSingleOrNull()
-          .map(_toProfile);
+  Stream<ChildProfile?> watch() => (db.select(
+    db.childProfiles,
+  )..where((p) => p.id.equals(1))).watchSingleOrNull().map(_toProfile);
 
   /// Whether the app must ask for the profile before play.
   Future<bool> pending() async => (await db.getSettings()).profilePending;
