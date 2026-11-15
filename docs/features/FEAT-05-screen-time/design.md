@@ -49,7 +49,7 @@ Not in scope: per-weekday limits, usage history in the dashboard (FEAT-06), stop
 
 ## Tasks
 
-- [ ] T1 — Domain `screen_time.dart` (`dayKey`, `effectiveDay`, `ScreenTimeStatus`, `UsageStore`, `ScreenTimeClock`).
+- [x] T1 — Domain `screen_time.dart` (`dayKey`, `effectiveDay`, `ScreenTimeStatus`, `UsageStore`, `ScreenTimeClock`).
       Done when: `scripts/check.sh 'flutter test test/domain'` passes with the AC-1 tests.
 - [ ] T2 — Data `UsageRepository` (`addSeconds`, `status`, `latestDay`, `grantExtra`, `setDailyLimit`), provider.
       Done when: the AC-2 tests and existing `test/data` tests pass.
