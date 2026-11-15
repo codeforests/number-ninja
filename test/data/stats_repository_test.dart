@@ -114,6 +114,7 @@ void main() {
     await db
         .into(db.badgesEarned)
         .insert(BadgesEarnedCompanion.insert(badgeId: 'x', earnedAt: now));
+    await usage.setSoundOn(false); // FEAT-09 AC-2: reset keeps the switch
 
     await stats.resetProgress();
 
@@ -125,6 +126,7 @@ void main() {
     final s = await usage.status('2026-11-18');
     expect(s.limitMinutes, 30);
     expect(s.usedSeconds, 300);
+    expect(await usage.soundOn(), isFalse);
     expect(await RoundRepository(db, clock: () => now).progress(), isEmpty);
     // A fresh RoundRepository (provider invalidated) can start a round.
     final again = RoundRepository(db, clock: () => now);

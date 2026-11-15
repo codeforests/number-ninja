@@ -10,6 +10,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:number_ninja/app.dart';
 import 'package:number_ninja/data/database.dart';
 import 'package:number_ninja/data/round_repository.dart';
+import 'package:number_ninja/data/sound_player.dart';
 import 'package:number_ninja/domain/question.dart';
 import 'package:number_ninja/domain/quiz.dart';
 import 'package:number_ninja/features/quiz/quiz_controller.dart';
@@ -112,6 +113,18 @@ class CountingRepository extends RoundRepository {
 
 /// An app with a PIN set, an in-memory database, a fake clock and a seeded
 /// round order, on a 1280 × 800 dp landscape tablet by default.
+/// Records sound effects instead of playing them (PRC-11, FEAT-09).
+class RecordingSoundPlayer implements SoundPlayer {
+  final played = <SoundEffect>[];
+  bool fail = false;
+
+  @override
+  Future<void> play(SoundEffect effect) async {
+    if (fail) throw StateError('no audio');
+    played.add(effect);
+  }
+}
+
 class QuizHarness {
   QuizHarness({QuestionBank? bank}) : bank = bank ?? fakeBank() {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -137,6 +150,8 @@ class QuizHarness {
     elapsed += d;
   }
 
+  final sounds = RecordingSoundPlayer();
+
   /// More overrides for one test, added after the defaults.
   List<Override> more = [];
 
@@ -147,6 +162,7 @@ class QuizHarness {
     roundRepositoryProvider.overrideWithValue(repo),
     quizRandomProvider.overrideWith((ref) => Random(42)),
     elapsedProvider.overrideWithValue(() => elapsed),
+    soundPlayerProvider.overrideWithValue(sounds),
     appSessionProvider.overrideWithValue(
       AppSession(hasPin: true, clock: clock),
     ),

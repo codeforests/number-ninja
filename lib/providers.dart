@@ -7,6 +7,7 @@ import 'data/database.dart';
 import 'data/pin_repository.dart';
 import 'data/question_bank_loader.dart';
 import 'data/round_repository.dart';
+import 'data/sound_player.dart';
 import 'data/stats_repository.dart';
 import 'data/usage_repository.dart';
 import 'domain/question.dart';
@@ -38,6 +39,12 @@ final usageRepositoryProvider = Provider<UsageRepository>(
 );
 
 /// One per app opening, so its play session is shared by every round.
+/// Sound effects with the parent's on/off switch (PRC-11).
+final soundEffectsProvider = Provider<SoundEffects>((ref) {
+  final usage = ref.watch(usageRepositoryProvider);
+  return SoundEffects(ref.watch(soundPlayerProvider), usage.soundOn);
+});
+
 final roundRepositoryProvider = Provider<RoundRepository>(
   (ref) => RoundRepository(
     ref.watch(databaseProvider),

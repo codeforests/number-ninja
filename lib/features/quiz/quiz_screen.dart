@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../ui/kid_background.dart';
 import '../../app.dart';
 import '../../domain/question.dart';
 import '../../domain/quiz.dart';
@@ -79,27 +80,31 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   Widget build(BuildContext context) {
     final s = ref.watch(quizControllerProvider);
     final quiz = s.quiz;
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.gap),
-          child: Column(
-            children: [
-              _TopBar(quiz: quiz),
-              const SizedBox(height: AppSizes.gap),
-              Expanded(
-                child: s.error != null
-                    ? const Center(
-                        child: Text(
-                          'Something went wrong. Go home and try again.',
-                          style: TextStyle(fontSize: AppText.body),
-                        ),
-                      )
-                    : quiz == null || quiz.phase == QuizPhase.done
-                    ? const Center(child: CircularProgressIndicator())
-                    : _Body(quiz: quiz, saving: s.saving, onNext: _next),
-              ),
-            ],
+    return KidBackground(
+      scene: KidScene.forTopic(widget.topicId),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.gap),
+            child: Column(
+              children: [
+                _TopBar(quiz: quiz),
+                const SizedBox(height: AppSizes.gap),
+                Expanded(
+                  child: s.error != null
+                      ? const Center(
+                          child: Text(
+                            'Something went wrong. Go home and try again.',
+                            style: TextStyle(fontSize: AppText.body),
+                          ),
+                        )
+                      : quiz == null || quiz.phase == QuizPhase.done
+                      ? const Center(child: CircularProgressIndicator())
+                      : _Body(quiz: quiz, saving: s.saving, onNext: _next),
+                ),
+              ],
+            ),
           ),
         ),
       ),

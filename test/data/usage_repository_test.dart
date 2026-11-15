@@ -17,6 +17,15 @@ void main() {
     });
     tearDown(() => db.close());
 
+    test('sound is on by default and the switch persists (PRC-11)', () async {
+      expect(await repo.soundOn(), isTrue);
+      await repo.setSoundOn(false);
+      expect(await repo.soundOn(), isFalse);
+      expect((await db.getSettings()).soundOn, isFalse);
+      await repo.setSoundOn(true);
+      expect(await repo.soundOn(), isTrue);
+    });
+
     test('a day with no row has zero use and the default limit', () async {
       final s = await repo.status('2027-01-05');
       expect(s.usedSeconds, 0);

@@ -62,7 +62,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 2);
+    expect(version.data.values.single, 3);
 
     final rounds = await (db.select(
       db.rounds,
@@ -80,5 +80,32 @@ void main() {
         )
         .get();
     expect(cols, hasLength(1));
+  });
+
+  test('v2 -> v3 adds app_settings.sound_on = true (FEAT-09 AC-2)', () async {
+    final executor = NativeDatabase.memory(
+      setup: (raw) {
+        for (final sql in _v1) {
+          raw.execute(sql);
+        }
+        raw.execute('ALTER TABLE rounds ADD COLUMN finished_at INTEGER NULL');
+        raw.execute(
+          'INSERT INTO app_settings (id, pin_hash, daily_limit_min) '
+          'VALUES (1, ?, 35)',
+          ['h'],
+        );
+        raw.execute('INSERT INTO pin_lockout (id) VALUES (1)');
+        raw.execute('PRAGMA user_version = 2');
+      },
+    );
+    final db = AppDatabase(executor);
+    addTearDown(db.close);
+
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.data.values.single, 3);
+    final settings = await db.getSettings();
+    expect(settings.soundOn, isTrue);
+    expect(settings.pinHash, 'h');
+    expect(settings.dailyLimitMin, 35);
   });
 }

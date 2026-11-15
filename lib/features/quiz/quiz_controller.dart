@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart' show immutable;
 
+import '../../data/sound_player.dart';
 import '../../domain/badges.dart';
 import '../../domain/progress.dart' as progress;
 import '../../domain/question.dart';
@@ -135,6 +138,15 @@ class QuizController extends Notifier<RoundState> {
     final quiz = s.quiz;
     if (quiz == null || s.saving || quiz.phase != QuizPhase.answering) return;
     final answered = quiz.answer(given, ref.read(clockProvider)());
+    unawaited(
+      ref
+          .read(soundEffectsProvider)
+          .play(
+            answered.lastResult!.correct
+                ? SoundEffect.right
+                : SoundEffect.wrong,
+          ),
+    );
     state = RoundState(
       topicId: s.topicId,
       level: s.level,

@@ -57,6 +57,8 @@ class ParentScreen extends ConsumerWidget {
           const Divider(height: AppSizes.gap * 2),
           const _ScreenTimeSection(),
           const Divider(height: AppSizes.gap * 2),
+          const _SoundSection(),
+          const Divider(height: AppSizes.gap * 2),
           ListTile(
             key: const Key('change-pin'),
             minTileHeight: AppSizes.minTap,
@@ -173,6 +175,44 @@ class _ScreenTimeSection extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// The sound effects switch (PRC-11).
+class _SoundSection extends ConsumerStatefulWidget {
+  const _SoundSection();
+
+  @override
+  ConsumerState<_SoundSection> createState() => _SoundSectionState();
+}
+
+class _SoundSectionState extends ConsumerState<_SoundSection> {
+  bool? _on;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(usageRepositoryProvider).soundOn().then((on) {
+      if (mounted) setState(() => _on = on);
+    });
+  }
+
+  Future<void> _set(bool on) async {
+    setState(() => _on = on);
+    await ref.read(usageRepositoryProvider).setSoundOn(on);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final on = _on;
+    return SwitchListTile(
+      key: const Key('sound-switch'),
+      secondary: Icon(on == false ? Icons.volume_off : Icons.volume_up),
+      title: const Text('Sound effects'),
+      subtitle: const Text('Short sounds for answers and finished rounds'),
+      value: on ?? true,
+      onChanged: on == null ? null : _set,
     );
   }
 }

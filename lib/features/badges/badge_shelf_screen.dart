@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart' hide Badge;
 
+import '../../ui/kid_background.dart';
 import '../../app.dart';
 import '../../domain/badges.dart';
 import '../../providers.dart';
@@ -37,58 +38,65 @@ class BadgeShelfScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context).textTheme;
     final earned = ref.watch(earnedBadgesProvider).value ?? const {};
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.gap * 2),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  SizedBox.square(
-                    dimension: AppSizes.minTap,
-                    child: IconButton.filledTonal(
-                      key: const Key('badges-back'),
-                      iconSize: 36,
-                      onPressed: () => context.go(Routes.home),
-                      icon: const Icon(Icons.arrow_back, semanticLabel: 'Back'),
+    return KidBackground(
+      scene: KidScene.home,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.gap * 2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    SizedBox.square(
+                      dimension: AppSizes.minTap,
+                      child: IconButton.filledTonal(
+                        key: const Key('badges-back'),
+                        iconSize: 36,
+                        onPressed: () => context.go(Routes.home),
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          semanticLabel: 'Back',
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSizes.gap),
-                  Expanded(
-                    child: Text(
-                      'My badges',
-                      style: theme.displaySmall,
-                      overflow: TextOverflow.ellipsis,
+                    const SizedBox(width: AppSizes.gap),
+                    Expanded(
+                      child: Text(
+                        'My badges',
+                        style: theme.displaySmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSizes.gap / 2),
-              Text(
-                '${earned.length} of ${badges.length}',
-                key: const Key('badge-count'),
-                style: theme.headlineSmall,
-              ),
-              const SizedBox(height: AppSizes.gap),
-              Expanded(
-                // A Wrap, not a fixed-height grid, so long hints at large
-                // text sizes grow the tile instead of overflowing (NFR-09).
-                child: SingleChildScrollView(
-                  key: const Key('badge-shelf'),
-                  child: Wrap(
-                    spacing: AppSizes.gap,
-                    runSpacing: AppSizes.gap,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      for (final b in badges)
-                        _BadgeTile(badge: b, earnedAt: earned[b.id]),
-                    ],
+                  ],
+                ),
+                const SizedBox(height: AppSizes.gap / 2),
+                Text(
+                  '${earned.length} of ${badges.length}',
+                  key: const Key('badge-count'),
+                  style: theme.headlineSmall,
+                ),
+                const SizedBox(height: AppSizes.gap),
+                Expanded(
+                  // A Wrap, not a fixed-height grid, so long hints at large
+                  // text sizes grow the tile instead of overflowing (NFR-09).
+                  child: SingleChildScrollView(
+                    key: const Key('badge-shelf'),
+                    child: Wrap(
+                      spacing: AppSizes.gap,
+                      runSpacing: AppSizes.gap,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        for (final b in badges)
+                          _BadgeTile(badge: b, earnedAt: earned[b.id]),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
