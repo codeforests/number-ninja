@@ -1,6 +1,6 @@
 # Number Ninja: Requirements
 
-> Version 1.1 · 2026-11-15 (1.0 signed off by Ken 2026-11-14; 1.1 adds D9, PRC-11, NFR-09, NFR-10 from his M1 check)
+> Version 2.0 draft · 2026-11-15 (1.0 signed off by Ken 2026-11-14; 1.1 adds D9, PRC-11, NFR-09, NFR-10 from his M1 check; 2.0 is the phase 2 amendment, D10–D16, waiting for Ken's sign-off)
 > This file is also the traceability matrix: the **Feature** column is filled by planning, **Verified by** by each feature's verify step. IDs are permanent and never reused; a dropped requirement keeps its row marked *Removed*.
 
 ## 1. Purpose and scope
@@ -8,6 +8,10 @@
 Number Ninja is an offline Android tablet app that helps one child (Singapore primary school, entering P2 in 2027) practise maths. It covers P1 revision, the P2 MOE syllabus and Olympiad-style thinking, times every answer, and gives the parent a PIN-protected view of accuracy and speed per topic. It limits daily use to a parent-set number of minutes.
 
 **Out of scope for v1:** iOS, accounts, cloud sync or backup, more than one child, read-aloud or other languages, questions generated on the device at run time, Play Store publishing.
+
+**Phase 2 (v2, D10–D16)** adds an optional parent account (email and password, or Google) that syncs her progress, badges and settings to Ken's own server and across devices; a question bank hosted on that server that the app updates by itself; a revision module for weak question types and recent mistakes; and a child profile that sets where each topic starts. Practice still works fully offline.
+
+**Still out of scope in phase 2:** iOS, a web dashboard, more than one child per account in the app (the data model allows it later), AI-driven analysis (planned for a later phase, D12), questions written outside the generator, Play Store publishing (the new name, D16, is chosen now so it can be published later).
 
 ## 2. Users
 
@@ -20,15 +24,22 @@ Number Ninja is an offline Android tablet app that helps one child (Singapore pr
 
 | ID | Decision | Date |
 |---|---|---|
-| D1 | Questions come from a fixed bank generated once by a script and shipped with the app; new questions ship as a new app version. | 2026-11-14 |
+| D1 | Questions come from a fixed bank generated once by a script and shipped with the app; new questions ship as a new app version. *Superseded by D11.* | 2026-11-14 |
 | D2 | P1 revision plus P2 MOE syllabus; plain addition and subtraction drills are skipped (regrouping and word problems stay). | 2026-11-14 |
 | D3 | Olympiad styles: patterns, logic puzzles, counting, model drawing. | 2026-11-14 |
 | D4 | Answer formats: multiple choice, typed number, drag and drop. | 2026-11-14 |
 | D5 | Screen time is a daily allowance, 20 minutes by default, changed only with the parent PIN. | 2026-11-14 |
 | D6 | Badges for motivation; English only; no voice. | 2026-11-14 |
-| D7 | Offline only, data on the device, no backup. One child. | 2026-11-14 |
+| D7 | Offline only, data on the device, no backup. One child. *Superseded by D10 (still offline-first, still one child).* | 2026-11-14 |
 | D8 | Target device: Android tablet around 12 inches, landscape first. | 2026-11-14 |
 | D9 | After the M1 tablet check (Ken, 2026-11-15): layouts must also work on smaller screens without overlapping (NFR-09), and the child screens get a more kid-friendly look with short sound effects (PRC-11, NFR-10). Sound effects are not voice, so D6 still holds: no speech, English text only. | 2026-11-15 |
+| D10 | Phase 2 (Ken, 2026-11-15): the parent may sign in to an optional account; her progress, badges, profile and settings then sync to the server and across devices. Practice never needs the network; data syncs when online. One child per account, with ids that allow more later. The PIN and its lockout stay on each device and never leave it. Reverses D7's "no backup". | 2026-11-15 |
+| D11 | The question bank is also hosted on the server. The generator script stays the only source; a publish step uploads a new bank version. The app keeps its bundled bank as a fallback and switches to a newer published bank by itself. Reverses D1's "new questions = new app version". | 2026-11-15 |
+| D12 | Revision module: rule-based in phase 2 (weak question types inside a topic, plus recent mistakes), offered automatically and counted as screen time. It sits behind one planner interface so an AI-driven analysis can replace or extend it in a later phase. | 2026-11-15 |
+| D13 | Child profile set by the parent: nickname (no real name or birth date), school year, optional starting level per track. It decides only where a topic starts; PRC-09 steps take over after the first finished round. | 2026-11-15 |
+| D14 | The server runs on Ken's existing DigitalOcean droplet (self-hosted, no paid cloud service), reached over HTTPS only. Details and alternatives in [04-architecture.md](04-architecture.md) (ADR-01, ADR-02). | 2026-11-15 |
+| D15 | Sign-in with email and password (verification and forgot-password emails) and with Google. Account screens sit inside the PIN-protected parent area. | 2026-11-15 |
+| D16 | The app gets a new name because "Number Ninja" clashes on Google Play. *Pending Ken's choice* (options in [03-plan.md](03-plan.md) §5). The Android application id stays `com.codeforests.number_ninja`, so the tablet updates in place and keeps her data. | 2026-11-15 |
 
 ## 4. Functional requirements
 
@@ -44,6 +55,12 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | BNK-04 | A generator script in the repo shall produce the bank reproducibly (same seed, same file) and fail if any question has a wrong answer, a duplicate, or an MCQ option list without exactly one correct option. | M | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
 | BNK-05 | Every question shall have a stable id that never changes between bank versions, so old results stay readable. | M | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
 | BNK-06 | Every question shall carry a short explanation of the answer shown after she answers. | S | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
+| BNK-07 | A publish step in the repo shall upload a new bank version to the server only after the generator's validator passes, and shall refuse a version that is not higher than the latest published one. (D11) | M | FEAT-15 | |
+| BNK-08 | When online, the app shall check for a newer published bank at launch and at most once a day, download it, verify its checksum and run the same checks as the bundled bank before keeping it. A failed download or check keeps the current bank. (D11) | M | FEAT-15 | |
+| BNK-09 | The app shall switch to a newly downloaded bank only between rounds, never during one, and shall fall back to the bundled bank if the downloaded file is missing or damaged. | M | FEAT-15 | |
+| BNK-10 | A newer bank shall keep every question id of the previous one (BNK-05); a question that should no longer be served is marked retired, so old results stay readable. | M | FEAT-15 | |
+| BNK-11 | The app shall ignore a published bank whose format needs a newer app version. | S | FEAT-15 | |
+| BNK-12 | The parent area shall show the bank version in use and when the app last checked for a new one. | C | FEAT-15 | |
 
 ### Practice (PRC)
 
@@ -95,11 +112,55 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | BDG-02 | A newly earned badge shall be celebrated on the round result screen. | M | FEAT-08 | FEAT-08 verify.md (2026-11-15) |
 | BDG-03 | A badge shelf shall show earned badges in colour and unearned ones as silhouettes with their hint. | M | FEAT-08 | FEAT-08 verify.md (2026-11-15) |
 
+### Child profile (PRO)
+
+| ID | Requirement | Pri | Feature | Verified by |
+|---|---|---|---|---|
+| PRO-01 | In the parent area the parent shall be able to set the child's nickname, school year and an optional starting level (1–3) per track. (D13) | M | FEAT-10 | |
+| PRO-02 | After first-run PIN setup (PAR-01) the app shall ask for the profile before the child can play; an existing install shall keep working and offer the profile in the parent area. | M | FEAT-10 | |
+| PRO-03 | A topic with no finished round shall start at the level the profile gives (the track override if set, else a level worked out from her school year and the topic's year), instead of level 1; after that PRC-09 applies. | M | FEAT-10 | |
+| PRO-04 | The home screen shall greet her by nickname. | C | FEAT-10 | |
+
+### Revision (REV)
+
+| ID | Requirement | Pri | Feature | Verified by |
+|---|---|---|---|---|
+| REV-01 | The app shall work out her weak question types (a question type = one generator template inside a topic): enough recent attempts with low accuracy or slow answers, by rules defined in the design. (D12) | M | FEAT-11 | |
+| REV-02 | The app shall keep a list of recent mistakes: questions answered wrong recently and not answered right since. | M | FEAT-11 | |
+| REV-03 | After a round in a topic that has weak types or recent mistakes, the result screen shall offer a revision round for that topic; the home screen shall offer a revision round across all topics when there is enough to revise. | M | FEAT-11 | |
+| REV-04 | A revision round shall be built from her recent mistakes and her weakest types, use the normal quiz screen, feedback and timing (PRC-03..06), count as screen time, in stats and for badges, and not change topic levels (PRC-09). | M | FEAT-11 | |
+| REV-05 | The topic detail in the dashboard shall list the topic's weak question types. | S | FEAT-11 | |
+| REV-06 | Weak-spot analysis and revision building shall sit behind one planner interface in the domain layer, so a later AI planner can replace it without changing screens. | S | FEAT-11 | |
+
+### Account (ACC)
+
+| ID | Requirement | Pri | Feature | Verified by |
+|---|---|---|---|---|
+| ACC-01 | From the parent area the parent shall be able to create an account with email and password (at least 8 characters); the server sends a verification email. (D15) | M | FEAT-13 | |
+| ACC-02 | The parent shall be able to sign in with email and password, or with Google. | M | FEAT-13 | |
+| ACC-03 | The parent shall be able to ask for a forgot-password email and set a new password from its link. | M | FEAT-13 | |
+| ACC-04 | Account screens shall be reachable only inside the PIN-protected parent area; the child never sees a sign-in prompt. | M | FEAT-13 | |
+| ACC-05 | The app shall keep the sign-in session in Android's encrypted storage and never store the password. | M | FEAT-13 | |
+| ACC-06 | The parent shall be able to sign out; progress stays on the device and syncing stops. | M | FEAT-13 | |
+| ACC-07 | The parent shall be able to delete the account, which deletes all of the child's data on the server after confirming with the PIN; data on the device stays. | M | FEAT-13 | |
+
+### Sync (SYN)
+
+| ID | Requirement | Pri | Feature | Verified by |
+|---|---|---|---|---|
+| SYN-01 | Every child feature shall work with no network; the database on the device stays what the app reads, and sync runs in the background without slowing or blocking practice. (D10) | M | FEAT-14 | |
+| SYN-02 | While signed in, the app shall sync rounds, attempts, badges, the child profile, settings (daily limit, sound) and daily screen time; the PIN and lockout never leave the device. | M | FEAT-14 | |
+| SYN-03 | On the first sign-in on a device, progress already on it shall be uploaded and merged with the account's, never lost or doubled. | M | FEAT-14 | |
+| SYN-04 | Merging shall follow the rules in [04-architecture.md](04-architecture.md) ADR-04: records only ever added are merged by id; a round's finish only moves forward; a badge keeps its earliest date; profile and settings take the latest change; screen time adds up across devices for the day. | M | FEAT-14 | |
+| SYN-05 | The app shall sync at launch, on resume, after each finished round, every 5 minutes while online, and on "Sync now" in the parent area; failures retry with growing delays. | M | FEAT-14 | |
+| SYN-06 | A PAR-10 reset on a signed-in device shall also clear the account's progress on the server and on her other devices at their next sync. | M | FEAT-14 | |
+| SYN-07 | The parent area shall show the signed-in email, the last successful sync time and any sync error in plain words. | S | FEAT-14 | |
+
 ## 5. Non-functional requirements
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| NFR-01 | The app shall work fully with no network connection and request no internet permission. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
+| NFR-01 | The app shall work fully with no network connection and request no internet permission. *Superseded by NFR-11 (D10).* | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | NFR-02 | Layouts shall fit a 12-inch landscape tablet without scrolling during a question, and stay usable in portrait. | M | FEAT-09 | FEAT-09 verify.md (2026-11-15) |
 | NFR-03 | Tap targets on child screens shall be at least 64 × 64 dp; text at least 20 sp. | M | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
 | NFR-04 | The next question shall appear within 300 ms of tapping Next on the target tablet. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15, tests); tablet timing: Ken's M1 check |
@@ -109,3 +170,9 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | NFR-08 | Logic with dates or timers shall take the clock as a parameter so tests never depend on today's date. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | NFR-09 | On screens smaller than the target tablet, down to 640 × 360 dp (landscape or portrait), no text, picture or answer control shall overlap another or be cut off; the page may scroll instead. (D9) | M | FEAT-04 | FEAT-04 verify.md (2026-11-15) |
 | NFR-10 | Child screens shall have a colourful, kid-friendly look: coloured backgrounds per track, a celebration when a round ends, colours still from `theme.dart`. (D9) | S | FEAT-09 | FEAT-09 verify.md (2026-11-15) |
+| NFR-11 | The app shall work fully with no network connection. It may request only the internet permission, used only for the account, sync and bank updates. (D10, replaces NFR-01) | M | FEAT-12 | |
+| NFR-12 | All traffic between app and server shall use HTTPS with a valid certificate; the app shall allow no plain-HTTP traffic. | M | FEAT-12 | |
+| NFR-13 | The server shall let a signed-in parent read and write only their own child's records, and let nobody write banks except the publish step; automated tests in CI shall prove these rules. | M | FEAT-12 | |
+| NFR-14 | Child data shall be kept to the minimum (nickname, school year, practice data); no ads, analytics or tracking SDKs; the parent area shall carry a short privacy note on what is stored and where. Data is handled in line with Singapore's PDPA. | M | FEAT-13 | |
+| NFR-15 | The server shall be set up from files in the repo (`server/`) with one deploy script, back up its data daily and keep 14 days of backups; a restore shall be tested once before v2.0. | M | FEAT-12 | |
+| NFR-16 | Syncing a year of practice (about 20,000 attempts) for the first time shall finish within 60 seconds on home Wi-Fi, and later syncs shall send only what changed. | S | FEAT-14 | |
