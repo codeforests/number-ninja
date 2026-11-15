@@ -60,7 +60,7 @@ The School track shows P1 and P2 topics; the Olympiad track shows `oly.*`.
 
 | Table | Columns | Notes |
 |---|---|---|
-| `app_settings` | id = 1, pin_hash, pin_salt, daily_limit_min (20), bank_version | One row, created on first open |
+| `app_settings` | id = 1, pin_hash, pin_salt, daily_limit_min (20), bank_version, sound_on (true) | One row, created on first open; `sound_on` schema v3 (FEAT-09) |
 | `play_sessions` | id, started_at, ended_at | One per app opening |
 | `rounds` | id, session_id, topic_id, level, started_at, score, duration_ms, stars, finished_at | `finished_at` is null until the last answer is saved (schema v2, FEAT-04) |
 | `attempts` | id, round_id, question_id, answer_given, correct, time_ms, answered_at | Saved before the next question shows (NFR-05) |
@@ -123,3 +123,5 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 | 2026-11-15 | FEAT-07 build: `pdfColor` lives in `report_pdf.dart` (not `theme.dart`) so only the two report files import `pdf`; `AppPdf` in `theme.dart` holds every PDF size; `ReportData` keeps trends as per-week values (`weeks`, `accuracyTrend`, `speedTrend`); the topic legend states the full FEAT-06 needs-practice rule (below 70 % or slower than average); each chart stays on one page with its heading; the export sheet closes after sharing. |
 | 2026-11-15 | FEAT-08 design: badge rules evaluated from scratch over all finished rounds and attempts after each finished round (no counters stored); the five topic badges and Pattern Finder use "27 of the latest 30 attempts, 30+ attempts" for §7's 90 %+; Perfect 10 = a 3-star round; streaks count days with a finished round; SCR-06 at `/badges` counts as screen time; SCR-02 shows the latest badge. No schema change. |
 | 2026-11-15 | FEAT-08 build: SCR-06 is a `Wrap` of 220 dp tiles in a scroll view, not a fixed-height `GridView`, so long hints at text scale 1.3 grow the tile instead of overflowing; the "N of 20" count sits under the title (fits 360 dp); `ninja-master` and `school-explorer` use a small best-stars map instead of `progressByTopic`; the domain `Badge` clashes with Material's, so screens importing both use `hide Badge`. |
+| 2026-11-15 | FEAT-09 design: sound effects synthesised by `tool/generate_sounds.dart` and played with `audioplayers`; `app_settings.sound_on` (schema v3) with a switch on SCR-11, kept by the PAR-10 reset; gradient backgrounds on child screens SCR-02..07 and confetti on SCR-05 drawn with CustomPainters (no image assets); launcher icon drawn by `tool/generate_icon.dart` and written by `flutter_launcher_icons`; version 1.0.0+2. |
+| 2026-11-15 | FEAT-09 build: backgrounds follow the home tracks, School (P1 and P2) and Olympiad, not P1/P2 separately (`KidScene`); SCR-02, SCR-06 and SCR-07 use a sunny home scene; animation durations live in `AppMotion` (`celebration`, `starPop`). |

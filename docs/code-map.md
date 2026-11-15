@@ -17,6 +17,7 @@
 ## Data (`lib/data`)
 
 - `database.dart`: Drift tables `AppSettings`, `PlaySessions`, `Rounds`, `Attempts`, `DailyUsage`, `BadgesEarned`, `PinLockout`; `schemaVersion` and migrations at the bottom. After a table change: `dart run build_runner build`, bump `schemaVersion`, add a case to `test/data/migration_test.dart`.
+- `sound_player.dart`: `SoundEffect`, `SoundPlayer` (`AudioSoundPlayer`, `audioplayers`), `SoundEffects` (checks `UsageRepository.soundOn`); `soundEffectsProvider` in `providers.dart`. Tests use `RecordingSoundPlayer` from the quiz harness.
 - Repositories: `pin_repository.dart`, `round_repository.dart`, `stats_repository.dart`, `usage_repository.dart`; `question_bank_loader.dart` (`loadBank`).
 
 ## Features (`lib/features`)
@@ -28,11 +29,12 @@
 
 ## Shared UI (`lib/ui`)
 
-- `theme.dart` (`buildTheme`, all colours, radii and text sizes), `layout.dart`, `screen_frame.dart`, `pin_pad.dart`, `trend_chart.dart`.
+- `theme.dart` (`buildTheme`, all colours, radii and text sizes), `kid_background.dart` (`KidBackground`, `KidScene`, on SCR-02..07), `celebration.dart` (SCR-05 confetti), `layout.dart`, `screen_frame.dart`, `pin_pad.dart`, `trend_chart.dart`.
 - `visuals/`: `question_visual.dart` dispatches to one widget per visual kind (bar model, clock, coins, figure, fraction, groups, picture graph, ruler, shapes) inside `visual_frame.dart`.
 
 ## Question bank (`tool/`)
 
+- `tool/generate_sounds.dart` (+ `tool/sounds/synth.dart`) writes `assets/sounds/*.wav`; `tool/generate_icon.dart` (+ `tool/icon/draw.dart`) writes `assets/icon/*.png`, then `dart run flutter_launcher_icons` writes the Android mipmaps.
 - `tool/generate_bank.dart` writes `assets/questions/*.json` (never read those). Templates: `tool/bank/templates_p1.dart`, `templates_p2.dart` (large: grep for the topic id), `templates_oly.dart`, `handwritten.dart`, `helpers.dart`, `generator.dart`.
 
 ## Tests
@@ -47,4 +49,5 @@
 - Call `forgetSession()` after a reset (FEAT-06).
 - Widget tests of async PDF work need `tester.runAsync` and a poll loop with `tester.pump()` (FEAT-07).
 - `pdf` MultiPage splits a `pw.Column`; wrap blocks that must stay together in `pw.Inseparable`, and check page breaks with `pdftoppm`/`pdftotext` (FEAT-07).
+- Child screens wrap a transparent `Scaffold` in `KidBackground`; a new child screen should too (FEAT-09).
 - Material widgets come from `package:material_ui/material_ui.dart`.

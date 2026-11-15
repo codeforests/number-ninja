@@ -1,7 +1,7 @@
 # FEAT-09: Polish and v1.0 release
 
 > Implements: PRC-11, NFR-10, NFR-02 · Screens: SCR-02..07 (look), SCR-05 (celebration), SCR-11 (sound switch)
-> Status: designed · Branch: `feat/FEAT-09-polish` · 2026-11-15
+> Status: built · Branch: `feat/FEAT-09-polish` · 2026-11-15
 
 ## Scope
 
@@ -40,5 +40,5 @@ Not in scope: music, voice (D6), animations other than the SCR-05 celebration an
       Done when: AC-4 passes and the touched layout tests still pass (`flutter test test/features test/ui`).
 - [x] T4 — Icon generator, `flutter_launcher_icons` config, mipmaps; version 1.0.0+2.
       Done when: AC-6's local parts pass (generator reruns with no diff, mipmaps present).
-- [ ] T5 — AC-5 layout checks; PRC-11, NFR-02, NFR-10 Feature cells; design §4 (`sound_on`) and §9 rows; code-map lines; full `scripts/check.sh`; PR ready for verify.
+- [x] T5 — AC-5 layout checks; PRC-11, NFR-02, NFR-10 Feature cells; design §4 (`sound_on`) and §9 rows; code-map lines; full `scripts/check.sh`; PR ready for verify.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.
