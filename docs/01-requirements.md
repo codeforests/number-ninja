@@ -39,7 +39,7 @@ Number Ninja is an offline Android tablet app that helps one child (Singapore pr
 | D13 | Child profile set by the parent: nickname (no real name or birth date), school year, optional starting level per track. It decides only where a topic starts; PRC-09 steps take over after the first finished round. | 2026-11-15 |
 | D14 | The server runs on Ken's existing DigitalOcean droplet (self-hosted, no paid cloud service), reached over HTTPS only. Details and alternatives in [04-architecture.md](04-architecture.md) (ADR-01, ADR-02). | 2026-11-15 |
 | D15 | Sign-in with email and password (verification and forgot-password emails) and with Google. Account screens sit inside the PIN-protected parent area. | 2026-11-15 |
-| D16 | The app gets a new name because "Number Ninja" clashes on Google Play. *Pending Ken's choice* (options in [03-plan.md](03-plan.md) §5). The Android application id stays `com.codeforests.number_ninja`, so the tablet updates in place and keeps her data. | 2026-11-15 |
+| D16 | The app gets a new name because "Number Ninja" clashes on Google Play. Ken's choice (2026-11-15): **Brain Bubblz**, with the domain `brainbubblz.com` (display spelling to confirm in FEAT-16). An iOS app called "BrainBubbles" exists, so the "z" spelling matters. The Android application id stays `com.codeforests.number_ninja`, so the tablet updates in place and keeps her data. | 2026-11-15 |
 
 ## 4. Functional requirements
 
