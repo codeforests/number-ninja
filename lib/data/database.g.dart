@@ -65,6 +65,21 @@ class $AppSettingsTable extends AppSettings
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _soundOnMeta = const VerificationMeta(
+    'soundOn',
+  );
+  @override
+  late final GeneratedColumn<bool> soundOn = GeneratedColumn<bool>(
+    'sound_on',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("sound_on" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -72,6 +87,7 @@ class $AppSettingsTable extends AppSettings
     pinSalt,
     dailyLimitMin,
     bankVersion,
+    soundOn,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -118,6 +134,12 @@ class $AppSettingsTable extends AppSettings
         ),
       );
     }
+    if (data.containsKey('sound_on')) {
+      context.handle(
+        _soundOnMeta,
+        soundOn.isAcceptableOrUnknown(data['sound_on']!, _soundOnMeta),
+      );
+    }
     return context;
   }
 
@@ -147,6 +169,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.int,
         data['${effectivePrefix}bank_version'],
       )!,
+      soundOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}sound_on'],
+      )!,
     );
   }
 
@@ -162,12 +188,14 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final String? pinSalt;
   final int dailyLimitMin;
   final int bankVersion;
+  final bool soundOn;
   const AppSetting({
     required this.id,
     this.pinHash,
     this.pinSalt,
     required this.dailyLimitMin,
     required this.bankVersion,
+    required this.soundOn,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -181,6 +209,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     }
     map['daily_limit_min'] = Variable<int>(dailyLimitMin);
     map['bank_version'] = Variable<int>(bankVersion);
+    map['sound_on'] = Variable<bool>(soundOn);
     return map;
   }
 
@@ -195,6 +224,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           : Value(pinSalt),
       dailyLimitMin: Value(dailyLimitMin),
       bankVersion: Value(bankVersion),
+      soundOn: Value(soundOn),
     );
   }
 
@@ -209,6 +239,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       pinSalt: serializer.fromJson<String?>(json['pinSalt']),
       dailyLimitMin: serializer.fromJson<int>(json['dailyLimitMin']),
       bankVersion: serializer.fromJson<int>(json['bankVersion']),
+      soundOn: serializer.fromJson<bool>(json['soundOn']),
     );
   }
   @override
@@ -220,6 +251,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'pinSalt': serializer.toJson<String?>(pinSalt),
       'dailyLimitMin': serializer.toJson<int>(dailyLimitMin),
       'bankVersion': serializer.toJson<int>(bankVersion),
+      'soundOn': serializer.toJson<bool>(soundOn),
     };
   }
 
@@ -229,12 +261,14 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     Value<String?> pinSalt = const Value.absent(),
     int? dailyLimitMin,
     int? bankVersion,
+    bool? soundOn,
   }) => AppSetting(
     id: id ?? this.id,
     pinHash: pinHash.present ? pinHash.value : this.pinHash,
     pinSalt: pinSalt.present ? pinSalt.value : this.pinSalt,
     dailyLimitMin: dailyLimitMin ?? this.dailyLimitMin,
     bankVersion: bankVersion ?? this.bankVersion,
+    soundOn: soundOn ?? this.soundOn,
   );
   AppSetting copyWithCompanion(AppSettingsCompanion data) {
     return AppSetting(
@@ -247,6 +281,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       bankVersion: data.bankVersion.present
           ? data.bankVersion.value
           : this.bankVersion,
+      soundOn: data.soundOn.present ? data.soundOn.value : this.soundOn,
     );
   }
 
@@ -257,14 +292,15 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('pinHash: $pinHash, ')
           ..write('pinSalt: $pinSalt, ')
           ..write('dailyLimitMin: $dailyLimitMin, ')
-          ..write('bankVersion: $bankVersion')
+          ..write('bankVersion: $bankVersion, ')
+          ..write('soundOn: $soundOn')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, pinHash, pinSalt, dailyLimitMin, bankVersion);
+      Object.hash(id, pinHash, pinSalt, dailyLimitMin, bankVersion, soundOn);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -273,7 +309,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.pinHash == this.pinHash &&
           other.pinSalt == this.pinSalt &&
           other.dailyLimitMin == this.dailyLimitMin &&
-          other.bankVersion == this.bankVersion);
+          other.bankVersion == this.bankVersion &&
+          other.soundOn == this.soundOn);
 }
 
 class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
@@ -282,12 +319,14 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<String?> pinSalt;
   final Value<int> dailyLimitMin;
   final Value<int> bankVersion;
+  final Value<bool> soundOn;
   const AppSettingsCompanion({
     this.id = const Value.absent(),
     this.pinHash = const Value.absent(),
     this.pinSalt = const Value.absent(),
     this.dailyLimitMin = const Value.absent(),
     this.bankVersion = const Value.absent(),
+    this.soundOn = const Value.absent(),
   });
   AppSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -295,6 +334,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.pinSalt = const Value.absent(),
     this.dailyLimitMin = const Value.absent(),
     this.bankVersion = const Value.absent(),
+    this.soundOn = const Value.absent(),
   });
   static Insertable<AppSetting> custom({
     Expression<int>? id,
@@ -302,6 +342,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<String>? pinSalt,
     Expression<int>? dailyLimitMin,
     Expression<int>? bankVersion,
+    Expression<bool>? soundOn,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -309,6 +350,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (pinSalt != null) 'pin_salt': pinSalt,
       if (dailyLimitMin != null) 'daily_limit_min': dailyLimitMin,
       if (bankVersion != null) 'bank_version': bankVersion,
+      if (soundOn != null) 'sound_on': soundOn,
     });
   }
 
@@ -318,6 +360,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<String?>? pinSalt,
     Value<int>? dailyLimitMin,
     Value<int>? bankVersion,
+    Value<bool>? soundOn,
   }) {
     return AppSettingsCompanion(
       id: id ?? this.id,
@@ -325,6 +368,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       pinSalt: pinSalt ?? this.pinSalt,
       dailyLimitMin: dailyLimitMin ?? this.dailyLimitMin,
       bankVersion: bankVersion ?? this.bankVersion,
+      soundOn: soundOn ?? this.soundOn,
     );
   }
 
@@ -346,6 +390,9 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (bankVersion.present) {
       map['bank_version'] = Variable<int>(bankVersion.value);
     }
+    if (soundOn.present) {
+      map['sound_on'] = Variable<bool>(soundOn.value);
+    }
     return map;
   }
 
@@ -356,7 +403,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('pinHash: $pinHash, ')
           ..write('pinSalt: $pinSalt, ')
           ..write('dailyLimitMin: $dailyLimitMin, ')
-          ..write('bankVersion: $bankVersion')
+          ..write('bankVersion: $bankVersion, ')
+          ..write('soundOn: $soundOn')
           ..write(')'))
         .toString();
   }
@@ -2411,6 +2459,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<String?> pinSalt,
       Value<int> dailyLimitMin,
       Value<int> bankVersion,
+      Value<bool> soundOn,
     });
 typedef $$AppSettingsTableUpdateCompanionBuilder =
     AppSettingsCompanion Function({
@@ -2419,6 +2468,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<String?> pinSalt,
       Value<int> dailyLimitMin,
       Value<int> bankVersion,
+      Value<bool> soundOn,
     });
 
 class $$AppSettingsTableFilterComposer
@@ -2452,6 +2502,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<int> get bankVersion => $composableBuilder(
     column: $table.bankVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get soundOn => $composableBuilder(
+    column: $table.soundOn,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2489,6 +2544,11 @@ class $$AppSettingsTableOrderingComposer
     column: $table.bankVersion,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get soundOn => $composableBuilder(
+    column: $table.soundOn,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AppSettingsTableAnnotationComposer
@@ -2518,6 +2578,9 @@ class $$AppSettingsTableAnnotationComposer
     column: $table.bankVersion,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get soundOn =>
+      $composableBuilder(column: $table.soundOn, builder: (column) => column);
 }
 
 class $$AppSettingsTableTableManager
@@ -2556,12 +2619,14 @@ class $$AppSettingsTableTableManager
                 Value<String?> pinSalt = const Value.absent(),
                 Value<int> dailyLimitMin = const Value.absent(),
                 Value<int> bankVersion = const Value.absent(),
+                Value<bool> soundOn = const Value.absent(),
               }) => AppSettingsCompanion(
                 id: id,
                 pinHash: pinHash,
                 pinSalt: pinSalt,
                 dailyLimitMin: dailyLimitMin,
                 bankVersion: bankVersion,
+                soundOn: soundOn,
               ),
           createCompanionCallback:
               ({
@@ -2570,12 +2635,14 @@ class $$AppSettingsTableTableManager
                 Value<String?> pinSalt = const Value.absent(),
                 Value<int> dailyLimitMin = const Value.absent(),
                 Value<int> bankVersion = const Value.absent(),
+                Value<bool> soundOn = const Value.absent(),
               }) => AppSettingsCompanion.insert(
                 id: id,
                 pinHash: pinHash,
                 pinSalt: pinSalt,
                 dailyLimitMin: dailyLimitMin,
                 bankVersion: bankVersion,
+                soundOn: soundOn,
               ),
           withReferenceMapper: (p0) => p0
               .map(

@@ -76,4 +76,13 @@ class UsageRepository implements UsageStore {
     );
     return m;
   }
+
+  /// Whether sound effects play (PRC-11); on unless a parent turned it off.
+  Future<bool> soundOn() async => (await _db.getSettings()).soundOn;
+
+  /// Turns sound effects on or off (PRC-11).
+  Future<void> setSoundOn(bool on) =>
+      (_db.update(_db.appSettings)..where((s) => s.id.equals(1))).write(
+        AppSettingsCompanion(soundOn: Value(on)),
+      );
 }

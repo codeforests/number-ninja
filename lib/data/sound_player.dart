@@ -29,3 +29,20 @@ class AudioSoundPlayer implements SoundPlayer {
 }
 
 final soundPlayerProvider = Provider<SoundPlayer>((ref) => AudioSoundPlayer());
+
+/// Plays [SoundEffect]s unless the parent turned sound off (PRC-11).
+/// Errors are swallowed: callers don't await it.
+class SoundEffects {
+  SoundEffects(this._player, this._soundOn);
+
+  final SoundPlayer _player;
+  final Future<bool> Function() _soundOn;
+
+  Future<void> play(SoundEffect effect) async {
+    try {
+      if (await _soundOn()) await _player.play(effect);
+    } catch (_) {
+      // Sound never breaks a round.
+    }
+  }
+}

@@ -10,6 +10,7 @@ class AppSettings extends Table {
   TextColumn get pinSalt => text().nullable()();
   IntColumn get dailyLimitMin => integer().withDefault(const Constant(20))();
   IntColumn get bankVersion => integer().withDefault(const Constant(1))();
+  BoolColumn get soundOn => boolean().withDefault(const Constant(true))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -93,7 +94,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'number_ninja'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -104,6 +105,7 @@ class AppDatabase extends _$AppDatabase {
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) await _from1To2(m);
+      if (from < 3) await m.addColumn(appSettings, appSettings.soundOn);
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

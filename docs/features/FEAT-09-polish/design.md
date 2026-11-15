@@ -34,7 +34,7 @@ Not in scope: music, voice (D6), animations other than the SCR-05 celebration an
 
 - [x] T1 — `audioplayers` dependency, `tool/generate_sounds.dart`, `assets/sounds/*.wav`, `sound_player.dart` + provider; open the draft PR so CI proves the plugin in the APK.
       Done when: AC-1 passes (`flutter test test/tool/sounds_test.dart`) and the draft PR's CI builds the APK.
-- [ ] T2 — `sound_on` column (schema v3, migration, build_runner), repository accessors, `soundOnProvider`, SCR-11 switch; sound hooks in `QuizController.check` and SCR-05.
+- [x] T2 — `sound_on` column (schema v3, migration, build_runner), repository accessors, `soundOnProvider`, SCR-11 switch; sound hooks in `QuizController.check` and SCR-05.
       Done when: AC-2 and AC-3 pass (`flutter test test/data test/features/quiz test/features/parent`).
 - [ ] T3 — `AppColors` backgrounds and `AppDurations.celebration`, `KidBackground` on SCR-02..07, `Celebration` on SCR-05.
       Done when: AC-4 passes and the touched layout tests still pass (`flutter test test/features test/ui`).
