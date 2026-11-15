@@ -1,7 +1,7 @@
 # FEAT-04: Home, topic map and difficulty steps
 
 > Implements: PRC-01, PRC-07, PRC-09, NFR-09 · Screens: SCR-02, SCR-03, SCR-04 (layout), SCR-05 (level up)
-> Status: built · Branch: `feat/FEAT-04-topic-map` · 2026-11-15
+> Status: verified (accepted) · Branch: `feat/FEAT-04-topic-map` · 2026-11-15
 
 ## Scope
 
