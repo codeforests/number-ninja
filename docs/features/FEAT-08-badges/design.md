@@ -66,7 +66,7 @@ Not in scope: sound or confetti (PRC-11 and NFR-10, FEAT-09), badges in the PDF 
 
 - [x] T1 — `lib/domain/badges.dart` (badge list, `evaluateBadges`, `mastered`, `longestStreak`).
       Done when: AC-1 passes: `scripts/check.sh 'flutter test test/domain/badges_test.dart'`.
-- [ ] T2 — `BadgeRepository`, providers; open the draft PR so CI runs.
+- [x] T2 — `BadgeRepository`, providers; open the draft PR so CI runs.
       Done when: AC-2 passes with `flutter test test/data/badge_repository_test.dart`.
 - [ ] T3 — Quiz controller hook, `RoundSummary.newBadges`, SCR-05 celebration, `badge_icons.dart`, theme sizes.
       Done when: AC-3 tests pass with `flutter test test/features/quiz`.
