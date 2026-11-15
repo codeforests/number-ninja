@@ -22,10 +22,10 @@ Each feature is a vertical slice that ends in something Ken can install and try.
 
 ## 2. How each feature is built
 
-One feature at a time, on branch `feat/FEAT-NN-<slug>`, one PR per feature.
+One feature at a time, on branch `feat/FEAT-NN-<slug>`, one PR per feature. Each stage below runs in its own fresh thread, reads only `docs/STATE.md`, the feature's `handoff.md` and the design sections it needs, and ends by writing `handoff.md` and starting the next stage's thread (AGENTS.md, "How a session starts and ends"). Stages chain without waiting for Ken unless a decision is pending.
 
-1. **Design** (`docs/features/FEAT-NN-<slug>/design.md`): scope, the requirement ids it implements, acceptance criteria (AC-1…), and a numbered task list with a "done when" check per task. Questions that change scope go to Ken before building.
-2. **Build:** one commit per task, tests written with the task, the task's check run before ticking it. At most 3 fix attempts on a stuck task, then stop and say so.
+1. **Design** (`docs/features/FEAT-NN-<slug>/design.md`): scope, the requirement ids it implements, acceptance criteria (AC-1…), and a numbered task list with a "done when" check per task. Questions that change scope go to Ken before building. Ends with `handoff.md` and the build kickoff.
+2. **Build:** one commit per task, tests written with the task, the task's check run before ticking it. At most 3 fix attempts on a stuck task, then stop and say so. After about 6 tasks, hand off to a fresh build thread. The last build session opens a draft PR and hands off to verify.
 3. **Verify** (`verify.md`), done in a fresh thread that did not write the code: re-run all checks from a clean checkout, check each AC against evidence, review the test diff (no test weakened, skipped or deleted), and fill the **Verified by** column in the requirements. Verdict: accepted, rework, or design change.
 4. **PR:** body lists the ACs with evidence and the CI result. Ken reviews and merges.
 
@@ -38,8 +38,8 @@ One feature at a time, on branch `feat/FEAT-NN-<slug>`, one PR per feature.
 - Never weaken, skip or delete a test to get green; a failing check goes back to build, or to design if the design is wrong.
 - Traceability is never skipped: every PR fills its requirements' Feature and Verified by cells.
 - Anything with dates or timers takes the clock as a parameter, so tests don't expire.
-- Each stage leaves what the next one needs in the repo, not in chat.
+- Each stage leaves what the next one needs in the repo (`handoff.md`), not in chat, and never reads old threads.
 
 ## 4. Kept deliberately small
 
-No separate architecture document, ADRs, UX foundations, design manifest, token tracking or handoff files: the design file per feature carries all of that at this size. If the project grows (a second child, cloud sync, iOS), revisit this section.
+No separate architecture document, ADRs, UX foundations, design manifest or token logs: the design file per feature carries all of that at this size. Handoff files and the token rules (AGENTS.md) were added on 2026-11-14 at Ken's request, to keep each fresh thread's reading small. If the project grows (a second child, cloud sync, iOS), revisit this section.
