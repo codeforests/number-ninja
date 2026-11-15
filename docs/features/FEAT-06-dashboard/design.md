@@ -58,7 +58,7 @@ Not in scope: PDF export (PAR-09, FEAT-07, which reuses this feature's stats), b
       Done when: Drift tests on an in-memory DB for `records` filters and the AC-7 data part pass, with existing `test/data`.
 - [x] T3 — Mix-in: `pickMixIn`, `buildRound(mixIn:)`, wiring in `QuizController.start`.
       Done when: AC-4 tests and `flutter test test/domain test/features/quiz` pass.
-- [ ] T4 — `TrendChart` painter in `lib/ui/trend_chart.dart`, track colours in the theme.
+- [x] T4 — `TrendChart` painter in `lib/ui/trend_chart.dart`, track colours in the theme.
       Done when: a widget test paints 3 series with gaps without exceptions and shows the legend.
 - [ ] T5 — SCR-09 dashboard, route, SCR-11 Progress tile.
       Done when: AC-5 widget tests pass.
