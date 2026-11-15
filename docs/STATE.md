@@ -11,15 +11,25 @@
 
 ## Kickoff prompts (the handoff names the exact one)
 
+AGENTS.md is already loaded in every thread; kickoffs don't ask to read it again. Stage details: AGENTS.md, "Stages".
+
 ```
 Design FEAT-NN on branch feat/FEAT-NN-<slug> (create it from main).
-Read AGENTS.md and docs/STATE.md, then do docs/03-plan.md §2 step 1.
+Read docs/STATE.md, then do the Design stage in AGENTS.md.
 ```
 ```
 Build FEAT-NN (from T<n>) on branch feat/FEAT-NN-<slug>.
-Read AGENTS.md, docs/STATE.md and the feature's handoff.md, then do docs/03-plan.md §2 step 2.
+Read docs/STATE.md and the feature's handoff.md, then do the Build stage in AGENTS.md.
 ```
 ```
 Verify FEAT-NN on branch feat/FEAT-NN-<slug>.
-Read AGENTS.md, docs/STATE.md and the feature's handoff.md, then do docs/03-plan.md §2 steps 3–4.
+Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md.
+```
+```
+Fix FEAT-NN rework on branch feat/FEAT-NN-<slug>.
+Read docs/STATE.md, the handoff.md and the "Rework" section of verify.md, then do the Rework fix stage in AGENTS.md.
+```
+```
+Re-verify FEAT-NN on branch feat/FEAT-NN-<slug> since <verified sha>.
+Read docs/STATE.md and the handoff.md, then do the Re-verify stage in AGENTS.md.
 ```
