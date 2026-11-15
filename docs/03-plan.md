@@ -22,7 +22,7 @@ Each feature is a vertical slice that ends in something Ken can install and try.
 
 ## 2. How each feature is built
 
-One feature at a time, on branch `feat/FEAT-NN-<slug>`, one PR per feature. Each stage below runs in its own fresh thread, reads only `docs/STATE.md`, the feature's `handoff.md` and the design sections it needs, and ends by writing `handoff.md` and starting the next stage's thread (AGENTS.md, "How a session starts and ends"). Stages chain without waiting for Ken unless a decision is pending.
+One feature at a time, on branch `feat/FEAT-NN-<slug>`, one PR per feature. Each stage below runs in its own fresh thread, reads only `docs/STATE.md`, the feature's `handoff.md` and the design sections it needs, and ends by writing `handoff.md` and starting the next stage's thread. What each stage reads and how it ends, including rework, re-verify and small features that design and build in one thread, is in AGENTS.md ("Stages"). Stages chain without waiting for Ken unless a decision is pending.
 
 1. **Design** (`docs/features/FEAT-NN-<slug>/design.md`): scope, the requirement ids it implements, acceptance criteria (AC-1…), and a numbered task list with a "done when" check per task. Questions that change scope go to Ken before building. Ends with `handoff.md` and the build kickoff.
 2. **Build:** one commit per task, tests written with the task, the task's check run before ticking it. At most 3 fix attempts on a stuck task, then stop and say so. After about 6 tasks, hand off to a fresh build thread. The last build session opens a draft PR and hands off to verify.
@@ -42,4 +42,4 @@ One feature at a time, on branch `feat/FEAT-NN-<slug>`, one PR per feature. Each
 
 ## 4. Kept deliberately small
 
-No separate architecture document, ADRs, UX foundations, design manifest or token logs: the design file per feature carries all of that at this size. Handoff files and the token rules (AGENTS.md) were added on 2026-11-14 at Ken's request, to keep each fresh thread's reading small. If the project grows (a second child, cloud sync, iOS), revisit this section.
+No separate architecture document, ADRs, UX foundations or design manifest: the design file per feature carries all of that at this size. Handoff files and the token rules (AGENTS.md) were added on 2026-11-14 at Ken's request, to keep each fresh thread's reading small; on 2026-11-15 `docs/code-map.md`, scoped rework and re-verify, fewer CI runs and a one-line-per-stage token log (in project files, not the repo) were added from the kakiagent build kit. If the project grows (a second child, cloud sync, iOS), revisit this section.
