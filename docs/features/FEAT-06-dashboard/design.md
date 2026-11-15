@@ -52,7 +52,7 @@ Not in scope: PDF export (PAR-09, FEAT-07, which reuses this feature's stats), b
 
 ## Tasks
 
-- [ ] T1 — Domain `stats.dart` (records, periods, tallies, needs practice, weekly trend, most missed, slowest).
+- [x] T1 — Domain `stats.dart` (records, periods, tallies, needs practice, weekly trend, most missed, slowest).
       Done when: `scripts/check.sh 'flutter test test/domain/stats_test.dart'` passes with the AC-1..3 tests.
 - [ ] T2 — Data `StatsRepository` (`records`, `resetProgress`) and provider.
       Done when: Drift tests on an in-memory DB for `records` filters and the AC-7 data part pass, with existing `test/data`.
