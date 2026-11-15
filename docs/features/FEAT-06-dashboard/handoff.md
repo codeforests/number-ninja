@@ -1,19 +1,17 @@
 # Handoff: FEAT-06 — Parent dashboard
-Branch: feat/FEAT-06-dashboard · PR: none · Updated: 2026-11-15 by design
-Stage done: design
-Next: build — kickoff: "Build FEAT-06 (from T1) on branch feat/FEAT-06-dashboard. Read AGENTS.md, docs/STATE.md and the feature's handoff.md, then do docs/03-plan.md §2 step 2."
+Branch: feat/FEAT-06-dashboard · PR: [#7](https://github.com/codeforests/number-ninja/pull/7) (draft) · Updated: 2026-11-15 by build
+Stage done: build (T1–T7 of 7)
+Next: verify — kickoff: "Verify FEAT-06 on branch feat/FEAT-06-dashboard. Read AGENTS.md, docs/STATE.md and the feature's handoff.md, then do docs/03-plan.md §2 steps 3–4."
 
 ## What the next stage needs
-- design.md here: decisions, design, AC-1..8, T1–T7. No schema change, no new package.
-- Charts: own `CustomPainter` (`lib/ui/trend_chart.dart`), not fl_chart (not in pubspec; may not build with the `material_ui` split). T7 updates design §1's stack row.
-- Stats join attempts to the bank by `question_id` (topic of the question, not of the round); read `QuestionBank.byTopic` / ids, don't change the bank.
-- Mix-in: `buildRound` gets `mixIn:`; `QuizController.start` (lib/features/quiz/quiz_controller.dart ~L80) picks the topic from 30-day needs practice, School track only, never the round's own topic. Existing quiz tests seed no attempts, so they see no mix-in.
-- Reset reuses `PinRepository.verify` (PAR-03 lockout) and `lib/ui/pin_pad.dart`; keep `app_settings`, `pin_lockout`, `daily_usage`.
-- New routes under `/parent` (`/parent/dashboard`, `/parent/topic/:topicId`, `/parent/reset`) so the PIN redirect and screen-time gating already cover them; `Routes.counts` must stay false for them.
-- Seven tasks: hand off to a fresh build thread after T6 if the session is long.
+- design.md "Build deviations" lists every change from the design (domain join `withBankTopics`, `StatsRepository.mixInTopic`, `RoundRepository.forgetSession()` after reset, one `statsDataProvider` filtered in memory, parent-only theme sizes, route helpers).
+- AC evidence: AC-1..3 `test/domain/stats_test.dart`; AC-1/AC-7 data `test/data/stats_repository_test.dart`; AC-4 `test/domain/round_builder_test.dart` (mix-in group) and `test/features/quiz/mix_in_test.dart`; AC-5 `test/features/parent/dashboard_test.dart`; AC-6/AC-7 `test/features/parent/topic_detail_reset_test.dart`; AC-8 `test/features/parent/parent_layout_test.dart`.
+- Test helper: `test/features/parent/parent_harness.dart` (extends `QuizHarness`; real PIN 2468, `seed()`, `openParent()`).
+- Build run: `scripts/check.sh` all PASS, 574 tests (507 before); `build_runner` and `generate_bank` gave no diff.
+- Existing tests unchanged; only additions.
 
 ## Left to CI or later
-- APK build (CI only). M3 tablet check after FEAT-08.
+- APK build and CI run on the PR. M3 tablet check after FEAT-08.
 
 ## Pending for Ken
 - none
