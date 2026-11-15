@@ -46,6 +46,15 @@ abstract final class AppSizes {
   static const chartHeight = 180.0;
   static const chartDot = 4.0;
   static const chartLine = 2.5;
+
+  /// Badge icon on SCR-05 and SCR-06, and the small one on SCR-02.
+  static const badge = 96.0;
+  static const badgeSmall = 48.0;
+}
+
+abstract final class AppMotion {
+  /// The pop-in of a new badge on SCR-05 (BDG-02).
+  static const badgePop = Duration(milliseconds: 600);
 }
 
 abstract final class AppText {

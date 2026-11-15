@@ -2,6 +2,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'data/badge_repository.dart';
 import 'data/database.dart';
 import 'data/pin_repository.dart';
 import 'data/question_bank_loader.dart';
@@ -51,6 +52,21 @@ final statsRepositoryProvider = FutureProvider<StatsRepository>(
     await ref.watch(bankProvider.future),
     clock: ref.watch(clockProvider),
   ),
+);
+
+/// Awards and lists badges (BDG-01..03). Needs the bank, via stats.
+final badgeRepositoryProvider = FutureProvider<BadgeRepository>(
+  (ref) async => BadgeRepository(
+    ref.watch(databaseProvider),
+    await ref.watch(statsRepositoryProvider.future),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// Earned badge ids with their dates. Auto-disposed, so SCR-02 and SCR-06
+/// re-read it after every round.
+final earnedBadgesProvider = FutureProvider.autoDispose<Map<String, DateTime>>(
+  (ref) async => (await ref.watch(badgeRepositoryProvider.future)).earned(),
 );
 
 /// Best stars and level per topic played (PRC-07). Auto-disposed, so a

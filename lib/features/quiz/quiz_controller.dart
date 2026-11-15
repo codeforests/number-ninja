@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart' show immutable;
 
+import '../../domain/badges.dart';
 import '../../domain/progress.dart' as progress;
 import '../../domain/question.dart';
 import '../../domain/quiz.dart';
@@ -22,6 +23,7 @@ class RoundSummary {
     required this.total,
     required this.durationMs,
     required this.stars,
+    this.newBadges = const [],
   });
 
   final String topicId;
@@ -32,6 +34,9 @@ class RoundSummary {
   final int total;
   final int durationMs;
   final int stars;
+
+  /// Badges this round earned, in shelf order (BDG-02).
+  final List<Badge> newBadges;
 
   /// The level the topic's next round is played at (PRC-09).
   int get nextLevel => progress.nextLevel(level, stars);
@@ -48,6 +53,7 @@ class RoundState {
     this.quiz,
     this.saving = false,
     this.error,
+    this.newBadges = const [],
   });
 
   final String? topicId;
@@ -61,6 +67,9 @@ class RoundState {
   final bool saving;
   final Object? error;
 
+  /// Badges awarded when the round finished (BDG-02).
+  final List<Badge> newBadges;
+
   RoundSummary get summary => RoundSummary(
     topicId: topicId!,
     level: level,
@@ -68,6 +77,7 @@ class RoundState {
     total: quiz!.questions.length,
     durationMs: quiz!.durationMs,
     stars: quiz!.stars,
+    newBadges: newBadges,
   );
 }
 
@@ -134,6 +144,7 @@ class QuizController extends Notifier<RoundState> {
     );
     final repo = ref.read(roundRepositoryProvider);
     await repo.saveAttempt(s.roundId!, answered.lastResult!);
+    var newBadges = const <Badge>[];
     if (answered.isLast) {
       await repo.finishRound(
         s.roundId!,
@@ -141,6 +152,7 @@ class QuizController extends Notifier<RoundState> {
         durationMs: answered.durationMs,
         stars: answered.stars,
       );
+      newBadges = await _awardBadges();
     }
     if (!ref.mounted) return;
     state = RoundState(
@@ -148,6 +160,7 @@ class QuizController extends Notifier<RoundState> {
       level: s.level,
       roundId: s.roundId,
       quiz: answered,
+      newBadges: newBadges,
     );
   }
 
@@ -161,7 +174,19 @@ class QuizController extends Notifier<RoundState> {
       level: s.level,
       roundId: s.roundId,
       quiz: quiz.next(ref.read(clockProvider)()),
+      newBadges: s.newBadges,
     );
+  }
+
+  /// Awards badges after a finished round. The round is already saved, so
+  /// a failure here only means no celebration (FEAT-08 design).
+  Future<List<Badge>> _awardBadges() async {
+    try {
+      final badges = await ref.read(badgeRepositoryProvider.future);
+      return await badges.awardNew();
+    } catch (_) {
+      return const [];
+    }
   }
 }
 
