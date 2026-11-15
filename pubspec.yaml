@@ -41,6 +41,7 @@ dependencies:
   intl: ^0.20.3
   pdf: ^3.13.1
   printing: ^5.15.1
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +70,8 @@ flutter:
   # The question bank (BNK-01), written by tool/generate_bank.dart.
   assets:
     - assets/questions/bank_v1.json
+    # Sound effects (PRC-11), written by tool/generate_sounds.dart.
+    - assets/sounds/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
