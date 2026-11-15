@@ -6,6 +6,7 @@ import '../../app.dart';
 import '../../domain/stats.dart';
 import '../../domain/topics.dart';
 import '../../ui/theme.dart';
+import 'report_export.dart';
 import 'stats_view.dart';
 
 /// SCR-09: accuracy, speed and attempts per track and topic for a period
@@ -24,6 +25,17 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   late StatsPeriod _period = widget.period;
+  bool _exporting = false;
+
+  /// Exports the period shown (FEAT-07).
+  Future<void> _export() async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _exporting = true);
+    final ok = await exportReport(ref, _period);
+    if (!mounted) return;
+    setState(() => _exporting = false);
+    if (!ok) showReportFailed(messenger);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +49,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           icon: const Icon(Icons.arrow_back),
         ),
         title: const Text('Progress'),
+        actions: [
+          IconButton(
+            key: const Key('export-pdf'),
+            tooltip: 'Export PDF',
+            onPressed: _exporting || data is! AsyncData ? null : _export,
+            icon: const Icon(Icons.share),
+          ),
+        ],
       ),
       body: switch (data) {
         AsyncData(:final value) => _body(context, value),
