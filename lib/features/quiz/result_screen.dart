@@ -11,7 +11,9 @@ String formatMinSec(int ms) {
   return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
 }
 
-/// SCR-05: the end of a round, with score, time and 0–3 stars (PRC-06).
+/// SCR-05: the end of a round, with score, time and 0–3 stars (PRC-06),
+/// and "Level up!" when the topic steps up (PRC-09). A step down shows
+/// nothing.
 class ResultScreen extends StatelessWidget {
   const ResultScreen({super.key, required this.summary});
 
@@ -43,6 +45,17 @@ class ResultScreen extends StatelessWidget {
                       ),
                   ],
                 ),
+                if (summary.levelUp) ...[
+                  const SizedBox(height: AppSizes.gap),
+                  Text(
+                    'Level up! Now level ${summary.nextLevel}',
+                    key: const Key('level-up'),
+                    style: theme.headlineMedium?.copyWith(
+                      color: AppColors.sun,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSizes.gap * 2),
                 Text(
                   '${summary.score} / ${summary.total}',

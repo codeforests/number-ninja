@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:number_ninja/app.dart';
+import 'package:number_ninja/domain/question.dart';
 import 'package:number_ninja/features/quiz/quiz_screen.dart';
 import 'package:number_ninja/features/quiz/result_screen.dart';
 
@@ -113,5 +114,64 @@ void main() {
     await h.pumpApp(tester, location: Routes.result);
     expect(find.byType(ResultScreen), findsNothing);
     expect(find.byKey(const Key('track-school')), findsOneWidget);
+  });
+
+  group('AC-3: difficulty steps', () {
+    /// The fake bank plus 12 level-2 questions of [numberTopic].
+    QuestionBank withLevel2() => QuestionBank(
+      version: 1,
+      questions: [
+        ...fakeBank().questions,
+        for (var i = 0; i < 12; i++)
+          Question(
+            id: '$numberTopic.t2.${i + 1}',
+            topic: numberTopic,
+            level: 2,
+            format: QuestionFormat.number,
+            prompt: 'What is 12 + $i?',
+            answer: '${12 + i}',
+            explanation: '',
+          ),
+      ],
+    );
+
+    setUp(() => h = QuizHarness(bank: withLevel2()));
+
+    Future<List<int>> levels() async => [
+      for (final r in await (h.db.select(
+        h.db.rounds,
+      )..orderBy([(r) => .asc(r.id)])).get())
+        r.level,
+    ];
+
+    testWidgets('3 stars at level 1 levels up; Play again is level 2', (
+      tester,
+    ) async {
+      await h.pumpApp(tester, location: Routes.quiz(numberTopic));
+      await playRound(tester, {for (var i = 0; i < 10; i++) i});
+      expect(text('level-up'), 'Level up! Now level 2');
+
+      await h.tap(tester, 'play-again');
+      await tester.pumpAndSettle();
+      expect(h.round(tester).level, 2);
+      expect(h.round(tester).quiz!.questions.map((q) => q.level).toSet(), {2});
+      expect(await levels(), [1, 2]);
+
+      // 0 stars at level 2: no banner, and the next round is level 1.
+      await playRound(tester, {});
+      expect(find.byType(ResultScreen), findsOneWidget);
+      expect(find.byKey(const Key('level-up')), findsNothing);
+      await h.tap(tester, 'play-again');
+      await tester.pumpAndSettle();
+      expect(h.round(tester).level, 1);
+      expect(await levels(), [1, 2, 1]);
+    });
+
+    testWidgets('2 stars shows no banner', (tester) async {
+      await h.pumpApp(tester, location: Routes.quiz(numberTopic));
+      await playRound(tester, {0, 1, 2, 3, 4, 5, 6, 7});
+      expect(filledStars(tester), 2);
+      expect(find.byKey(const Key('level-up')), findsNothing);
+    });
   });
 }
