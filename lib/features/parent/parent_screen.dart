@@ -55,6 +55,17 @@ class ParentScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go(Routes.changePin),
           ),
+          const Divider(height: AppSizes.gap * 2),
+          ListTile(
+            key: const Key('reset-progress'),
+            minTileHeight: AppSizes.minTap,
+            iconColor: Theme.of(context).colorScheme.error,
+            textColor: Theme.of(context).colorScheme.error,
+            leading: const Icon(Icons.delete_forever),
+            title: const Text('Reset all progress'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go(Routes.reset),
+          ),
         ],
       ),
     );

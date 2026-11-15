@@ -62,7 +62,7 @@ Not in scope: PDF export (PAR-09, FEAT-07, which reuses this feature's stats), b
       Done when: a widget test paints 3 series with gaps without exceptions and shows the legend.
 - [x] T5 — SCR-09 dashboard, route, SCR-11 Progress tile.
       Done when: AC-5 widget tests pass.
-- [ ] T6 — SCR-10 topic detail; reset screen and SCR-11 tile.
+- [x] T6 — SCR-10 topic detail; reset screen and SCR-11 tile.
       Done when: AC-6 and AC-7 widget tests pass.
 - [ ] T7 — AC-8 layout checks; update design §1 stack row and §9; full `scripts/check.sh`; draft PR.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.

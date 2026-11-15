@@ -14,6 +14,8 @@ import 'features/parent/change_pin_screen.dart';
 import 'features/parent/dashboard_screen.dart';
 import 'features/parent/parent_screen.dart';
 import 'features/parent/pin_entry_screen.dart';
+import 'features/parent/reset_screen.dart';
+import 'features/parent/topic_detail_screen.dart';
 import 'features/screen_time/lock_screen.dart';
 import 'features/screen_time/screen_time_controller.dart';
 import 'features/setup/setup_pin_screen.dart';
@@ -115,7 +117,17 @@ final routerProvider = Provider<GoRouter>((ref) {
               period: StatsPeriod.fromQuery(state.uri.queryParameters['p']),
             ),
           ),
-          // T6: topic detail and reset routes.
+          GoRoute(
+            path: 'topic/:topicId',
+            builder: (context, state) => TopicDetailScreen(
+              topicId: state.pathParameters['topicId']!,
+              period: StatsPeriod.fromQuery(state.uri.queryParameters['p']),
+            ),
+          ),
+          GoRoute(
+            path: 'reset',
+            builder: (context, state) => const ResetScreen(),
+          ),
         ],
       ),
     ],
