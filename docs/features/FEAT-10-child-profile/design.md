@@ -1,7 +1,7 @@
 # FEAT-10: Child profile
 
 > Implements: PRO-01..04 (D13) · Screens: SCR-12 (new), SCR-01 (next step), SCR-02 (greeting), SCR-03 (start level), SCR-11 (entry)
-> Status: designed · Branch: `feat/FEAT-10-child-profile` · 2026-11-15
+> Status: built · Branch: `feat/FEAT-10-child-profile` · 2026-11-15
 
 ## Scope
 
@@ -21,9 +21,9 @@ Not in scope: syncing the profile (FEAT-14; ADR-04's per-field "last change wins
 ## Design
 
 - **Domain** (`lib/domain/profile.dart`): `class ChildProfile {nickname, schoolYear, schoolStartLevel?, olympiadStartLevel?}` with `==`; `const schoolYears = [1..6]`; `String? nicknameError(String raw)` (null when valid); `int? topicYear(Topic t)` (P1 → 1, P2 → 2, Olympiad → null); `int startLevel(ChildProfile? p, Topic? t)`. `TopicProgress.fresh(int level)` in `progress.dart` (`none` stays = `fresh(1)`).
-- **Data**: `database.dart` schema 4 (table above, `AppSettings.profilePending`, migration `from < 4`). `lib/data/profile_repository.dart`: `ProfileRepository(AppDatabase db, {required Clock clock})` with `Future<ChildProfile?> load()`, `Stream<ChildProfile?> watch()`, `Future<void> save(ChildProfile p)` (upsert stamped `clock()`, and `profile_pending = false`, in one transaction), `Future<bool> pending()`. `RoundRepository.levelFor(topicId, {int start = minLevel})` returns `start` when the topic has no finished round. Providers: `profileRepositoryProvider`, `childProfileProvider` (StreamProvider of `watch()`).
+- **Data**: `database.dart` schema 4 (table above, `AppSettings.profilePending`, migration `from < 4`). `lib/data/profile_repository.dart`: `ProfileRepository(AppDatabase db, {required Clock clock})` with `Future<ChildProfile?> load()`, `Stream<ChildProfile?> watch()`, `Future<void> save(ChildProfile p)` (upsert stamped `clock()`, and `profile_pending = false`, in one transaction), `Future<bool> pending()`. `RoundRepository.levelFor(topicId, {int start = minLevel})` returns `start` when the topic has no finished round. Providers: `profileRepositoryProvider`, `childProfileProvider` (FutureProvider.autoDispose of `load()`, invalidated by SCR-12 after a save; a Drift stream left pending timers in widget tests).
 - **Session/router** (`providers.dart`, `app.dart`): `AppSession({hasPin, profilePending = false, clock})`, `profileSaved()` notifies. `redirectFor`: no PIN → `/setup`; PIN and `profilePending` → `Routes.setupProfile = '/setup/profile'` (from any location, parent area included); `/setup` or `/setup/profile` when nothing is pending → home. `Routes.profile = '/parent/profile'` (PIN-protected like the rest of `/parent`). Neither counts as screen time.
-- **SCR-12** (`lib/features/profile/profile_screen.dart`, `ProfileScreen({required bool firstRun})`): parent styling (AppBar "Child profile", like SCR-11). Nickname `TextField` key `profile-nickname`; year chips key `year-<n>`; per track a row of four choices key `start-<school|olympiad>-<auto|1|2|3>`; one line under them: "New topics start at level N" for the School track at her year, so the parent sees what Automatic means; Save button key `profile-save`, disabled until nickname and year are valid, error text key `profile-error`. Loads the saved profile when editing. After save: first run → home; parent → back to SCR-11. Scrolls (NFR-09).
+- **SCR-12** (`lib/features/profile/profile_screen.dart`, `ProfileScreen({required bool firstRun})`): parent styling (AppBar "Child profile", like SCR-11). Nickname `TextField` key `profile-nickname`; year choices key `year-<n>` (64 dp buttons, selected one filled with a tick); per track a row of four choices key `start-<school|olympiad>-<auto|1|2|3>`; one line under them key `profile-summary` saying where her own year, lower years and Olympiad start (e.g. "P2 topics start at level 1, P1 topics at level 2, Olympiad at level 1."), so the parent sees what Automatic means; Save button key `profile-save`, disabled until nickname and year are valid, error text key `profile-error`. Loads the saved profile when editing. After save: first run → home; parent → back to SCR-11. Scrolls (NFR-09).
 - **SCR-01**: after `pinCreated()` goes to `/setup/profile` (the redirect would send it there anyway).
 - **SCR-11**: a `ListTile` key `open-profile` "Child profile", subtitle the nickname and year ("Mia · P2") or "Not set yet".
 - **Quiz** (`quiz_controller.dart`): loads the profile once per `start`, passes `start: startLevel(profile, topicsById[id])` to `levelFor` for the round topic and the mix-in topic.
@@ -41,13 +41,13 @@ Not in scope: syncing the profile (FEAT-14; ADR-04's per-field "last change wins
 
 ## Tasks
 
-- [ ] T1 — `lib/domain/profile.dart`, `TopicProgress.fresh`.
+- [x] T1 — `lib/domain/profile.dart`, `TopicProgress.fresh`.
       Done when: AC-1 passes: `scripts/check.sh 'flutter test test/domain/profile_test.dart'`.
-- [ ] T2 — Schema v4, `ProfileRepository`, `levelFor(start:)`, providers, `AppSession.profilePending` in `main()`.
+- [x] T2 — Schema v4, `ProfileRepository`, `levelFor(start:)`, providers, `AppSession.profilePending` in `main()`.
       Done when: AC-2 passes: `flutter test test/data`.
-- [ ] T3 — SCR-12, routes and redirect, SCR-01 next step, SCR-11 entry.
+- [x] T3 — SCR-12, routes and redirect, SCR-01 next step, SCR-11 entry.
       Done when: AC-3 passes: `flutter test test/features/profile test/features/pin_flow_test.dart test/features/parent`.
-- [ ] T4 — Start level in quiz and SCR-03; SCR-02 greeting.
+- [x] T4 — Start level in quiz and SCR-03; SCR-02 greeting.
       Done when: AC-4 and AC-5 pass: `flutter test test/features/quiz test/features/topics test/features/home`.
-- [ ] T5 — AC-6 layout checks; PRO-01..04 Feature cells; design §4/§9 rows; code-map lines; full `scripts/check.sh`; draft PR.
+- [x] T5 — AC-6 layout checks; PRO-01..04 Feature cells; design §4/§9 rows; code-map lines; full `scripts/check.sh`; draft PR.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.

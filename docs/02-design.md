@@ -60,7 +60,8 @@ The School track shows P1 and P2 topics; the Olympiad track shows `oly.*`.
 
 | Table | Columns | Notes |
 |---|---|---|
-| `app_settings` | id = 1, pin_hash, pin_salt, daily_limit_min (20), bank_version, sound_on (true) | One row, created on first open; `sound_on` schema v3 (FEAT-09) |
+| `app_settings` | id = 1, pin_hash, pin_salt, daily_limit_min (20), bank_version, sound_on (true), profile_pending (true) | One row, created on first open; `sound_on` schema v3 (FEAT-09); `profile_pending` schema v4, false on upgrade (FEAT-10, PRO-02) |
+| `child_profile` | id = 1, nickname, school_year (1–6), school_start_level, olympiad_start_level (nullable), updated_at | Schema v4 (FEAT-10, PRO-01); kept by the PAR-10 reset |
 | `play_sessions` | id, started_at, ended_at | One per app opening |
 | `rounds` | id, session_id, topic_id, level, started_at, score, duration_ms, stars, finished_at | `finished_at` is null until the last answer is saved (schema v2, FEAT-04) |
 | `attempts` | id, round_id, question_id, answer_given, correct, time_ms, answered_at | Saved before the next question shows (NFR-05) |
@@ -76,7 +77,7 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 - **Screen-time clock (TIM-01..05):** a `ScreenTimeClock` in the domain layer takes `now()` and an elapsed-time source as parameters (NFR-08). It adds foreground seconds to today's `daily_usage` row every 10 seconds and on pause. "Today" is the later of the device date and the latest day already recorded, so moving the clock back cannot reopen a used day. Allowance = daily limit + extra granted today.
 - **Stars (PRC-06):** 10/10 = 3 stars, 8–9 = 2, 6–7 = 1, else 0. Speed does not reduce stars, so she is never punished for being careful.
 - **Round builder (PRC-08, PRC-09):** picks 10 questions at the topic's current level, preferring ones not answered correctly in her last 3 rounds; mixes in up to 2 questions from a "needs practice" topic on the School track.
-- **Level (PRC-09):** a topic's current level is worked out from its latest finished round (level L, stars S), never stored: S = 3 → L + 1, S ≤ 1 → L − 1, else L, kept within 1–3. No finished round yet → level 1. A quit round doesn't count. Best stars (PRC-07) = most stars in any finished round of the topic, at any level.
+- **Level (PRC-09):** a topic's current level is worked out from its latest finished round (level L, stars S), never stored: S = 3 → L + 1, S ≤ 1 → L − 1, else L, kept within 1–3. No finished round yet → the profile's start level (PRO-03, FEAT-10 design), or 1 without a profile. A quit round doesn't count. Best stars (PRC-07) = most stars in any finished round of the topic, at any level.
 
 ## 6. Screens
 
@@ -127,3 +128,4 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 | 2026-11-15 | FEAT-09 design: sound effects synthesised by `tool/generate_sounds.dart` and played with `audioplayers`; `app_settings.sound_on` (schema v3) with a switch on SCR-11, kept by the PAR-10 reset; gradient backgrounds on child screens SCR-02..07 and confetti on SCR-05 drawn with CustomPainters (no image assets); launcher icon drawn by `tool/generate_icon.dart` and written by `flutter_launcher_icons`; version 1.0.0+2. |
 | 2026-11-15 | FEAT-09 build: backgrounds follow the home tracks, School (P1 and P2) and Olympiad, not P1/P2 separately (`KidScene`); SCR-02, SCR-06 and SCR-07 use a sunny home scene; animation durations live in `AppMotion` (`celebration`, `starPop`). |
 | 2026-11-15 | Phase 2 plan: §1's "no server" holds for v1 only; the server, sync, bank hosting and privacy decisions are in [04-architecture.md](04-architecture.md) (ADR-01..08); screens SCR-12..14 added. Requirements 2.0 draft (D10–D16). |
+| 2026-11-15 | FEAT-10: schema v4 (`child_profile`, `app_settings.profile_pending`); an unplayed topic starts at the profile's start level (§5); SCR-12 at `/setup/profile` (first run) and `/parent/profile`. |
