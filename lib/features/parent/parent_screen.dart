@@ -7,6 +7,7 @@ import '../../domain/screen_time.dart';
 import '../../providers.dart';
 import '../../ui/theme.dart';
 import '../screen_time/screen_time_controller.dart';
+import 'report_export.dart';
 
 /// SCR-11: parent area: Progress (FEAT-06), screen time (FEAT-05), Change
 /// PIN and reset progress; FEAT-07 adds more.
@@ -43,6 +44,15 @@ class ParentScreen extends ConsumerWidget {
             subtitle: const Text('Accuracy, speed and trends per topic'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go(Routes.dashboard),
+          ),
+          ListTile(
+            key: const Key('export-report'),
+            minTileHeight: AppSizes.minTap,
+            leading: const Icon(Icons.picture_as_pdf),
+            title: const Text('Export PDF report'),
+            subtitle: const Text('Share or save a summary'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => showExportSheet(context),
           ),
           const Divider(height: AppSizes.gap * 2),
           const _ScreenTimeSection(),

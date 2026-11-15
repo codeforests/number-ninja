@@ -10,7 +10,8 @@ import '../../ui/layout_checks.dart';
 import '../quiz/quiz_harness.dart';
 import 'parent_harness.dart';
 
-/// AC-8 (NFR-09): SCR-09, SCR-10 and the reset screen at the six sizes and
+/// AC-8 (NFR-09): SCR-09, SCR-10, the reset screen and the FEAT-07 export
+/// sheet at the six sizes and
 /// at text scale 1.3: no layout exception or overflow anywhere on the page.
 /// The child-screen 64 dp / 20 sp checks don't apply to parent screens.
 void main() {
@@ -72,6 +73,14 @@ void main() {
         await open(tester, Routes.topicDetail(numberTopic, StatsPeriod.all));
         expect(find.byType(TopicDetailScreen), findsOneWidget);
         expectNoOverlap(tester, ['topic-tally', 'trend-accuracy']);
+        await scrollAll(tester);
+      });
+
+      testWidgets('SCR-11 export sheet (FEAT-07 AC-6)', (tester) async {
+        await open(tester, Routes.parent);
+        await h.tapKey(tester, 'export-report');
+        expect(find.byKey(const Key('export-sheet')), findsOneWidget);
+        expectNoOverlap(tester, ['period-30', 'export-share']);
         await scrollAll(tester);
       });
 
