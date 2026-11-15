@@ -63,13 +63,13 @@ class BadgeShelfScreen extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: AppSizes.gap),
-                  Text(
-                    '${earned.length} of ${badges.length}',
-                    key: const Key('badge-count'),
-                    style: theme.headlineSmall,
-                  ),
                 ],
+              ),
+              const SizedBox(height: AppSizes.gap / 2),
+              Text(
+                '${earned.length} of ${badges.length}',
+                key: const Key('badge-count'),
+                style: theme.headlineSmall,
               ),
               const SizedBox(height: AppSizes.gap),
               Expanded(

@@ -72,5 +72,5 @@ Not in scope: sound or confetti (PRC-11 and NFR-10, FEAT-09), badges in the PDF 
       Done when: AC-3 tests pass with `flutter test test/features/quiz`.
 - [x] T4 — SCR-06 shelf and `/badges` route (counts as screen time); SCR-02 badge button.
       Done when: AC-4 and AC-5 pass with `flutter test test/features/badges test/features/topics test/features/screen_time` (home tests go in `test/features/badges` if none exist).
-- [ ] T5 — AC-6 layout checks; BDG-01..03 Feature cells; design §9 build row if anything deviated; full `scripts/check.sh`; draft PR ready for verify.
+- [x] T5 — AC-6 layout checks; BDG-01..03 Feature cells; design §9 build row if anything deviated; full `scripts/check.sh`; draft PR ready for verify.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.

@@ -1,19 +1,18 @@
 # Handoff: FEAT-08 — Badges and badge shelf
-Branch: feat/FEAT-08-badges · PR: none · Updated: 2026-11-15 by design
-Stage done: design
-Next: build — kickoff: "Build FEAT-08 (from T1) on branch feat/FEAT-08-badges. Read AGENTS.md, docs/STATE.md and the feature's handoff.md, then do docs/03-plan.md §2 step 2."
+Branch: feat/FEAT-08-badges · PR: https://github.com/codeforests/number-ninja/pull/10 (draft) · Updated: 2026-11-15 by build
+Stage done: build (T1–T5 of 5)
+Next: verify — kickoff: "Verify FEAT-08 on branch feat/FEAT-08-badges. Read AGENTS.md, docs/STATE.md and the feature's handoff.md, then do docs/03-plan.md §2 steps 3–4."
 
 ## What the next stage needs
-- Read design.md whole (it is short); the badge table there is the source of ids, names, rules and hints.
-- No schema change: `BadgesEarned` (badge_id PK, earned_at) is in `lib/data/database.dart`; `StatsRepository.resetProgress` already deletes it.
-- Facts come from `rounds` with `finished_at` (need `score`, `duration_ms`, `stars`, `finished_at`; `RoundRepository.finishedRounds` doesn't expose them, so query in `BadgeRepository`) and `StatsRepository.records()` for attempts.
-- Hook point: `QuizController.check`, right after `repo.finishRound(...)` when `answered.isLast`; wrap in try/catch so a badge error never blocks SCR-05.
-- `Routes.counts` in `lib/app.dart` must include `/badges` (TIM-01); add `Routes.badges`.
-- Open the draft PR at T2 so CI runs (CI only triggers on pull_request).
-- Widget tests: Ahem font is wide, `QuizHarness.tap` uses ensureVisible; the SCR-05 pop animation needs `pumpAndSettle` or a pump of `AppMotion.badgePop`.
+- Files: `lib/domain/badges.dart`, `lib/data/badge_repository.dart`, `lib/ui/badge_icons.dart`, `lib/features/badges/badge_shelf_screen.dart` (+ `latestBadge`); hooks in `quiz_controller.dart` (`_awardBadges`, try/catch), `result_screen.dart` (`_NewBadges`, `see-badges`), `home_screen.dart` (`_BadgesButton`), `app.dart` (`Routes.badges`, in `counts`), `providers.dart`, `theme.dart` (`AppSizes.badge/badgeSmall`, `AppMotion.badgePop`).
+- Tests: `test/domain/badges_test.dart` (AC-1), `test/data/badge_repository_test.dart` (AC-2), `test/features/quiz/badges_result_test.dart` (AC-3), `test/features/badges/badge_shelf_test.dart` (AC-4, AC-5), `test/features/badges/badges_layout_test.dart` (AC-6). Full `scripts/check.sh`: 667 tests pass.
+- Deviations (design §9 build row): SCR-06 is a `Wrap` of 220 dp tiles, not a fixed-height GridView (long hints at scale 1.3); count under the title; best-stars map instead of `progressByTopic`; `hide Badge` on Material imports.
+- `awardNew` evaluates whatever is in the DB, so calling it after quit rounds alone would award attempt badges; only the quiz controller calls it, after a finished round.
+- Pop test: `Transform.scale` matrix, read `entry(0, 0)` (getMaxScaleOnAxis includes z = 1).
+- BDG-01..03 Feature cells already say FEAT-08; Verified by is verify's.
 
 ## Left to CI or later
-- APK build: CI on the draft PR. Real tablet check at M3 (`m3` release after FEAT-08 merges).
+- APK build: CI on PR #10. Real tablet check at M3 (`m3` release after merge).
 
 ## Pending for Ken
-- none (the "latest 30" reading of §7's 90 %+ rule is recorded in design §9; Ken can change it at the M3 check).
+- none
