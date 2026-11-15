@@ -1,20 +1,18 @@
 # Handoff: FEAT-03 — Quiz engine
-Branch: feat/FEAT-03-quiz-engine · PR: none · Updated: 2026-11-15 by build
-Stage done: build (T1–T6 of 7)
-Next: build — kickoff: "Build FEAT-03 (from T7) on branch feat/FEAT-03-quiz-engine. Read AGENTS.md, docs/STATE.md and the feature's handoff.md, then do docs/03-plan.md §2 step 2."
+Branch: feat/FEAT-03-quiz-engine · PR: [#4](https://github.com/codeforests/number-ninja/pull/4) (draft) · Updated: 2026-11-15 by build
+Stage done: build (T1–T7 of 7)
+Next: verify — kickoff: "Verify FEAT-03 on branch feat/FEAT-03-quiz-engine. Read AGENTS.md, docs/STATE.md and the feature's handoff.md, then do docs/03-plan.md §2 steps 3–4."
 
 ## What the next stage needs
-- T7 only: finish `lib/features/quiz/result_screen.dart` (now a stub: score + Home). Add `m:ss` time, 0–3 stars, Play again (`context.go(Routes.quiz(summary.topicId))`). It gets a `RoundSummary` (topicId, score, total, durationMs, stars) as route `extra`; `/result` without one redirects home.
-- The round is saved before the last feedback shows: `check()` awaits `saveAttempt` and, on the last question, `finishRound`. `next()` is sync, no I/O (AC-8 test in `quiz_screen_test.dart`). "See results" calls `next()` then goes to `/result`.
-- Test harness: `test/features/quiz/quiz_harness.dart` (`QuizHarness`: fake bank with one format per topic `p2.fractions` mcq / `p2.money` number / `p2.place` drag, in-memory DB, fake clock `h.now`/`h.tick`, `Random(42)`, `CountingRepository` with a `gate` Completer, `answer(tester, right:)`, `next`, `round`, `current`). Pass `bank:` for AC-6 with the real bank (`QuestionBank.fromJson` of `assets/questions/bank_v1.json` via `File`).
-- Keys: `quit`, `progress-dots`, `prompt`, `option-i`, `key-0..9|dot|back`, `check`, `chip-i`, `slot-i`, `feedback-title|answer|explanation`, `next`, `track-school|olympiad`, `topic-<id>`, `back`, `result-score`, `home`.
-- Routes: `Routes.play(track)` → `TopicListScreen`, `Routes.quiz(id)` → `QuizScreen`, `Routes.result`. Home track cards are tappable.
-- Visuals: `VisualFrame` scales each visual to its box (up to 1.6×). Painter labels (clock, ruler numbers) use the default font, so they show as Ahem boxes in test screenshots; real device is fine. Checked by eye at 1280 × 800 with Roboto loaded: all nine kinds look right.
-- Drift stores `DateTime` to the second; `time_ms` keeps milliseconds.
-- AC-7 note: visual texts are 20 sp before FittedBox scaling; the size test should check `Text` widgets outside `QuestionVisual` or accept that.
+- AC → tests: AC-1 `test/domain/round_builder_test.dart` + `test/data/round_repository_test.dart`; AC-2/3/4/8 `test/features/quiz/quiz_screen_test.dart` + `answer_widgets_test.dart`; AC-5/9 `test/features/quiz/result_flow_test.dart` + `test/domain/stars_test.dart`; AC-6/7 `test/features/quiz/layout_test.dart`.
+- SCR-05 (`result_screen.dart`): keys `result-score`, `result-time`, `star-0..2`, `play-again`, `home`. `formatMinSec` rounds down to the second.
+- AC-6 renders the longest-prompt question of each of the 109 templates alone on SCR-04 (single-question bank via `QuizHarness(bank:)`), answers it wrongly so the feedback panel lays out too, and fails on any overflow/exception. Portrait sample: longest per visual kind and per format without a visual.
+- AC-7 uses `MinimumTapTargetGuideline(64 × 64)` (semantics) and checks every `RenderParagraph` ≥ 20 sp outside `QuestionVisual` and `Icon` (visual labels scale with their box; icons are glyphs). Both checks were confirmed to fail when the thresholds are raised.
+- Harness change in T7: `QuizHarness.tap` calls `ensureVisible` first. The test font (Ahem) is wider than Roboto, so the longest drag answers (5 time chips) push Check below 800 dp into the right half's scroll view; with Roboto loaded, `p1.time.order.003` fits on one screen, filled or empty (checked by eye).
+- T7 also set the keypad backspace icon to `AppText.heading` (it was the button default 18).
 
 ## Left to CI or later
-- APK build (no Android SDK in cloud). NFR-04 300 ms on the tablet: Ken's M1 check.
+- APK build and CI on PR #4. NFR-04 300 ms on the tablet: Ken's M1 check.
 
 ## Pending for Ken
 - none
