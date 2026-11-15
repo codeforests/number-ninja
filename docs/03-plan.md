@@ -1,6 +1,6 @@
 # Number Ninja: Plan
 
-> Version 1.0 (signed off by Ken 2026-11-14) · 2026-11-14 · From [01-requirements.md](01-requirements.md) and [02-design.md](02-design.md)
+> Version 1.1 · 2026-11-15 (1.0 signed off by Ken 2026-11-14; 1.1 adds Ken's M1 feedback, D9) · From [01-requirements.md](01-requirements.md) and [02-design.md](02-design.md)
 
 ## 1. Features in build order
 
@@ -11,12 +11,12 @@ Each feature is a vertical slice that ends in something Ken can install and try.
 | FEAT-01 | Walking skeleton: app shell, theme, database, first-run PIN setup, PIN entry with lockout, parent area stub, CI building the APK | PAR-01..04, NFR-01, NFR-06..08 | M1 |
 | FEAT-02 | Question bank v1: generator, validator, all 23 topics, bank loader | BNK-01..06 | M1 |
 | FEAT-03 | Quiz engine: rounds of 10, three answer formats, drawn visuals, timing, feedback, results with stars | PRC-02..06, PRC-08, PRC-10, NFR-03..05 | M1 |
-| FEAT-04 | Home and topic map: tracks, topics with stars, difficulty steps | PRC-01, PRC-07, PRC-09 | M2 |
+| FEAT-04 | Home and topic map: tracks, topics with stars, difficulty steps; layouts that fit smaller screens | PRC-01, PRC-07, PRC-09, NFR-09 | M2 |
 | FEAT-05 | Screen-time lock: daily allowance, warning, lock screen, parent unlock and limits | TIM-01..06 | M2 |
 | FEAT-06 | Parent dashboard: per-topic stats, trends, needs practice, topic detail, reset | PAR-05..08, PAR-10 | M3 |
 | FEAT-07 | PDF report export | PAR-09 | M3 |
 | FEAT-08 | Badges and badge shelf | BDG-01..03 | M3 |
-| FEAT-09 | Tablet polish and v1.0 release: layout check on 12-inch landscape and portrait, app icon, release APK | NFR-02 | M4 |
+| FEAT-09 | Polish and v1.0 release: layout check on 12-inch landscape and portrait, kid-friendly look (backgrounds, celebration) and sound effects with a parent off switch, app icon, release APK | NFR-02, NFR-10, PRC-11 | M4 |
 
 **Milestones:** M1 = she can play a real round (FEAT-01..03). M2 = safe for daily use (04–05). M3 = parent insights and rewards (06–08). M4 = v1.0 (09). Ken tries the APK on the tablet at the end of each milestone and signs it off before the next one starts. When a milestone's last PR merges, run the CI workflow on `main` with input `release` = `m<N>` (e.g. `m1`): it publishes a GitHub Release with the release-signed `number-ninja-m<N>.apk` for him to install.
 

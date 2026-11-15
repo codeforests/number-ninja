@@ -1,6 +1,6 @@
 # Number Ninja: Requirements
 
-> Version 1.0 (signed off by Ken 2026-11-14) · 2026-11-14
+> Version 1.1 · 2026-11-15 (1.0 signed off by Ken 2026-11-14; 1.1 adds D9, PRC-11, NFR-09, NFR-10 from his M1 check)
 > This file is also the traceability matrix: the **Feature** column is filled by planning, **Verified by** by each feature's verify step. IDs are permanent and never reused; a dropped requirement keeps its row marked *Removed*.
 
 ## 1. Purpose and scope
@@ -28,6 +28,7 @@ Number Ninja is an offline Android tablet app that helps one child (Singapore pr
 | D6 | Badges for motivation; English only; no voice. | 2026-11-14 |
 | D7 | Offline only, data on the device, no backup. One child. | 2026-11-14 |
 | D8 | Target device: Android tablet around 12 inches, landscape first. | 2026-11-14 |
+| D9 | After the M1 tablet check (Ken, 2026-11-15): layouts must also work on smaller screens without overlapping (NFR-09), and the child screens get a more kid-friendly look with short sound effects (PRC-11, NFR-10). Sound effects are not voice, so D6 still holds: no speech, English text only. | 2026-11-15 |
 
 ## 4. Functional requirements
 
@@ -58,6 +59,7 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | PRC-08 | Rounds shall avoid repeating a question she answered correctly in her last 3 rounds of that topic, while questions remain. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
 | PRC-09 | Difficulty shall step up after a 3-star round and down after a 0–1-star round in that topic. | S | FEAT-04 | |
 | PRC-10 | Pictures (clocks, shapes, coins, bar models, picture graphs) shall be drawn from question data, not image files. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
+| PRC-11 | The app shall play short sound effects (right answer, wrong answer, round complete, 3 stars), bundled with the app; the parent shall be able to turn sound off. (D9) | S | FEAT-09 | |
 
 ### Screen time (TIM)
 
@@ -105,3 +107,5 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | NFR-06 | The app shall run on Android 7.0 (API 24) and later. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | NFR-07 | CI shall build a release APK on every push to main and every pull request, and run all tests. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | NFR-08 | Logic with dates or timers shall take the clock as a parameter so tests never depend on today's date. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
+| NFR-09 | On screens smaller than the target tablet, down to 640 × 360 dp (landscape or portrait), no text, picture or answer control shall overlap another or be cut off; the page may scroll instead. (D9) | M | FEAT-04 | |
+| NFR-10 | Child screens shall have a colourful, kid-friendly look: coloured backgrounds per track, a celebration when a round ends, colours still from `theme.dart`. (D9) | S | FEAT-09 | |

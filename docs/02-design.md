@@ -62,7 +62,7 @@ The School track shows P1 and P2 topics; the Olympiad track shows `oly.*`.
 |---|---|---|
 | `app_settings` | id = 1, pin_hash, pin_salt, daily_limit_min (20), bank_version | One row, created on first open |
 | `play_sessions` | id, started_at, ended_at | One per app opening |
-| `rounds` | id, session_id, topic_id, level, started_at, score, duration_ms, stars | |
+| `rounds` | id, session_id, topic_id, level, started_at, score, duration_ms, stars, finished_at | `finished_at` is null until the last answer is saved (schema v2, FEAT-04) |
 | `attempts` | id, round_id, question_id, answer_given, correct, time_ms, answered_at | Saved before the next question shows (NFR-05) |
 | `daily_usage` | day (yyyy-MM-dd), seconds_used, extra_seconds_granted | Screen time per day |
 | `badges_earned` | badge_id, earned_at | |
@@ -76,6 +76,7 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 - **Screen-time clock (TIM-01..05):** a `ScreenTimeClock` in the domain layer takes `now()` and an elapsed-time source as parameters (NFR-08). It adds foreground seconds to today's `daily_usage` row every 10 seconds and on pause. "Today" is the later of the device date and the latest day already recorded, so moving the clock back cannot reopen a used day. Allowance = daily limit + extra granted today.
 - **Stars (PRC-06):** 10/10 = 3 stars, 8–9 = 2, 6–7 = 1, else 0. Speed does not reduce stars, so she is never punished for being careful.
 - **Round builder (PRC-08, PRC-09):** picks 10 questions at the topic's current level, preferring ones not answered correctly in her last 3 rounds; mixes in up to 2 questions from a "needs practice" topic on the School track.
+- **Level (PRC-09):** a topic's current level is worked out from its latest finished round (level L, stars S), never stored: S = 3 → L + 1, S ≤ 1 → L − 1, else L, kept within 1–3. No finished round yet → level 1. A quit round doesn't count. Best stars (PRC-07) = most stars in any finished round of the topic, at any level.
 
 ## 6. Screens
 
@@ -93,7 +94,7 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 | SCR-10 | Topic detail | PAR-08 |
 | SCR-11 | Parent settings: daily limit, extra time, change PIN, export PDF, reset | TIM-04, PAR-04, PAR-09, PAR-10 |
 
-**Look:** bright, high-contrast, rounded. Colours, radii and text sizes are defined once in `lib/ui/theme.dart` and never hard-coded in screens. Child screens use 64 dp minimum tap targets and 20 sp minimum text (NFR-03). Landscape layout first: question on the left, answer area on the right (NFR-02).
+**Look:** bright, high-contrast, rounded. Colours, radii and text sizes are defined once in `lib/ui/theme.dart` and never hard-coded in screens. Child screens use 64 dp minimum tap targets and 20 sp minimum text (NFR-03). Landscape layout first: question on the left, answer area on the right (NFR-02). On smaller screens (NFR-09) the layout adapts by width and height rather than by device: halves side by side only when the screen is landscape and at least 600 dp wide, otherwise stacked; anything that doesn't fit scrolls instead of overlapping. The 12-inch landscape tablet still never scrolls during a question.
 
 ## 7. Badges (BDG-01)
 
@@ -113,3 +114,4 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 |---|---|
 | 2026-11-14 | First version. |
 | 2026-11-15 | FEAT-03 design: the round builder's "needs practice" mix-in (§5) moves to FEAT-06, which first computes needs practice. FEAT-03 plays rounds at level 1 from a placeholder topic list until FEAT-04 adds SCR-03 and difficulty steps (PRC-09). |
+| 2026-11-15 | FEAT-04 design: `rounds.finished_at` (schema v2) so a quit round doesn't move the level; level rule in §5; small-screen layout rule in §6 (NFR-09, D9). |
