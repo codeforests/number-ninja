@@ -12,6 +12,11 @@ class AppSettings extends Table {
   IntColumn get bankVersion => integer().withDefault(const Constant(1))();
   BoolColumn get soundOn => boolean().withDefault(const Constant(true))();
 
+  /// Ask for the child profile before play (PRO-02). True on a new install,
+  /// false on one updated from v3; saving the profile clears it.
+  BoolColumn get profilePending =>
+      boolean().withDefault(const Constant(true))();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -68,6 +73,24 @@ class BadgesEarned extends Table {
   Set<Column> get primaryKey => {badgeId};
 }
 
+/// The child profile (single row, id is always 1), PRO-01. Absent until the
+/// parent first saves it.
+@DataClassName('ProfileRow')
+class ChildProfiles extends Table {
+  @override
+  String get tableName => 'child_profile';
+
+  IntColumn get id => integer().withDefault(const Constant(1))();
+  TextColumn get nickname => text()();
+  IntColumn get schoolYear => integer()();
+  IntColumn get schoolStartLevel => integer().nullable()();
+  IntColumn get olympiadStartLevel => integer().nullable()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Wrong-PIN counter (single row, id is always 1), PAR-03.
 class PinLockout extends Table {
   IntColumn get id => integer().withDefault(const Constant(1))();
@@ -87,6 +110,7 @@ class PinLockout extends Table {
     DailyUsage,
     BadgesEarned,
     PinLockout,
+    ChildProfiles,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -94,7 +118,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'number_ninja'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -106,6 +130,12 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (m, from, to) async {
       if (from < 2) await _from1To2(m);
       if (from < 3) await m.addColumn(appSettings, appSettings.soundOn);
+      if (from < 4) {
+        await m.addColumn(appSettings, appSettings.profilePending);
+        await m.createTable(childProfiles);
+        // An updated install keeps working without a profile (PRO-02).
+        await customStatement('UPDATE app_settings SET profile_pending = 0');
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

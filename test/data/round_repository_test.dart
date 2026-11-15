@@ -101,6 +101,12 @@ void main() {
       expect(await repo.progress(), isEmpty);
     });
 
+    test('a never-played topic starts at the given level (PRO-03)', () async {
+      expect(await repo.levelFor('t', start: 3), 3);
+      await play('t', 3, 2); // finished: PRC-09 from now on
+      expect(await repo.levelFor('t', start: 1), 3);
+    });
+
     test('a quit round changes neither level nor best stars', () async {
       await play('t', 1, 3); // -> level 2, best 3
       await play('t', 2, 0, finish: false); // quit
