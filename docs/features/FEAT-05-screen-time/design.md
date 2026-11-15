@@ -1,7 +1,7 @@
 # FEAT-05: Screen-time lock
 
 > Implements: TIM-01..06 · Screens: SCR-02 (minutes left), SCR-07 (lock), SCR-11 (limit and extra time), SCR-04/05 (finish the current question)
-> Status: designed · Branch: `feat/FEAT-05-screen-time` · 2026-11-15
+> Status: built (T1–T6) · Branch: `feat/FEAT-05-screen-time` · 2026-11-15
 
 ## Scope
 
@@ -37,6 +37,13 @@ Not in scope: per-weekday limits, usage history in the dashboard (FEAT-06), stop
 - **SCR-02 home:** under the title row, "N min left" (key `minutes-left`, `AppText.body`, `Icons.timer`), from `screenTimeProvider`.
 - **SCR-11 parent** (`parent_screen.dart`): a "Screen time" section above Change PIN: "Today: U min used, L min left" (key `today-usage`); "Daily limit" with − / value / + (keys `limit-minus`, `limit-value`, `limit-plus`, steps of 5, disabled at 5 and 120); "Extra time today" buttons (keys `extra-5`, `extra-10`, `extra-15`, `extra-30`). Each tap saves at once.
 
+## Build deviations (2026-11-15)
+
+- **SCR-07 itself doesn't count** (only home, `/play`, `/quiz`, `/result`): otherwise minutes spent on the lock screen would eat the extra time a parent grants afterwards. `Routes.counts(location)` in `app.dart`.
+- `redirectFor(session, locked, location)` takes `bool locked`; the router's `refreshListenable` merges the session with `ScreenTimeController.lockedListenable`, which notifies only when `locked` changes. Refreshing the router on every status change rebuilt `/result` and lost its `extra`, so SCR-05 bounced home.
+- `screenTimeProvider` builds the controller itself (from `usageRepositoryProvider`, `clockProvider` and a new `elapsedProvider`) and disposes it; tests override `elapsedProvider` instead of `screenTimeProvider`, so nothing is overridden in `main()`.
+- The hold lives in the screens, not `QuizController`: `QuizScreen` and `ResultScreen` call `holdQuestion()` in `initState` and release in `dispose` (after a microtask) or on Next / a button. Holds are counted, so SCR-05 takes over from SCR-04 without a gap.
+
 ## Acceptance criteria
 
 - **AC-1** (TIM-01, TIM-05): `ScreenTimeClock` unit tests with a fake clock and elapsed source: adds elapsed seconds only between `start` and `stop`, carries sub-second remainders, crosses midnight into the new day, and with the device clock set back a day keeps adding to the later recorded day.
@@ -59,5 +66,5 @@ Not in scope: per-weekday limits, usage history in the dashboard (FEAT-06), stop
       Done when: AC-4 widget tests and the existing quiz tests pass.
 - [x] T5 — SCR-11 screen-time section (usage, limit stepper, extra time).
       Done when: AC-5 widget tests pass.
-- [ ] T6 — AC-7 layout checks; full `scripts/check.sh`; draft PR.
+- [x] T6 — AC-7 layout checks; full `scripts/check.sh`; draft PR.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.
