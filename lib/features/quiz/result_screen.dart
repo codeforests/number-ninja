@@ -1,8 +1,10 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../app.dart';
 import '../../ui/theme.dart';
+import '../screen_time/screen_time_controller.dart';
 import 'quiz_controller.dart';
 
 /// A round's answering time as `m:ss`, rounded down to the second (PRC-06).
@@ -14,10 +16,46 @@ String formatMinSec(int ms) {
 /// SCR-05: the end of a round, with score, time and 0–3 stars (PRC-06),
 /// and "Level up!" when the topic steps up (PRC-09). A step down shows
 /// nothing.
-class ResultScreen extends StatelessWidget {
+class ResultScreen extends ConsumerStatefulWidget {
   const ResultScreen({super.key, required this.summary});
 
   final RoundSummary summary;
+
+  @override
+  ConsumerState<ResultScreen> createState() => _ResultScreenState();
+}
+
+class _ResultScreenState extends ConsumerState<ResultScreen> {
+  /// If time ran out on the last question, SCR-05 still shows until a
+  /// button is tapped (TIM-03).
+  late final ScreenTimeController _screenTime;
+  bool _held = false;
+
+  RoundSummary get summary => widget.summary;
+
+  @override
+  void initState() {
+    super.initState();
+    _screenTime = ref.read(screenTimeProvider)..holdQuestion();
+    _held = true;
+  }
+
+  @override
+  void dispose() {
+    if (_held) {
+      _held = false;
+      Future.microtask(_screenTime.releaseHold);
+    }
+    super.dispose();
+  }
+
+  void _go(String location) {
+    if (_held) {
+      _held = false;
+      _screenTime.releaseHold();
+    }
+    context.go(location);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,12 +129,12 @@ class ResultScreen extends StatelessWidget {
                   children: [
                     FilledButton(
                       key: const Key('play-again'),
-                      onPressed: () => context.go(Routes.quiz(summary.topicId)),
+                      onPressed: () => _go(Routes.quiz(summary.topicId)),
                       child: const Text('Play again'),
                     ),
                     FilledButton.tonal(
                       key: const Key('home'),
-                      onPressed: () => context.go(Routes.home),
+                      onPressed: () => _go(Routes.home),
                       child: const Text('Home'),
                     ),
                   ],

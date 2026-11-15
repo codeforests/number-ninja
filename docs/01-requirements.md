@@ -65,12 +65,12 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| TIM-01 | The app shall count time used per calendar day only while it is in the foreground. | M | FEAT-05 | |
-| TIM-02 | When the day's allowance (default 20 minutes) is used up, the app shall show a lock screen and allow no practice until the next day or a parent unlock. | M | FEAT-05 | |
-| TIM-03 | Two minutes before the allowance ends, the app shall warn her, and shall let her finish the current question before locking. | S | FEAT-05 | |
-| TIM-04 | With the PIN, the parent shall be able to change the daily allowance (5–120 minutes) and grant extra minutes for today. | M | FEAT-05 | |
-| TIM-05 | Closing and reopening the app, or changing the device clock backwards, shall not reset the day's used time. | M | FEAT-05 | |
-| TIM-06 | The home screen shall show minutes left today. | S | FEAT-05 | |
+| TIM-01 | The app shall count time used per calendar day only while it is in the foreground. | M | FEAT-05 | FEAT-05 verify.md (2026-11-15) |
+| TIM-02 | When the day's allowance (default 20 minutes) is used up, the app shall show a lock screen and allow no practice until the next day or a parent unlock. | M | FEAT-05 | FEAT-05 verify.md (2026-11-15) |
+| TIM-03 | Two minutes before the allowance ends, the app shall warn her, and shall let her finish the current question before locking. | S | FEAT-05 | FEAT-05 verify.md (2026-11-15) |
+| TIM-04 | With the PIN, the parent shall be able to change the daily allowance (5–120 minutes) and grant extra minutes for today. | M | FEAT-05 | FEAT-05 verify.md (2026-11-15) |
+| TIM-05 | Closing and reopening the app, or changing the device clock backwards, shall not reset the day's used time. | M | FEAT-05 | FEAT-05 verify.md (2026-11-15) |
+| TIM-06 | The home screen shall show minutes left today. | S | FEAT-05 | FEAT-05 verify.md (2026-11-15) |
 
 ### Parent area (PAR)
 

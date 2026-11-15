@@ -14,6 +14,7 @@ import 'package:number_ninja/domain/question.dart';
 import 'package:number_ninja/domain/quiz.dart';
 import 'package:number_ninja/features/quiz/quiz_controller.dart';
 import 'package:number_ninja/features/quiz/quiz_screen.dart';
+import 'package:number_ninja/features/screen_time/screen_time_controller.dart';
 import 'package:number_ninja/providers.dart';
 
 /// Topics of the fake bank, one format each.
@@ -126,15 +127,30 @@ class QuizHarness {
 
   void tick(Duration d) => now = now.add(d);
 
+  /// Foreground time for the screen-time clock; it only moves when a test
+  /// moves it, so other tests never lock (FEAT-05).
+  Duration elapsed = Duration.zero;
+
+  /// Moves both the clock and the elapsed source on by [d].
+  void run(Duration d) {
+    tick(d);
+    elapsed += d;
+  }
+
+  /// More overrides for one test, added after the defaults.
+  List<Override> more = [];
+
   List<Override> get overrides => [
     databaseProvider.overrideWithValue(db),
     clockProvider.overrideWithValue(clock),
     bankProvider.overrideWith((ref) => bank),
     roundRepositoryProvider.overrideWithValue(repo),
     quizRandomProvider.overrideWith((ref) => Random(42)),
+    elapsedProvider.overrideWithValue(() => elapsed),
     appSessionProvider.overrideWithValue(
       AppSession(hasPin: true, clock: clock),
     ),
+    ...more,
   ];
 
   Future<void> pumpApp(

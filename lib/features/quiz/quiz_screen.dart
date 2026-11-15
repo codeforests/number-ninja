@@ -8,6 +8,7 @@ import '../../domain/quiz.dart';
 import '../../ui/layout.dart';
 import '../../ui/theme.dart';
 import '../../ui/visuals/question_visual.dart';
+import '../screen_time/screen_time_controller.dart';
 import 'answers/drag_answer.dart';
 import 'answers/mcq_answer.dart';
 import 'answers/number_answer.dart';
@@ -25,9 +26,15 @@ class QuizScreen extends ConsumerStatefulWidget {
 }
 
 class _QuizScreenState extends ConsumerState<QuizScreen> {
+  /// Holds the screen-time lock while a question is open (TIM-03).
+  late final ScreenTimeController _screenTime;
+  bool _held = false;
+
   @override
   void initState() {
     super.initState();
+    _screenTime = ref.read(screenTimeProvider)..holdQuestion();
+    _held = true;
     Future.microtask(() {
       if (mounted) {
         ref.read(quizControllerProvider.notifier).start(widget.topicId);
@@ -35,7 +42,31 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     });
   }
 
+  void _release() {
+    if (!_held) return;
+    _held = false;
+    _screenTime.releaseHold();
+  }
+
+  @override
+  void dispose() {
+    // After the frame, so the router isn't refreshed while the tree is
+    // being torn down; SCR-05 takes over the hold first.
+    if (_held) {
+      _held = false;
+      Future.microtask(_screenTime.releaseHold);
+    }
+    super.dispose();
+  }
+
   void _next() {
+    final quiz = ref.read(quizControllerProvider).quiz;
+    // Time ran out during this question: SCR-07 instead of the next one,
+    // except after the last, which shows SCR-05 first (TIM-03).
+    if (_screenTime.status?.timeUp == true && quiz != null && !quiz.isLast) {
+      _release();
+      return;
+    }
     final controller = ref.read(quizControllerProvider.notifier);
     controller.next();
     final s = ref.read(quizControllerProvider);

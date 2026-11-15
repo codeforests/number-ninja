@@ -115,3 +115,5 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 | 2026-11-14 | First version. |
 | 2026-11-15 | FEAT-03 design: the round builder's "needs practice" mix-in (§5) moves to FEAT-06, which first computes needs practice. FEAT-03 plays rounds at level 1 from a placeholder topic list until FEAT-04 adds SCR-03 and difficulty steps (PRC-09). |
 | 2026-11-15 | FEAT-04 design: `rounds.finished_at` (schema v2) so a quit round doesn't move the level; level rule in §5; small-screen layout rule in §6 (NFR-09, D9). |
+| 2026-11-15 | FEAT-05 design: screen time counts only on child screens (not PIN entry or the parent area); route `/locked` for SCR-07; "finish the current question" (TIM-03) ends at the latest 2 minutes after time runs out; parent unlock = extra minutes or a higher limit on SCR-11. No schema change. |
+| 2026-11-15 | FEAT-05 build: SCR-07 itself doesn't count as screen time, so extra minutes a parent grants aren't used up on the lock screen. |

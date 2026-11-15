@@ -7,6 +7,7 @@ import '../../domain/progress.dart';
 import '../../domain/topics.dart';
 import '../../providers.dart';
 import '../../ui/theme.dart';
+import '../screen_time/screen_time_controller.dart';
 import '../topics/topic_map_screen.dart';
 
 /// SCR-02: home. Two track cards with the stars earned on each, side by
@@ -86,6 +87,7 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
+                    const _MinutesLeft(),
                     gap,
                     Expanded(
                       child: Flex(
@@ -105,6 +107,39 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// "N min left" today (TIM-06), from [screenTimeProvider].
+class _MinutesLeft extends ConsumerWidget {
+  const _MinutesLeft();
+
+  /// The label for [minutesLeft], or null before the first read.
+  static String label(int minutesLeft) =>
+      minutesLeft > 0 ? '$minutesLeft min left' : "Time's up";
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final screenTime = ref.watch(screenTimeProvider);
+    return ListenableBuilder(
+      listenable: screenTime,
+      builder: (context, _) {
+        final status = screenTime.status;
+        return Row(
+          children: [
+            const Icon(Icons.timer, color: AppColors.ninja),
+            const SizedBox(width: AppSizes.gap / 2),
+            Flexible(
+              child: Text(
+                status == null ? '' : label(status.minutesLeft),
+                key: const Key('minutes-left'),
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
