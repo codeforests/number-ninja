@@ -59,7 +59,7 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | PRC-08 | Rounds shall avoid repeating a question she answered correctly in her last 3 rounds of that topic, while questions remain. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
 | PRC-09 | Difficulty shall step up after a 3-star round and down after a 0–1-star round in that topic. | S | FEAT-04 | FEAT-04 verify.md (2026-11-15) |
 | PRC-10 | Pictures (clocks, shapes, coins, bar models, picture graphs) shall be drawn from question data, not image files. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
-| PRC-11 | The app shall play short sound effects (right answer, wrong answer, round complete, 3 stars), bundled with the app; the parent shall be able to turn sound off. (D9) | S | FEAT-09 | |
+| PRC-11 | The app shall play short sound effects (right answer, wrong answer, round complete, 3 stars), bundled with the app; the parent shall be able to turn sound off. (D9) | S | FEAT-09 | FEAT-09 verify.md (2026-11-15) |
 
 ### Screen time (TIM)
 
@@ -100,7 +100,7 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
 | NFR-01 | The app shall work fully with no network connection and request no internet permission. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
-| NFR-02 | Layouts shall fit a 12-inch landscape tablet without scrolling during a question, and stay usable in portrait. | M | FEAT-09 | |
+| NFR-02 | Layouts shall fit a 12-inch landscape tablet without scrolling during a question, and stay usable in portrait. | M | FEAT-09 | FEAT-09 verify.md (2026-11-15) |
 | NFR-03 | Tap targets on child screens shall be at least 64 × 64 dp; text at least 20 sp. | M | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
 | NFR-04 | The next question shall appear within 300 ms of tapping Next on the target tablet. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15, tests); tablet timing: Ken's M1 check |
 | NFR-05 | All progress shall survive the app being killed; an answer is saved before the next question shows. | M | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
@@ -108,4 +108,4 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | NFR-07 | CI shall build a release APK on every push to main and every pull request, and run all tests. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | NFR-08 | Logic with dates or timers shall take the clock as a parameter so tests never depend on today's date. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | NFR-09 | On screens smaller than the target tablet, down to 640 × 360 dp (landscape or portrait), no text, picture or answer control shall overlap another or be cut off; the page may scroll instead. (D9) | M | FEAT-04 | FEAT-04 verify.md (2026-11-15) |
-| NFR-10 | Child screens shall have a colourful, kid-friendly look: coloured backgrounds per track, a celebration when a round ends, colours still from `theme.dart`. (D9) | S | FEAT-09 | |
+| NFR-10 | Child screens shall have a colourful, kid-friendly look: coloured backgrounds per track, a celebration when a round ends, colours still from `theme.dart`. (D9) | S | FEAT-09 | FEAT-09 verify.md (2026-11-15) |
