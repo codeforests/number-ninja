@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -10,6 +12,8 @@ import 'features/quiz/result_screen.dart';
 import 'features/parent/change_pin_screen.dart';
 import 'features/parent/parent_screen.dart';
 import 'features/parent/pin_entry_screen.dart';
+import 'features/screen_time/lock_screen.dart';
+import 'features/screen_time/screen_time_controller.dart';
 import 'features/setup/setup_pin_screen.dart';
 import 'providers.dart';
 import 'ui/theme.dart';
@@ -23,25 +27,39 @@ abstract final class Routes {
   static String play(String track) => '/play/$track'; // SCR-03
   static String quiz(String topicId) => '/quiz/$topicId'; // SCR-04
   static const result = '/result'; // SCR-05, the RoundSummary as extra
+  static const locked = '/locked'; // SCR-07
+
+  /// The routes whose time counts as screen time (TIM-01). SCR-07 itself
+  /// doesn't, so extra time a parent grants isn't used up on the lock.
+  static bool counts(String location) =>
+      location == home ||
+      location.startsWith('/play/') ||
+      location.startsWith('/quiz/') ||
+      location == result;
 }
 
 /// Where a location should go instead, or null to stay (design: Routing).
-String? redirectFor(AppSession session, String location) {
+/// [locked] is [ScreenTimeController.locked]; `/parent*` is never locked.
+String? redirectFor(AppSession session, bool locked, String location) {
   if (!session.hasPin) return location == Routes.setup ? null : Routes.setup;
   if (location == Routes.setup) return Routes.home;
   final isParent = location.startsWith(Routes.parent);
   if (isParent && location != Routes.pinEntry && !session.parentUnlocked) {
     return Routes.pinEntry;
   }
+  if (locked && Routes.counts(location)) return Routes.locked;
+  if (!locked && location == Routes.locked) return Routes.home;
   return null;
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
   final session = ref.watch(appSessionProvider);
+  final screenTime = ref.watch(screenTimeProvider);
   final router = GoRouter(
     initialLocation: Routes.home,
-    refreshListenable: session,
-    redirect: (context, state) => redirectFor(session, state.matchedLocation),
+    refreshListenable: Listenable.merge([session, screenTime]),
+    redirect: (context, state) =>
+        redirectFor(session, screenTime.locked, state.matchedLocation),
     routes: [
       GoRoute(
         path: Routes.setup,
@@ -69,6 +87,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             ResultScreen(summary: state.extra! as RoundSummary),
       ),
       GoRoute(
+        path: Routes.locked,
+        builder: (context, state) => const LockScreen(),
+      ),
+      GoRoute(
         path: Routes.parent,
         builder: (context, state) => const ParentScreen(),
         routes: [
@@ -84,17 +106,56 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-  ref.onDispose(router.dispose);
+  void onRoute() => screenTime.setChildRoute(
+    Routes.counts(router.routerDelegate.currentConfiguration.uri.path),
+  );
+  router.routerDelegate.addListener(onRoute);
+  ref.onDispose(() {
+    router.routerDelegate.removeListener(onRoute);
+    router.dispose();
+  });
   return router;
 });
 
-class NumberNinjaApp extends ConsumerWidget {
+class NumberNinjaApp extends ConsumerStatefulWidget {
   const NumberNinjaApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NumberNinjaApp> createState() => _NumberNinjaAppState();
+}
+
+class _NumberNinjaAppState extends ConsumerState<NumberNinjaApp> {
+  final _messenger = GlobalKey<ScaffoldMessengerState>();
+  StreamSubscription<void>? _warnings;
+
+  @override
+  void initState() {
+    super.initState();
+    _warnings = ref.read(screenTimeProvider).warnings.listen((_) {
+      _messenger.currentState?.showSnackBar(
+        const SnackBar(
+          key: Key('time-warning'),
+          duration: Duration(seconds: 6),
+          content: Text(
+            '2 minutes left! Finish this question.',
+            style: TextStyle(fontSize: AppText.body),
+          ),
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _warnings?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Number Ninja',
+      scaffoldMessengerKey: _messenger,
       theme: buildTheme(),
       routerConfig: ref.watch(routerProvider),
       debugShowCheckedModeBanner: false,

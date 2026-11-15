@@ -53,7 +53,7 @@ Not in scope: per-weekday limits, usage history in the dashboard (FEAT-06), stop
       Done when: `scripts/check.sh 'flutter test test/domain'` passes with the AC-1 tests.
 - [x] T2 — Data `UsageRepository` (`addSeconds`, `status`, `latestDay`, `grantExtra`, `setDailyLimit`), provider.
       Done when: the AC-2 tests and existing `test/data` tests pass.
-- [ ] T3 — `ScreenTimeController` (timer, lifecycle, child-route gating, lock state), `/locked` route and redirect, SCR-07, home minutes left; override in `main()` and test helpers.
+- [x] T3 — `ScreenTimeController` (timer, lifecycle, child-route gating, lock state), `/locked` route and redirect, SCR-07, home minutes left; override in `main()` and test helpers.
       Done when: AC-3 and AC-6 widget tests and `flutter test test/features` pass.
 - [ ] T4 — Grace hold in quiz and result, warning SnackBar.
       Done when: AC-4 widget tests and the existing quiz tests pass.

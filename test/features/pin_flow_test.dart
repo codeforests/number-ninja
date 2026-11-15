@@ -10,6 +10,7 @@ import 'package:number_ninja/domain/pin.dart';
 import 'package:number_ninja/features/home/home_screen.dart';
 import 'package:number_ninja/features/parent/parent_screen.dart';
 import 'package:number_ninja/features/parent/pin_entry_screen.dart';
+import 'package:number_ninja/features/screen_time/screen_time_controller.dart';
 import 'package:number_ninja/features/setup/setup_pin_screen.dart';
 import 'package:number_ninja/providers.dart';
 
@@ -41,6 +42,7 @@ void main() {
           databaseProvider.overrideWithValue(db),
           clockProvider.overrideWithValue(clock),
           pinRepositoryProvider.overrideWithValue(repo()),
+          elapsedProvider.overrideWithValue(() => Duration.zero),
           appSessionProvider.overrideWithValue(
             AppSession(hasPin: hasPin, clock: clock),
           ),
@@ -187,20 +189,20 @@ void main() {
 
   test('redirects: setup until a PIN exists, parent routes need unlock', () {
     final session = AppSession(hasPin: false, clock: clock);
-    expect(redirectFor(session, Routes.home), Routes.setup);
-    expect(redirectFor(session, Routes.parent), Routes.setup);
-    expect(redirectFor(session, Routes.setup), isNull);
+    expect(redirectFor(session, false, Routes.home), Routes.setup);
+    expect(redirectFor(session, false, Routes.parent), Routes.setup);
+    expect(redirectFor(session, false, Routes.setup), isNull);
 
     session.pinCreated();
-    expect(redirectFor(session, Routes.setup), Routes.home);
-    expect(redirectFor(session, Routes.home), isNull);
-    expect(redirectFor(session, Routes.parent), Routes.pinEntry);
-    expect(redirectFor(session, Routes.changePin), Routes.pinEntry);
-    expect(redirectFor(session, Routes.pinEntry), isNull);
+    expect(redirectFor(session, false, Routes.setup), Routes.home);
+    expect(redirectFor(session, false, Routes.home), isNull);
+    expect(redirectFor(session, false, Routes.parent), Routes.pinEntry);
+    expect(redirectFor(session, false, Routes.changePin), Routes.pinEntry);
+    expect(redirectFor(session, false, Routes.pinEntry), isNull);
 
     session.unlockParent();
-    expect(redirectFor(session, Routes.parent), isNull);
+    expect(redirectFor(session, false, Routes.parent), isNull);
     now = now.add(AppSession.unlockFor);
-    expect(redirectFor(session, Routes.parent), Routes.pinEntry);
+    expect(redirectFor(session, false, Routes.parent), Routes.pinEntry);
   });
 }
