@@ -1,6 +1,6 @@
 # Number Ninja: Requirements
 
-> Version 2.0 draft · 2026-11-15 (1.0 signed off by Ken 2026-11-14; 1.1 adds D9, PRC-11, NFR-09, NFR-10 from his M1 check; 2.0 is the phase 2 amendment, D10–D16, waiting for Ken's sign-off)
+> Version 2.0 · 2026-11-15 (1.0 signed off by Ken 2026-11-14; 1.1 adds D9, PRC-11, NFR-09, NFR-10 from his M1 check; 2.0 is the phase 2 amendment, D10–D16, signed off by Ken 2026-11-15)
 > This file is also the traceability matrix: the **Feature** column is filled by planning, **Verified by** by each feature's verify step. IDs are permanent and never reused; a dropped requirement keeps its row marked *Removed*.
 
 ## 1. Purpose and scope
