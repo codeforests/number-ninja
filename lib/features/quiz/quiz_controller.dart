@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart' show immutable;
 
 import '../../domain/progress.dart' as progress;
+import '../../domain/question.dart';
 import '../../domain/quiz.dart';
 import '../../domain/round_builder.dart';
 import '../../providers.dart';
@@ -85,11 +86,23 @@ class QuizController extends Notifier<RoundState> {
       final repo = ref.read(roundRepositoryProvider);
       final level = await repo.levelFor(topicId);
       final recent = await repo.recentCorrectIds(topicId);
+      final random = ref.read(quizRandomProvider);
+      final stats = await ref.read(statsRepositoryProvider.future);
+      final mixTopic = await stats.mixInTopic(topicId);
+      final mixIn = mixTopic == null
+          ? const <Question>[]
+          : pickMixIn(
+              candidates: bank.byTopic[mixTopic] ?? const [],
+              level: await repo.levelFor(mixTopic),
+              recentCorrect: await repo.recentCorrectIds(mixTopic),
+              random: random,
+            );
       final questions = buildRound(
         topicQuestions: bank.byTopic[topicId] ?? const [],
         level: level,
         recentCorrect: recent,
-        random: ref.read(quizRandomProvider),
+        random: random,
+        mixIn: mixIn,
       );
       if (questions.isEmpty) throw StateError('no questions for $topicId');
       final roundId = await repo.startRound(topicId, level);

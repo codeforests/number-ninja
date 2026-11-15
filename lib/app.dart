@@ -9,9 +9,13 @@ import 'features/quiz/quiz_controller.dart';
 import 'features/quiz/quiz_screen.dart';
 import 'features/topics/topic_map_screen.dart';
 import 'features/quiz/result_screen.dart';
+import 'domain/stats.dart';
 import 'features/parent/change_pin_screen.dart';
+import 'features/parent/dashboard_screen.dart';
 import 'features/parent/parent_screen.dart';
 import 'features/parent/pin_entry_screen.dart';
+import 'features/parent/reset_screen.dart';
+import 'features/parent/topic_detail_screen.dart';
 import 'features/screen_time/lock_screen.dart';
 import 'features/screen_time/screen_time_controller.dart';
 import 'features/setup/setup_pin_screen.dart';
@@ -24,6 +28,11 @@ abstract final class Routes {
   static const pinEntry = '/parent/pin'; // SCR-08
   static const parent = '/parent'; // SCR-11
   static const changePin = '/parent/change-pin'; // SCR-11 (change PIN)
+  static const dashboard = '/parent/dashboard'; // SCR-09, `?p=7|30|all`
+  static const reset = '/parent/reset'; // SCR-11 (reset progress, PAR-10)
+  static String dashboardFor(StatsPeriod p) => '$dashboard?p=${p.query}';
+  static String topicDetail(String topicId, StatsPeriod p) =>
+      '/parent/topic/$topicId?p=${p.query}'; // SCR-10
   static String play(String track) => '/play/$track'; // SCR-03
   static String quiz(String topicId) => '/quiz/$topicId'; // SCR-04
   static const result = '/result'; // SCR-05, the RoundSummary as extra
@@ -101,6 +110,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'change-pin',
             builder: (context, state) => const ChangePinScreen(),
+          ),
+          GoRoute(
+            path: 'dashboard',
+            builder: (context, state) => DashboardScreen(
+              period: StatsPeriod.fromQuery(state.uri.queryParameters['p']),
+            ),
+          ),
+          GoRoute(
+            path: 'topic/:topicId',
+            builder: (context, state) => TopicDetailScreen(
+              topicId: state.pathParameters['topicId']!,
+              period: StatsPeriod.fromQuery(state.uri.queryParameters['p']),
+            ),
+          ),
+          GoRoute(
+            path: 'reset',
+            builder: (context, state) => const ResetScreen(),
           ),
         ],
       ),

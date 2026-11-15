@@ -8,8 +8,8 @@ import '../../providers.dart';
 import '../../ui/theme.dart';
 import '../screen_time/screen_time_controller.dart';
 
-/// SCR-11: parent area: screen time (FEAT-05) and Change PIN; FEAT-06..07
-/// add more.
+/// SCR-11: parent area: Progress (FEAT-06), screen time (FEAT-05), Change
+/// PIN and reset progress; FEAT-07 adds more.
 class ParentScreen extends ConsumerWidget {
   const ParentScreen({super.key});
 
@@ -35,6 +35,16 @@ class ParentScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.gap),
         children: [
+          ListTile(
+            key: const Key('open-dashboard'),
+            minTileHeight: AppSizes.minTap,
+            leading: const Icon(Icons.insights),
+            title: const Text('Progress'),
+            subtitle: const Text('Accuracy, speed and trends per topic'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go(Routes.dashboard),
+          ),
+          const Divider(height: AppSizes.gap * 2),
           const _ScreenTimeSection(),
           const Divider(height: AppSizes.gap * 2),
           ListTile(
@@ -44,6 +54,17 @@ class ParentScreen extends ConsumerWidget {
             title: const Text('Change PIN'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go(Routes.changePin),
+          ),
+          const Divider(height: AppSizes.gap * 2),
+          ListTile(
+            key: const Key('reset-progress'),
+            minTileHeight: AppSizes.minTap,
+            iconColor: Theme.of(context).colorScheme.error,
+            textColor: Theme.of(context).colorScheme.error,
+            leading: const Icon(Icons.delete_forever),
+            title: const Text('Reset all progress'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go(Routes.reset),
           ),
         ],
       ),

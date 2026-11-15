@@ -17,6 +17,10 @@ class RoundRepository {
   /// FEAT-05 may take this over.
   int? _sessionId;
 
+  /// Drops the cached session after a progress reset deleted it (PAR-10),
+  /// so the next round starts a new one.
+  void forgetSession() => _sessionId = null;
+
   Future<int> _session() async => _sessionId ??= await db
       .into(db.playSessions)
       .insert(PlaySessionsCompanion.insert(startedAt: clock()));

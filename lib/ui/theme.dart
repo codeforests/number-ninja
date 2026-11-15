@@ -23,6 +23,12 @@ abstract final class AppColors {
   static const coinSilver = Color(0xFFC9CDD2);
   static const wood = Color(0xFFF3D9A4);
   static const shade = Color(0xFF7E86E8); // shaded fraction parts, bar units
+
+  // Dashboard tracks and charts (PAR-05, PAR-06).
+  static const trackP1 = Color(0xFF1E88E5);
+  static const trackP2 = Color(0xFFFF8A00);
+  static const trackOly = Color(0xFF8E24AA);
+  static const chartGrid = Color(0xFFDDDDE6);
 }
 
 abstract final class AppRadii {
@@ -35,6 +41,11 @@ abstract final class AppSizes {
   static const minTap = 64.0;
   static const pinKey = 72.0;
   static const gap = 16.0;
+
+  /// Trend chart plot height and dot radius on parent screens.
+  static const chartHeight = 180.0;
+  static const chartDot = 4.0;
+  static const chartLine = 2.5;
 }
 
 abstract final class AppText {
@@ -42,6 +53,10 @@ abstract final class AppText {
   static const heading = 28.0;
   static const body = 22.0;
   static const small = 20.0; // smallest text on child screens (NFR-03)
+
+  /// Parent screens only: chart axis labels and table details.
+  static const chartLabel = 14.0;
+  static const parentBody = 16.0;
 }
 
 ThemeData buildTheme() {
