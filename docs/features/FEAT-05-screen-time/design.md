@@ -1,7 +1,7 @@
 # FEAT-05: Screen-time lock
 
 > Implements: TIM-01..06 · Screens: SCR-02 (minutes left), SCR-07 (lock), SCR-11 (limit and extra time), SCR-04/05 (finish the current question)
-> Status: built (T1–T6) · Branch: `feat/FEAT-05-screen-time` · 2026-11-15
+> Status: verified, accepted (T1–T6) · Branch: `feat/FEAT-05-screen-time` · 2026-11-15
 
 ## Scope
 
