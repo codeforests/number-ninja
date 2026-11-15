@@ -19,7 +19,7 @@ const topics = <Topic>[
   Topic('p1.shapes', Track.p1, 'Shapes and patterns'),
   Topic('p1.graphs', Track.p1, 'Picture graphs'),
   Topic('p2.place', Track.p2, 'Numbers to 1000'),
-  Topic('p2.regroup', Track.p2, 'Add and subtract with regrouping'),
+  Topic('p2.regroup', Track.p2, 'Add and subtract'),
   Topic('p2.times', Track.p2, 'Times tables'),
   Topic('p2.divide', Track.p2, 'Division'),
   Topic('p2.fractions', Track.p2, 'Fractions'),

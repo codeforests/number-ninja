@@ -3,12 +3,10 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart' show immutable;
 
+import '../../domain/progress.dart' as progress;
 import '../../domain/quiz.dart';
 import '../../domain/round_builder.dart';
 import '../../providers.dart';
-
-/// Rounds are played at level 1 until FEAT-04 adds difficulty steps (PRC-09).
-const playLevel = 1;
 
 /// Shuffles rounds; overridden with a seeded one in tests.
 final quizRandomProvider = Provider<Random>((ref) => Random());
@@ -18,6 +16,7 @@ final quizRandomProvider = Provider<Random>((ref) => Random());
 class RoundSummary {
   const RoundSummary({
     required this.topicId,
+    required this.level,
     required this.score,
     required this.total,
     required this.durationMs,
@@ -25,16 +24,25 @@ class RoundSummary {
   });
 
   final String topicId;
+
+  /// The level the round was played at.
+  final int level;
   final int score;
   final int total;
   final int durationMs;
   final int stars;
+
+  /// The level the topic's next round is played at (PRC-09).
+  int get nextLevel => progress.nextLevel(level, stars);
+
+  bool get levelUp => nextLevel > level;
 }
 
 @immutable
 class RoundState {
   const RoundState({
     this.topicId,
+    this.level = progress.minLevel,
     this.roundId,
     this.quiz,
     this.saving = false,
@@ -42,6 +50,7 @@ class RoundState {
   });
 
   final String? topicId;
+  final int level;
   final int? roundId;
 
   /// Null while the round is being built.
@@ -53,6 +62,7 @@ class RoundState {
 
   RoundSummary get summary => RoundSummary(
     topicId: topicId!,
+    level: level,
     score: quiz!.score,
     total: quiz!.questions.length,
     durationMs: quiz!.durationMs,
@@ -66,24 +76,27 @@ class QuizController extends Notifier<RoundState> {
   @override
   RoundState build() => const RoundState();
 
-  /// Builds and starts a new round of [topicId].
+  /// Builds and starts a new round of [topicId] at its current level
+  /// (PRC-09).
   Future<void> start(String topicId) async {
     state = RoundState(topicId: topicId);
     try {
       final bank = await ref.read(bankProvider.future);
       final repo = ref.read(roundRepositoryProvider);
+      final level = await repo.levelFor(topicId);
       final recent = await repo.recentCorrectIds(topicId);
       final questions = buildRound(
         topicQuestions: bank.byTopic[topicId] ?? const [],
-        level: playLevel,
+        level: level,
         recentCorrect: recent,
         random: ref.read(quizRandomProvider),
       );
       if (questions.isEmpty) throw StateError('no questions for $topicId');
-      final roundId = await repo.startRound(topicId, playLevel);
+      final roundId = await repo.startRound(topicId, level);
       if (!ref.mounted) return;
       state = RoundState(
         topicId: topicId,
+        level: level,
         roundId: roundId,
         quiz: Quiz.start(questions, ref.read(clockProvider)()),
       );
@@ -101,6 +114,7 @@ class QuizController extends Notifier<RoundState> {
     final answered = quiz.answer(given, ref.read(clockProvider)());
     state = RoundState(
       topicId: s.topicId,
+      level: s.level,
       roundId: s.roundId,
       quiz: quiz,
       saving: true,
@@ -116,7 +130,12 @@ class QuizController extends Notifier<RoundState> {
       );
     }
     if (!ref.mounted) return;
-    state = RoundState(topicId: s.topicId, roundId: s.roundId, quiz: answered);
+    state = RoundState(
+      topicId: s.topicId,
+      level: s.level,
+      roundId: s.roundId,
+      quiz: answered,
+    );
   }
 
   /// The next question, or done after the last. No database or bank work.
@@ -126,6 +145,7 @@ class QuizController extends Notifier<RoundState> {
     if (quiz == null || quiz.phase != QuizPhase.feedback) return;
     state = RoundState(
       topicId: s.topicId,
+      level: s.level,
       roundId: s.roundId,
       quiz: quiz.next(ref.read(clockProvider)()),
     );

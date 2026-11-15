@@ -26,18 +26,21 @@ class FeedbackPanel extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
+        // Wraps on a narrow screen instead of overflowing (NFR-09).
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: AppSizes.gap,
           children: [
             Icon(
               right ? Icons.check_circle : Icons.cancel,
               color: color,
               size: AppText.title * 1.5,
             ),
-            const SizedBox(width: AppSizes.gap),
             Text(
               right ? 'Right!' : 'Not quite',
               key: const Key('feedback-title'),
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: AppText.title,
                 fontWeight: FontWeight.w800,

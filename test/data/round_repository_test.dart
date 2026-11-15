@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:number_ninja/data/database.dart';
 import 'package:number_ninja/data/round_repository.dart';
+import 'package:number_ninja/domain/progress.dart';
 import 'package:number_ninja/domain/quiz.dart';
 
 void main() {
@@ -69,5 +70,57 @@ void main() {
     expect(await repo.recentCorrectIds('t'), {'a', 'b', 'c'});
     expect(await repo.recentCorrectIds('other'), {'elsewhere'});
     expect(await repo.recentCorrectIds('none'), isEmpty);
+  });
+
+  group('progress (AC-2)', () {
+    Future<int> play(
+      String topic,
+      int level,
+      int stars, {
+      bool finish = true,
+    }) async {
+      now = now.add(const Duration(minutes: 1));
+      final id = await repo.startRound(topic, level);
+      await repo.saveAttempt(id, r('q', true));
+      if (finish) {
+        await repo.finishRound(id, score: 0, durationMs: 1000, stars: stars);
+      }
+      return id;
+    }
+
+    test('finishRound stamps finished_at with the clock', () async {
+      final id = await play('t', 1, 2);
+      final row = await (db.select(
+        db.rounds,
+      )..where((x) => x.id.equals(id))).getSingle();
+      expect(row.finishedAt, now);
+    });
+
+    test('a never-played topic is level 1 and absent from progress', () async {
+      expect(await repo.levelFor('t'), 1);
+      expect(await repo.progress(), isEmpty);
+    });
+
+    test('a quit round changes neither level nor best stars', () async {
+      await play('t', 1, 3); // -> level 2, best 3
+      await play('t', 2, 0, finish: false); // quit
+      expect(await repo.levelFor('t'), 2);
+      expect(
+        (await repo.progress())['t'],
+        const TopicProgress(bestStars: 3, level: 2, rounds: 1),
+      );
+      expect(await repo.finishedRounds(topicId: 't'), hasLength(1));
+    });
+
+    test('level follows the latest finished round, per topic', () async {
+      await play('t', 1, 3);
+      await play('u', 1, 2);
+      await play('t', 2, 1);
+      expect(await repo.levelFor('t'), 1);
+      expect(await repo.levelFor('u'), 1);
+      final p = await repo.progress();
+      expect(p['t'], const TopicProgress(bestStars: 3, level: 1, rounds: 2));
+      expect(p['u'], const TopicProgress(bestStars: 2, level: 1, rounds: 1));
+    });
   });
 }

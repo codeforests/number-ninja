@@ -65,13 +65,21 @@ class PictureGraphVisual extends StatelessWidget {
               ),
             if (scale > 1) ...[
               const SizedBox(height: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Each ', style: visualText),
-                  visualIcon(icon, 32),
-                  Text(' stands for $scale', style: visualText),
-                ],
+              // One text so it wraps under large text instead of
+              // overflowing (NFR-09).
+              Text.rich(
+                TextSpan(
+                  style: visualText,
+                  children: [
+                    const TextSpan(text: 'Each '),
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: visualIcon(icon, 32),
+                    ),
+                    TextSpan(text: ' stands for $scale'),
+                  ],
+                ),
+                textAlign: TextAlign.center,
               ),
             ],
           ],

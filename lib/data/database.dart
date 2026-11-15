@@ -32,6 +32,9 @@ class Rounds extends Table {
   IntColumn get score => integer().withDefault(const Constant(0))();
   IntColumn get durationMs => integer().withDefault(const Constant(0))();
   IntColumn get stars => integer().withDefault(const Constant(0))();
+
+  /// Null until the last answer is saved; a quit round stays null (schema v2).
+  DateTimeColumn get finishedAt => dateTime().nullable()();
 }
 
 /// Every answer she gives: the raw record behind every chart.
@@ -90,7 +93,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'number_ninja'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -99,10 +102,26 @@ class AppDatabase extends _$AppDatabase {
       await into(appSettings).insert(AppSettingsCompanion.insert());
       await into(pinLockout).insert(PinLockoutCompanion.insert());
     },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) await _from1To2(m);
+    },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  /// Adds `rounds.finished_at` and backfills it for rounds that got all
+  /// their answers (M1 rounds were always 10 questions).
+  Future<void> _from1To2(Migrator m) async {
+    await m.addColumn(rounds, rounds.finishedAt);
+    await customStatement('''
+      UPDATE rounds SET finished_at = (
+        SELECT MAX(answered_at) FROM attempts WHERE attempts.round_id = rounds.id
+      )
+      WHERE (SELECT COUNT(*) FROM attempts WHERE attempts.round_id = rounds.id)
+        >= 10
+    ''');
+  }
 
   Future<AppSetting> getSettings() =>
       (select(appSettings)..where((s) => s.id.equals(1))).getSingle();
