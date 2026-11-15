@@ -6,6 +6,7 @@ import 'data/database.dart';
 import 'data/pin_repository.dart';
 import 'data/question_bank_loader.dart';
 import 'data/round_repository.dart';
+import 'data/stats_repository.dart';
 import 'data/usage_repository.dart';
 import 'domain/question.dart';
 import 'domain/clock.dart';
@@ -39,6 +40,15 @@ final usageRepositoryProvider = Provider<UsageRepository>(
 final roundRepositoryProvider = Provider<RoundRepository>(
   (ref) => RoundRepository(
     ref.watch(databaseProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// Dashboard stats and progress reset (PAR-05..10). Needs the bank.
+final statsRepositoryProvider = FutureProvider<StatsRepository>(
+  (ref) async => StatsRepository(
+    ref.watch(databaseProvider),
+    await ref.watch(bankProvider.future),
     clock: ref.watch(clockProvider),
   ),
 );
