@@ -8,6 +8,7 @@ import 'data/question_bank_loader.dart';
 import 'data/round_repository.dart';
 import 'domain/question.dart';
 import 'domain/clock.dart';
+import 'domain/progress.dart';
 
 /// Overridden in main() and in tests.
 final databaseProvider = Provider<AppDatabase>(
@@ -35,6 +36,13 @@ final roundRepositoryProvider = Provider<RoundRepository>(
     clock: ref.watch(clockProvider),
   ),
 );
+
+/// Best stars and level per topic played (PRC-07). Auto-disposed, so a
+/// screen that shows it again re-reads it after every round.
+final topicProgressProvider =
+    FutureProvider.autoDispose<Map<String, TopicProgress>>(
+      (ref) => ref.watch(roundRepositoryProvider).progress(),
+    );
 
 /// Whether a PIN exists, and whether the parent area is unlocked.
 /// The router listens to it. Unlocking lasts 5 minutes, in memory only.

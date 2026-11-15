@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../domain/clock.dart';
+import '../domain/progress.dart';
 import '../domain/quiz.dart';
 import 'database.dart';
 
@@ -49,7 +50,8 @@ class RoundRepository {
         ),
       );
 
-  /// Writes the final score. An unfinished round keeps score 0.
+  /// Writes the final score and stamps `finished_at`. A quit round keeps
+  /// score 0 and no `finished_at`, so it never counts (PRC-09).
   Future<void> finishRound(
     int roundId, {
     required int score,
@@ -60,8 +62,34 @@ class RoundRepository {
       score: Value(score),
       durationMs: Value(durationMs),
       stars: Value(stars),
+      finishedAt: Value(clock()),
     ),
   );
+
+  /// Rounds with a `finished_at`, optionally of one topic.
+  Future<List<FinishedRound>> finishedRounds({String? topicId}) async {
+    final q = db.select(db.rounds)..where((r) => r.finishedAt.isNotNull());
+    if (topicId != null) q.where((r) => r.topicId.equals(topicId));
+    return [
+      for (final r in await q.get())
+        FinishedRound(
+          id: r.id,
+          topicId: r.topicId,
+          level: r.level,
+          stars: r.stars,
+          startedAt: r.startedAt,
+        ),
+    ];
+  }
+
+  /// Best stars and current level of every topic played (PRC-07, PRC-09).
+  Future<Map<String, TopicProgress>> progress() async =>
+      progressByTopic(await finishedRounds());
+
+  /// The level her next round of [topicId] is played at (PRC-09).
+  Future<int> levelFor(String topicId) async =>
+      progressByTopic(await finishedRounds(topicId: topicId))[topicId]?.level ??
+      minLevel;
 
   /// Question ids answered correctly in the topic's last [rounds] rounds,
   /// by start time (PRC-08).
