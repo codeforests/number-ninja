@@ -12,7 +12,7 @@ Fresh clone at `c9cfb37`, Flutter 3.50.0, the version CI pins.
 | `dart run build_runner build` | no diff (schema v4) |
 | `dart run tool/generate_bank.dart` | no diff |
 | `scripts/check.sh` (format, analyze, test) | all PASS, 735 tests |
-| CI on the final head (PR #14) | see PR checks (release APK build) |
+| CI run [43774106643](https://github.com/codeforests/number-ninja/actions/runs/43774106643) (`5700e13`, final code head) | success (incl. release APK build) |
 
 ## Acceptance criteria
 
