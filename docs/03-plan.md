@@ -23,6 +23,7 @@ Each feature is a vertical slice that ends in something Ken can install and try.
 | Feature | What it delivers | Requirements | Milestone |
 |---|---|---|---|
 | FEAT-10 | Child profile: SCR-12 after PIN setup and in the parent area, start level from the profile, greeting by nickname. Small feature (design and build in one thread). | PRO-01..04 | M5 |
+| FEAT-17 | School topic unlocking: each year's School topics open in order after the previous one is passed at 70 %, padlocks on SCR-03, years below her profile year open, parent can open any topic. Built right after FEAT-10, as it uses the profile's school year. Small feature. | PRC-12..14 | M5 |
 | FEAT-11 | Revision module: weak question types and recent mistakes behind `RevisionPlanner`, revision rounds from SCR-05 and the home screen (SCR-14), weak types on SCR-10 | REV-01..06 | M5 |
 | FEAT-12 | Server foundation: PocketBase and Caddy on the droplet from `server/`, collections and API rules with tests in CI, deploy workflow, daily backups and a restore drill, internet permission and HTTPS-only app config, a health check from the app | NFR-11..13, NFR-15 | M6 |
 | FEAT-13 | Parent account: SCR-13 with create account, verify, sign in, forgot password, Google sign-in, sign out, delete account, privacy note | ACC-01..07, NFR-14 | M6 |
@@ -30,7 +31,7 @@ Each feature is a vertical slice that ends in something Ken can install and try.
 | FEAT-15 | Server question bank: publish step in CI, download and checks in the app, safe switch between rounds, bank version on the parent area | BNK-07..12 | M7 |
 | FEAT-16 | New name and v2.0 release: app label, icon text, docs and README renamed (application id kept), full regression on the tablet, release APK | D16 | M7 |
 
-**Phase 2 milestones:** M5 = she gets the right starting level and revision rounds, still fully offline (FEAT-10..11); no server needed, so it can ship while Ken sets up the droplet. M6 = parent account and sync across devices (12–14). M7 = server question bank and v2.0 under the new name (15–16). Same sign-off and `m<N>` release rule as M1–M4; the v2.0 release after FEAT-16 merges is tagged `v2.0`.
+**Phase 2 milestones:** M5 = she gets the right starting level, School topics unlock in order, and revision rounds, still fully offline (FEAT-10, 17, 11; ids are permanent, so FEAT-17 is built before FEAT-11); no server needed, so it can ship while Ken sets up the droplet. M6 = parent account and sync across devices (12–14). M7 = server question bank and v2.0 under the new name (15–16). Same sign-off and `m<N>` release rule as M1–M4; the v2.0 release after FEAT-16 merges is tagged `v2.0`.
 
 **Milestones:** M1 = she can play a real round (FEAT-01..03). M2 = safe for daily use (04–05). M3 = parent insights and rewards (06–08). M4 = v1.0 (09). Ken tries the APK on the tablet at the end of each milestone and signs it off before the next one starts. When a milestone's last PR merges, run the CI workflow on `main` with input `release` = `m<N>` (e.g. `m1`): it publishes a GitHub Release with the release-signed `number-ninja-m<N>.apk` for him to install.
 

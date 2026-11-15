@@ -36,7 +36,7 @@ The app stays offline-first: screens read and write only the Drift database, as 
 | Collection | Fields | API rule |
 |---|---|---|
 | `users` (auth) | email, verified, name; Google linked as OAuth2 | own record only |
-| `children` | owner → users, nickname, school_year, start_level_school, start_level_olympiad, daily_limit_min, sound_on, field_times (json: last change per field), reset_epoch | `owner = @request.auth.id` |
+| `children` | owner → users, nickname, school_year, start_level_school, start_level_olympiad, unlocked_topics (parent-opened, FEAT-17), daily_limit_min, sound_on, field_times (json: last change per field), reset_epoch | `owner = @request.auth.id` |
 | `rounds` | child, uuid (unique), topic_id, level, kind (`normal` / `revision`), started_at, finished_at, score, duration_ms, stars, device_id | via `child.owner` |
 | `attempts` | child, uuid (unique), round_uuid, question_id, answer_given, correct, time_ms, answered_at | via `child.owner`; create only |
 | `badges` | child, badge_id (unique per child), earned_at | via `child.owner` |

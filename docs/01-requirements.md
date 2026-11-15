@@ -40,6 +40,7 @@ Number Ninja is an offline Android tablet app that helps one child (Singapore pr
 | D14 | The server runs on Ken's existing DigitalOcean droplet (self-hosted, no paid cloud service), reached over HTTPS only. Details and alternatives in [04-architecture.md](04-architecture.md) (ADR-01, ADR-02). | 2026-11-15 |
 | D15 | Sign-in with email and password (verification and forgot-password emails) and with Google. Account screens sit inside the PIN-protected parent area. | 2026-11-15 |
 | D16 | The app gets a new name because "Number Ninja" clashes on Google Play. Ken's choice (2026-11-15): **Brain Bubblz**, with the domain `brainbubblz.com` (display spelling to confirm in FEAT-16). An iOS app called "BrainBubbles" exists, so the "z" spelling matters. The Android application id stays `com.codeforests.number_ninja`, so the tablet updates in place and keeps her data. | 2026-11-15 |
+| D17 | School topics unlock in order (Ken, 2026-11-15): a School topic opens only after the topic before it in its year is passed with at least 70 % correct. Olympiad topics are never locked. Rules and defaults in PRC-12..14. | 2026-11-15 |
 
 ## 4. Functional requirements
 
@@ -76,6 +77,9 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | PRC-08 | Rounds shall avoid repeating a question she answered correctly in her last 3 rounds of that topic, while questions remain. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
 | PRC-09 | Difficulty shall step up after a 3-star round and down after a 0–1-star round in that topic. | S | FEAT-04 | FEAT-04 verify.md (2026-11-15) |
 | PRC-10 | Pictures (clocks, shapes, coins, bar models, picture graphs) shall be drawn from question data, not image files. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
+| PRC-12 | On the School track, each year's topics (P1, P2) shall unlock in the order of the design's topic list: the first topic of a year is open, and each later one opens when the topic before it has a finished normal round with at least 7 of 10 correct (70 %), at any level. Olympiad topics are always open. (D17) | M | FEAT-17 | |
+| PRC-13 | Topics of a school year below the year in her profile (PRO-01) shall be open from the start, and a topic she has already passed, or that the parent has opened, stays open. | M | FEAT-17 | |
+| PRC-14 | A locked topic shall show a padlock and which topic to pass first, and shall not start a round; in the parent area, with the PIN, the parent shall be able to open any locked topic. | M | FEAT-17 | |
 | PRC-11 | The app shall play short sound effects (right answer, wrong answer, round complete, 3 stars), bundled with the app; the parent shall be able to turn sound off. (D9) | S | FEAT-09 | FEAT-09 verify.md (2026-11-15) |
 
 ### Screen time (TIM)
