@@ -80,12 +80,12 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | PAR-02 | The parent area shall open only after the correct PIN; the PIN shall be stored only as a salted hash. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | PAR-03 | After 5 wrong PIN entries the app shall block PIN entry for 60 seconds. | S | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
 | PAR-04 | The parent shall be able to change the PIN after entering the current one. | M | FEAT-01 | FEAT-01 verify.md (2026-11-14) |
-| PAR-05 | The dashboard shall show, per topic, accuracy (% correct), average seconds per question and number of attempts, for a chosen period (7 days, 30 days, all time). | M | FEAT-06 | |
-| PAR-06 | The dashboard shall show weekly trends of accuracy and speed per track and per topic. | M | FEAT-06 | |
-| PAR-07 | The dashboard shall list "needs practice" topics: accuracy under 70% or average time above her own overall average, with at least 10 attempts. | S | FEAT-06 | |
-| PAR-08 | The parent shall be able to open a topic and see its most-missed and slowest questions. | S | FEAT-06 | |
+| PAR-05 | The dashboard shall show, per topic, accuracy (% correct), average seconds per question and number of attempts, for a chosen period (7 days, 30 days, all time). | M | FEAT-06 | FEAT-06 verify.md (2026-11-15) |
+| PAR-06 | The dashboard shall show weekly trends of accuracy and speed per track and per topic. | M | FEAT-06 | FEAT-06 verify.md (2026-11-15) |
+| PAR-07 | The dashboard shall list "needs practice" topics: accuracy under 70% or average time above her own overall average, with at least 10 attempts. | S | FEAT-06 | FEAT-06 verify.md (2026-11-15) |
+| PAR-08 | The parent shall be able to open a topic and see its most-missed and slowest questions. | S | FEAT-06 | FEAT-06 verify.md (2026-11-15) |
 | PAR-09 | The parent shall be able to export a PDF report (period, per-track summary, per-topic table, trend charts, needs-practice list) and share or save it through Android's share sheet. | M | FEAT-07 | |
-| PAR-10 | The parent shall be able to reset all progress after confirming with the PIN. | C | FEAT-06 | |
+| PAR-10 | The parent shall be able to reset all progress after confirming with the PIN. | C | FEAT-06 | FEAT-06 verify.md (2026-11-15) |
 
 ### Badges (BDG)
 
