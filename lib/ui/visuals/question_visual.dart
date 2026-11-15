@@ -1,15 +1,28 @@
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'bar_model_visual.dart';
 import 'clock_visual.dart';
 import 'coins_visual.dart';
 import 'figure_visual.dart';
 import 'fraction_visual.dart';
+import 'groups_visual.dart';
+import 'picture_graph_visual.dart';
 import 'ruler_visual.dart';
 import 'shapes_visual.dart';
 
 /// Every visual `kind` this app draws (`tool/bank/README.md`).
-const visualKinds = {'clock', 'coins', 'fraction', 'ruler', 'shapes', 'figure'};
+const visualKinds = {
+  'clock',
+  'coins',
+  'fraction',
+  'ruler',
+  'shapes',
+  'figure',
+  'groups',
+  'pictureGraph',
+  'barModel',
+};
 
 /// Draws a question's visual (PRC-10), scaled to the box it is given.
 /// An unknown kind draws nothing (and asserts in debug).
@@ -43,6 +56,35 @@ class QuestionVisual extends StatelessWidget {
         );
       case 'figure':
         return FigureVisual(name: v['name'] as String);
+      case 'groups':
+        return GroupsVisual(
+          groups: v['groups'] as int,
+          each: v['each'] as int,
+          icon: v['icon'] as String,
+        );
+      case 'pictureGraph':
+        return PictureGraphVisual(
+          title: v['title'] as String,
+          scale: v['scale'] as int,
+          icon: v['icon'] as String,
+          rows: [
+            for (final r in list<Map>('rows'))
+              (label: r['label'] as String, count: r['count'] as int),
+          ],
+        );
+      case 'barModel':
+        return BarModelVisual(
+          total: v['total'] as int?,
+          bars: [
+            for (final b in list<Map>('bars'))
+              (
+                label: b['label'] as String,
+                units: b['units'] as int,
+                unitValue: b['unitValue'] as int?,
+                known: b['known'] as int?,
+              ),
+          ],
+        );
     }
     assert(false, 'unknown visual kind ${v['kind']}');
     if (kDebugMode) debugPrint('unknown visual kind ${v['kind']}');

@@ -1,5 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:number_ninja/data/question_bank_loader.dart';
+import 'package:number_ninja/domain/question.dart';
+import 'package:number_ninja/ui/visuals/figure_visual.dart';
+import 'package:number_ninja/ui/visuals/icons.dart';
 import 'package:number_ninja/ui/visuals/question_visual.dart';
 
 /// Sample data per kind, incl. the extremes in the shipped bank.
@@ -52,6 +59,53 @@ const samples = <String, List<Map<String, dynamic>>>{
     {'kind': 'figure', 'name': 'grid-3x3'},
     {'kind': 'figure', 'name': 'grid-2x3'},
   ],
+  'groups': [
+    {'kind': 'groups', 'groups': 2, 'each': 5, 'icon': 'flower'},
+    {'kind': 'groups', 'groups': 9, 'each': 10, 'icon': 'crayon'},
+    {'kind': 'groups', 'groups': 3, 'each': 1, 'icon': 'apple'},
+  ],
+  'pictureGraph': [
+    {
+      'kind': 'pictureGraph',
+      'title': 'Favourite sport',
+      'rows': [
+        {'label': 'swimming', 'count': 5},
+        {'label': 'running', 'count': 1},
+        {'label': 'badminton', 'count': 7},
+      ],
+      'scale': 1,
+      'icon': 'child',
+    },
+    {
+      'kind': 'pictureGraph',
+      'title': 'Books read',
+      'rows': [
+        {'label': 'basketballs', 'count': 90},
+        {'label': 'b', 'count': 10},
+        {'label': 'c', 'count': 0},
+        {'label': 'd', 'count': 40},
+      ],
+      'scale': 10,
+      'icon': 'child',
+    },
+  ],
+  'barModel': [
+    {
+      'kind': 'barModel',
+      'bars': [
+        {'label': 'Jun Wei', 'units': 6, 'unitValue': 25},
+        {'label': 'Ben', 'units': 1, 'unitValue': 25},
+      ],
+    },
+    {
+      'kind': 'barModel',
+      'bars': [
+        {'label': 'Daniel', 'units': 1, 'known': 16},
+        {'label': 'Siti', 'units': 1},
+      ],
+      'total': 40,
+    },
+  ],
 };
 
 void main() {
@@ -79,5 +133,27 @@ void main() {
 
   test('every sampled kind is handled', () {
     expect(visualKinds, containsAll(samples.keys));
+  });
+
+  test('every visual kind and icon in the shipped bank is handled', () {
+    final bank = QuestionBank.fromJson(
+      jsonDecode(File(bankAsset).readAsStringSync()) as Map<String, dynamic>,
+    );
+    final kinds = {
+      for (final q in bank.questions)
+        if (q.visual != null) q.visual!['kind'] as String,
+    };
+    final icons = {
+      for (final q in bank.questions)
+        if (q.visual?['icon'] case final String i) i,
+    };
+    final figures = {
+      for (final q in bank.questions)
+        if (q.visual?['kind'] == 'figure') q.visual!['name'] as String,
+    };
+    expect(kinds, hasLength(9));
+    expect(visualKinds, containsAll(kinds));
+    expect(visualIcons.keys, containsAll(icons));
+    expect(FigureVisual.names, containsAll(figures));
   });
 }
