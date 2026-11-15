@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -69,7 +70,7 @@ class ScreenTimeController extends ChangeNotifier {
   DateTime? _timeUpAt;
   bool _graceGranted = false;
   bool _warned = false;
-  bool _locked = false;
+  final _locked = ValueNotifier(false);
 
   /// Null until the first read.
   ScreenTimeStatus? get status => _status;
@@ -89,7 +90,11 @@ class ScreenTimeController extends ChangeNotifier {
       clock().difference(_timeUpAt!) < graceCap;
 
   /// Child screens show SCR-07 (TIM-02).
-  bool get locked => _locked;
+  bool get locked => _locked.value;
+
+  /// Notifies only when [locked] changes; the router listens to this, so
+  /// a new status doesn't rebuild the route stack.
+  ValueListenable<bool> get lockedListenable => _locked;
 
   /// Counting runs only on child routes in the foreground (TIM-01).
   void setChildRoute(bool child) {
@@ -162,8 +167,8 @@ class ScreenTimeController extends ChangeNotifier {
   bool _recompute() {
     if (_disposed) return false;
     final now = _status != null && _status!.timeUp && !holding;
-    if (now == _locked) return false;
-    _locked = now;
+    if (now == _locked.value) return false;
+    _locked.value = now;
     notifyListeners();
     return true;
   }
@@ -174,6 +179,7 @@ class ScreenTimeController extends ChangeNotifier {
     _timer.cancel();
     _lifecycle.dispose();
     _warnings.close();
+    _locked.dispose();
     super.dispose();
   }
 }

@@ -57,7 +57,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final screenTime = ref.watch(screenTimeProvider);
   final router = GoRouter(
     initialLocation: Routes.home,
-    refreshListenable: Listenable.merge([session, screenTime]),
+    refreshListenable: Listenable.merge([session, screenTime.lockedListenable]),
     redirect: (context, state) =>
         redirectFor(session, screenTime.locked, state.matchedLocation),
     routes: [
