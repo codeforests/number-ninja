@@ -1,7 +1,7 @@
 # FEAT-07: PDF progress report
 
 > Implements: PAR-09 · Screens: SCR-11 (export tile and sheet), SCR-09 (export action)
-> Status: designed (T1–T5) · Branch: `feat/FEAT-07-pdf-report` · 2026-11-15
+> Status: built (T1–T5) · Branch: `feat/FEAT-07-pdf-report` · 2026-11-15
 
 ## Scope
 
@@ -40,13 +40,13 @@ Not in scope: printing (the share sheet's "Save to Files/Drive" covers saving), 
 
 ## Tasks
 
-- [ ] T1 — Add `pdf` and `printing` to `pubspec.yaml`; `AppPdf` sizes and `pdfColor` helper in `theme.dart`; push early so CI checks the release APK build with `printing`.
+- [x] T1 — Add `pdf` and `printing` to `pubspec.yaml`; `AppPdf` sizes and `pdfColor` helper in `theme.dart`; push early so CI checks the release APK build with `printing`.
       Done when: `flutter pub get` and `flutter analyze` pass, and CI's APK job is green on the pushed commit (if it fails on Gradle or minSdk, stop and record it in the handoff for design).
-- [ ] T2 — `lib/domain/report.dart` (`ReportData.build`, `reportFileName`).
+- [x] T2 — `lib/domain/report.dart` (`ReportData.build`, `reportFileName`).
       Done when: AC-1 and AC-3 tests pass: `scripts/check.sh 'flutter test test/domain/report_test.dart'`.
-- [ ] T3 — `lib/features/parent/report_pdf.dart` (layout, tables, `pw.CustomPaint` trend charts with gaps).
+- [x] T3 — `lib/features/parent/report_pdf.dart` (layout, tables, `pw.CustomPaint` trend charts with gaps).
       Done when: AC-2 tests pass.
-- [ ] T4 — `report_export.dart` (sharer provider, `exportReport`, `ExportSheet`), SCR-11 tile, SCR-09 action.
+- [x] T4 — `report_export.dart` (sharer provider, `exportReport`, `ExportSheet`), SCR-11 tile, SCR-09 action.
       Done when: AC-4 and AC-5 widget tests pass with `flutter test test/features/parent`.
-- [ ] T5 — AC-6 layout checks; design §9 build row if anything deviated; full `scripts/check.sh`; draft PR.
+- [x] T5 — AC-6 layout checks; design §9 build row if anything deviated; full `scripts/check.sh`; draft PR.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.
