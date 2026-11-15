@@ -61,6 +61,6 @@ v1 had no separate architecture document or ADRs: the design file per feature ca
 ## 5. Open for Ken (phase 2)
 
 1. **New app name (D16).** A quick web search (not a full Play Store or trademark search) found no app with these names: **Sum Sprout**, **Mathsmith**, **Brainy Bento**, **Kiasu Maths**. Already taken or too close: Sumurai (a maths puzzle game), Maths Dojo (Google Play), Count Kodo (too close to Todo Math). Please search Google Play for your favourite before deciding. Needed before FEAT-12 if the domain should match the name; the in-app rename lands in FEAT-16.
-2. **Hostname (ADR-02):** buy a domain (recommended) or use a free DuckDNS name. Needed before FEAT-12.
+2. **Hostname (ADR-02):** decided 2026-11-15: Ken buys a domain matching the new name (after D16), with `api.<domain>` pointing at the droplet. Needed before FEAT-12.
 3. **Setup before FEAT-12** ([04-architecture.md](04-architecture.md) §5): DNS record, repo secrets, email-service account; Google OAuth client before FEAT-13.
 4. **Optional:** DigitalOcean droplet backups for an off-box copy (about 20 % of the droplet's price).
