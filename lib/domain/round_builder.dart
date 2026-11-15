@@ -8,13 +8,54 @@ import 'question.dart';
 /// whose id is in [recentCorrect] last. If the level has fewer than [size],
 /// fills from the nearest other level (lower first on a tie), with the same
 /// preference. Never repeats a question. Returns at most [size].
+///
+/// [mixIn] (already picked with [pickMixIn], at most 2) are added first and
+/// the topic's own questions fill the rest; the whole round is then shuffled
+/// so they land in random positions (design §5).
 List<Question> buildRound({
   required List<Question> topicQuestions,
   required int level,
   required Set<String> recentCorrect,
   required Random random,
   int size = 10,
+  List<Question> mixIn = const [],
 }) {
+  if (mixIn.isNotEmpty) {
+    final mixed = mixIn.take(size).toList();
+    final ids = {for (final q in mixed) q.id};
+    final own = _pick(
+      [
+        for (final q in topicQuestions)
+          if (!ids.contains(q.id)) q,
+      ],
+      level,
+      recentCorrect,
+      random,
+      size - mixed.length,
+    );
+    return [...mixed, ...own]..shuffle(random);
+  }
+  return _pick(topicQuestions, level, recentCorrect, random, size);
+}
+
+/// Up to [count] questions of a needs-practice topic for a School round
+/// (design §5), from [candidates] at [level], with the same preference as
+/// [buildRound].
+List<Question> pickMixIn({
+  required List<Question> candidates,
+  required int level,
+  required Set<String> recentCorrect,
+  required Random random,
+  int count = 2,
+}) => _pick(candidates, level, recentCorrect, random, count);
+
+List<Question> _pick(
+  List<Question> topicQuestions,
+  int level,
+  Set<String> recentCorrect,
+  Random random,
+  int size,
+) {
   final byLevel = <int, List<Question>>{};
   final seen = <String>{};
   for (final q in topicQuestions) {
