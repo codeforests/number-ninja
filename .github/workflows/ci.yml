@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Milestone release tag, e.g. m1 (empty: build only)'
+        required: false
+        default: ''
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -13,6 +18,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -84,3 +91,15 @@ jobs:
           name: number-ninja-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+
+      - name: Milestone release (APK for Ken's device check)
+        if: github.event_name == 'workflow_dispatch' && inputs.release != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release }}
+        run: |
+          set -euo pipefail
+          cp build/app/outputs/flutter-apk/app-release.apk "number-ninja-$TAG.apk"
+          gh release create "$TAG" "number-ninja-$TAG.apk" \
+            --target "$GITHUB_SHA" --title "Number Ninja $TAG" \
+            --notes "Release-signed APK from $GITHUB_SHA for the milestone check on the tablet. Open this page on the tablet, download the APK and install it."
