@@ -59,6 +59,21 @@ abstract final class AppText {
   static const parentBody = 16.0;
 }
 
+/// PDF progress report (FEAT-07) sizes, in points. Colours come from
+/// [AppColors] through `pdfColor` in the report code.
+abstract final class AppPdf {
+  static const margin = 56.7; // 2 cm
+  static const title = 20.0;
+  static const heading = 13.0;
+  static const body = 10.0;
+  static const small = 8.0;
+  static const chartHeight = 140.0;
+  static const chartLine = 1.5;
+  static const chartDot = 2.0;
+  static const gap = 12.0;
+  static const cellPadding = 4.0;
+}
+
 ThemeData buildTheme() {
   final scheme = ColorScheme.fromSeed(
     seedColor: AppColors.ninja,
