@@ -57,7 +57,7 @@ Not in scope: per-weekday limits, usage history in the dashboard (FEAT-06), stop
       Done when: AC-3 and AC-6 widget tests and `flutter test test/features` pass.
 - [x] T4 — Grace hold in quiz and result, warning SnackBar.
       Done when: AC-4 widget tests and the existing quiz tests pass.
-- [ ] T5 — SCR-11 screen-time section (usage, limit stepper, extra time).
+- [x] T5 — SCR-11 screen-time section (usage, limit stepper, extra time).
       Done when: AC-5 widget tests pass.
 - [ ] T6 — AC-7 layout checks; full `scripts/check.sh`; draft PR.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.

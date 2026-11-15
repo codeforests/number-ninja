@@ -10,9 +10,6 @@ class UsageRepository implements UsageStore {
 
   final AppDatabase _db;
 
-  static const minLimit = 5;
-  static const maxLimit = 120;
-
   @override
   Future<String?> latestDay() async {
     final max = _db.dailyUsage.day.max();
@@ -73,7 +70,7 @@ class UsageRepository implements UsageStore {
   /// Saves the daily limit, clamped to 5–120 minutes (D5, TIM-04), and
   /// returns the saved value.
   Future<int> setDailyLimit(int minutes) async {
-    final m = minutes.clamp(minLimit, maxLimit);
+    final m = minutes.clamp(minDailyLimit, maxDailyLimit);
     await (_db.update(_db.appSettings)..where((s) => s.id.equals(1))).write(
       AppSettingsCompanion(dailyLimitMin: Value(m)),
     );

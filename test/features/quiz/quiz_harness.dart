@@ -137,6 +137,9 @@ class QuizHarness {
     elapsed += d;
   }
 
+  /// More overrides for one test, added after the defaults.
+  List<Override> more = [];
+
   List<Override> get overrides => [
     databaseProvider.overrideWithValue(db),
     clockProvider.overrideWithValue(clock),
@@ -147,6 +150,7 @@ class QuizHarness {
     appSessionProvider.overrideWithValue(
       AppSession(hasPin: true, clock: clock),
     ),
+    ...more,
   ];
 
   Future<void> pumpApp(

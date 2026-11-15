@@ -24,6 +24,10 @@ const warnAt = Duration(minutes: 2);
 /// A question left open may run at most this long after time is up (TIM-03).
 const graceCap = Duration(minutes: 2);
 
+/// The daily limit a parent can set, in minutes (D5, TIM-04).
+const minDailyLimit = 5;
+const maxDailyLimit = 120;
+
 /// How often used time is written to the database (design §5).
 const flushEvery = Duration(seconds: 10);
 
