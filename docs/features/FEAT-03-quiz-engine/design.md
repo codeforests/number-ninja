@@ -1,7 +1,7 @@
 # FEAT-03: Quiz engine
 
 > Implements: PRC-02, PRC-03, PRC-04, PRC-05, PRC-06, PRC-08, PRC-10, NFR-03, NFR-04, NFR-05 · Screens: SCR-04, SCR-05, SCR-03 (placeholder)
-> Status: designed · Branch: `feat/FEAT-03-quiz-engine` · 2026-11-15
+> Status: building (T1–T6 done) · Branch: `feat/FEAT-03-quiz-engine` · 2026-11-15
 
 ## Scope
 
@@ -48,17 +48,17 @@ Not in scope: stars on the topic map and difficulty steps (FEAT-04), screen-time
 
 ## Tasks
 
-- [ ] T1 — Domain: `stars.dart`, `round_builder.dart`, `quiz.dart` (incl. answer text helpers).
+- [x] T1 — Domain: `stars.dart`, `round_builder.dart`, `quiz.dart` (incl. answer text helpers).
       Done when: `scripts/check.sh 'flutter test test/domain'` passes with the AC-1 builder tests, `starsFor` (AC-5) and `Quiz` transitions and timing.
-- [ ] T2 — Data: `round_repository.dart` and `roundRepositoryProvider`.
+- [x] T2 — Data: `round_repository.dart` and `roundRepositoryProvider`.
       Done when: `test/data/round_repository_test.dart` passes (start, save, finish, `recentCorrectIds` over 4 rounds, AC-1).
-- [ ] T3 — Visuals part 1: `clock`, `coins`, `fraction`, `ruler`, `shapes`, `figure`, plus `question_visual.dart` dispatch and theme colours.
+- [x] T3 — Visuals part 1: `clock`, `coins`, `fraction`, `ruler`, `shapes`, `figure`, plus `question_visual.dart` dispatch and theme colours.
       Done when: a widget test renders each of these kinds from sample data at two box sizes without exceptions.
-- [ ] T4 — Visuals part 2: `groups`, `pictureGraph`, `barModel`; a test that every `kind` in the shipped bank is handled.
+- [x] T4 — Visuals part 2: `groups`, `pictureGraph`, `barModel`; a test that every `kind` in the shipped bank is handled.
       Done when: the same render test passes for all nine kinds and the shipped-bank kind test passes.
-- [ ] T5 — Answer widgets: MCQ, number keypad, drag (drag and tap).
+- [x] T5 — Answer widgets: MCQ, number keypad, drag (drag and tap).
       Done when: widget tests for each widget alone pass (the AC-2 interactions, on the widget, not yet the screen).
-- [ ] T6 — Quiz controller, SCR-04 with feedback panel, routes, home cards → placeholder topic list.
+- [x] T6 — Quiz controller, SCR-04 with feedback panel, routes, home cards → placeholder topic list.
       Done when: AC-2, AC-3, AC-4 and AC-8 widget/controller tests pass on SCR-04.
 - [ ] T7 — SCR-05 result, Play again and Home; the full-round test (AC-5, AC-9); the layout test (AC-6) and the size test (AC-7); full `scripts/check.sh`; draft PR.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.
