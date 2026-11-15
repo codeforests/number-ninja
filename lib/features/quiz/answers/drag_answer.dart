@@ -117,7 +117,6 @@ class _DragAnswerState extends State<DragAnswer> {
             minHeight: AppSizes.minTap * 1.2,
           ),
           padding: const EdgeInsets.symmetric(horizontal: AppSizes.gap),
-          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: candidates.isNotEmpty
                 ? AppColors.ninjaLight
@@ -125,12 +124,16 @@ class _DragAnswerState extends State<DragAnswer> {
             borderRadius: BorderRadius.circular(AppRadii.button),
             border: Border.all(color: AppColors.ninja, width: 3),
           ),
-          child: Text(
-            item == null ? '' : widget.items[item],
-            style: const TextStyle(
-              fontSize: AppText.heading,
-              fontWeight: FontWeight.w700,
-              color: AppColors.ink,
+          child: Center(
+            widthFactor: 1,
+            heightFactor: 1,
+            child: Text(
+              item == null ? '' : widget.items[item],
+              style: const TextStyle(
+                fontSize: AppText.heading,
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink,
+              ),
             ),
           ),
         ),
@@ -152,7 +155,6 @@ class _ChipBox extends StatelessWidget {
       minHeight: AppSizes.minTap * 1.2,
     ),
     padding: const EdgeInsets.symmetric(horizontal: AppSizes.gap),
-    alignment: Alignment.center,
     decoration: BoxDecoration(
       color: ghost ? AppColors.paper : AppColors.sun,
       borderRadius: BorderRadius.circular(AppRadii.button),
@@ -161,12 +163,16 @@ class _ChipBox extends StatelessWidget {
         width: 3,
       ),
     ),
-    child: Text(
-      text,
-      style: TextStyle(
-        fontSize: AppText.heading,
-        fontWeight: FontWeight.w700,
-        color: ghost ? AppColors.ninjaLight : AppColors.ink,
+    child: Center(
+      widthFactor: 1,
+      heightFactor: 1,
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: AppText.heading,
+          fontWeight: FontWeight.w700,
+          color: ghost ? AppColors.ninjaLight : AppColors.ink,
+        ),
       ),
     ),
   );

@@ -1,0 +1,207 @@
+import 'dart:async';
+import 'dart:math';
+
+import 'package:drift/drift.dart' show driftRuntimeOptions;
+import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:number_ninja/app.dart';
+import 'package:number_ninja/data/database.dart';
+import 'package:number_ninja/data/round_repository.dart';
+import 'package:number_ninja/domain/question.dart';
+import 'package:number_ninja/domain/quiz.dart';
+import 'package:number_ninja/features/quiz/quiz_controller.dart';
+import 'package:number_ninja/features/quiz/quiz_screen.dart';
+import 'package:number_ninja/providers.dart';
+
+/// Topics of the fake bank, one format each.
+const mcqTopic = 'p2.fractions';
+const numberTopic = 'p2.money';
+const dragTopic = 'p2.place';
+
+/// 12 level-1 questions per format, with visuals on some.
+QuestionBank fakeBank() => QuestionBank(
+  version: 1,
+  questions: [
+    for (var i = 0; i < 12; i++) ...[
+      Question(
+        id: '$mcqTopic.t.${i + 1}',
+        topic: mcqTopic,
+        level: 1,
+        format: QuestionFormat.mcq,
+        prompt: 'Which is bigger? ($i)',
+        options: const ['1/3', '1/5', '1/8', 'Equal'],
+        answer: '1/3',
+        explanation: 'Thirds are bigger pieces than fifths.',
+        visual: const {'kind': 'fraction', 'parts': 3, 'shaded': 1},
+      ),
+      Question(
+        id: '$numberTopic.t.${i + 1}',
+        topic: numberTopic,
+        level: 1,
+        format: QuestionFormat.number,
+        prompt: 'How much money is there in dollars? ($i)',
+        answer: '3.60',
+        explanation: r'$1 + $1 + $1 + 50¢ + 10¢ = $3.60',
+        visual: const {
+          'kind': 'coins',
+          'cents': [100, 100, 100, 50, 10],
+        },
+      ),
+      Question(
+        id: '$dragTopic.t.${i + 1}',
+        topic: dragTopic,
+        level: 1,
+        format: QuestionFormat.drag,
+        prompt: 'Put the numbers in order, smallest first. ($i)',
+        drag: const DragSpec(items: ['300', '103', '130', '31'], slots: 3),
+        answer: const ['103', '130', '300'],
+        explanation: '103 < 130 < 300',
+      ),
+    ],
+  ],
+);
+
+/// Counts repository calls (AC-8).
+class CountingRepository extends RoundRepository {
+  CountingRepository(super.db, {required super.clock});
+
+  int calls = 0;
+
+  /// When set, saveAttempt waits for it before writing (AC-3).
+  Completer<void>? gate;
+
+  @override
+  Future<int> startRound(String topicId, int level) {
+    calls++;
+    return super.startRound(topicId, level);
+  }
+
+  @override
+  Future<void> saveAttempt(int roundId, AnswerResult r) async {
+    calls++;
+    await gate?.future;
+    return super.saveAttempt(roundId, r);
+  }
+
+  @override
+  Future<void> finishRound(
+    int roundId, {
+    required int score,
+    required int durationMs,
+    required int stars,
+  }) {
+    calls++;
+    return super.finishRound(
+      roundId,
+      score: score,
+      durationMs: durationMs,
+      stars: stars,
+    );
+  }
+
+  @override
+  Future<Set<String>> recentCorrectIds(String topicId, {int rounds = 3}) {
+    calls++;
+    return super.recentCorrectIds(topicId, rounds: rounds);
+  }
+}
+
+/// An app with a PIN set, an in-memory database, a fake clock and a seeded
+/// round order, on a 1280 × 800 dp landscape tablet by default.
+class QuizHarness {
+  QuizHarness({QuestionBank? bank}) : bank = bank ?? fakeBank() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+    db = AppDatabase(NativeDatabase.memory());
+    repo = CountingRepository(db, clock: clock);
+  }
+
+  final QuestionBank bank;
+  late final AppDatabase db;
+  late final CountingRepository repo;
+  DateTime now = DateTime(2027, 1, 5, 9);
+  DateTime clock() => now;
+
+  void tick(Duration d) => now = now.add(d);
+
+  List<Override> get overrides => [
+    databaseProvider.overrideWithValue(db),
+    clockProvider.overrideWithValue(clock),
+    bankProvider.overrideWith((ref) => bank),
+    roundRepositoryProvider.overrideWithValue(repo),
+    quizRandomProvider.overrideWith((ref) => Random(42)),
+    appSessionProvider.overrideWithValue(
+      AppSession(hasPin: true, clock: clock),
+    ),
+  ];
+
+  Future<void> pumpApp(
+    WidgetTester tester, {
+    String? location,
+    Size size = const Size(2560, 1600),
+  }) async {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(overrides: overrides, child: const NumberNinjaApp()),
+    );
+    await tester.pumpAndSettle();
+    if (location != null) {
+      container(tester).read(routerProvider).go(location);
+      await tester.pumpAndSettle();
+    }
+  }
+
+  ProviderContainer container(WidgetTester tester) =>
+      ProviderScope.containerOf(tester.element(find.byType(NumberNinjaApp)));
+
+  RoundState round(WidgetTester tester) =>
+      ProviderScope.containerOf(tester.element(find.byType(QuizScreen)))
+          .read(quizControllerProvider);
+
+  Question current(WidgetTester tester) => round(tester).quiz!.current;
+
+  Future<void> tap(WidgetTester tester, String key) async {
+    await tester.tap(find.byKey(Key(key)));
+    await tester.pump();
+  }
+
+  /// Answers the current question on screen, right or wrong, and leaves
+  /// the feedback showing.
+  Future<void> answer(WidgetTester tester, {required bool right}) async {
+    final q = current(tester);
+    switch (q.format) {
+      case QuestionFormat.mcq:
+        final i = q.options!.indexOf(q.answer as String);
+        await tap(tester, 'option-${right ? i : (i + 1) % q.options!.length}');
+      case QuestionFormat.number:
+        final text = right ? q.answer as String : '9';
+        for (final c in text.split('')) {
+          await tap(tester, 'key-${c == '.' ? 'dot' : c}');
+        }
+        await tap(tester, 'check');
+      case QuestionFormat.drag:
+        final want = q.answer as List<String>;
+        final order = right ? want : want.reversed.toList();
+        final used = <int>{};
+        for (final item in order) {
+          var i = -1;
+          do {
+            i = q.drag!.items.indexOf(item, i + 1);
+          } while (used.contains(i));
+          used.add(i);
+          await tap(tester, 'chip-$i');
+        }
+        await tap(tester, 'check');
+    }
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> next(WidgetTester tester) async {
+    await tester.tap(find.byKey(const Key('next')));
+    await tester.pumpAndSettle();
+  }
+}

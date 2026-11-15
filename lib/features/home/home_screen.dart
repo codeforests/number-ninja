@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../app.dart';
 import '../../ui/theme.dart';
 
-/// SCR-02: home. Track cards are placeholders until FEAT-04.
+/// SCR-02: home. Track cards open the placeholder topic list until FEAT-04.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -42,6 +42,7 @@ class HomeScreen extends StatelessWidget {
                         title: 'School',
                         subtitle: 'P1 and P2 maths',
                         icon: Icons.school,
+                        track: 'school',
                       ),
                     ),
                     SizedBox(width: AppSizes.gap * 2),
@@ -50,6 +51,7 @@ class HomeScreen extends StatelessWidget {
                         title: 'Olympiad',
                         subtitle: 'Puzzles and patterns',
                         icon: Icons.extension,
+                        track: 'olympiad',
                       ),
                     ),
                   ],
@@ -68,37 +70,38 @@ class _TrackCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
+    required this.track,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
+  final String track;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
-    return Opacity(
-      opacity: 0.6,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadii.card),
-          border: Border.all(color: AppColors.ninjaLight, width: 3),
-        ),
-        padding: const EdgeInsets.all(AppSizes.gap * 2),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 96, color: AppColors.ninja),
-            const SizedBox(height: AppSizes.gap),
-            Text(title, style: theme.headlineSmall),
-            Text(subtitle, style: theme.bodyLarge),
-            const SizedBox(height: AppSizes.gap),
-            Text(
-              'Coming soon',
-              style: theme.bodyMedium?.copyWith(color: AppColors.muted),
-            ),
-          ],
+    return Material(
+      color: AppColors.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        side: const BorderSide(color: AppColors.ninjaLight, width: 3),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: Key('track-$track'),
+        onTap: () => context.go(Routes.play(track)),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.gap * 2),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 96, color: AppColors.ninja),
+              const SizedBox(height: AppSizes.gap),
+              Text(title, style: theme.headlineSmall),
+              Text(subtitle, style: theme.bodyLarge),
+            ],
+          ),
         ),
       ),
     );
