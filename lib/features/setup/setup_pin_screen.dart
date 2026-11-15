@@ -35,8 +35,10 @@ class _SetupPinScreenState extends ConsumerState<SetupPinScreen> {
       return;
     }
     await ref.read(pinRepositoryProvider).setPin(pin);
-    ref.read(appSessionProvider).pinCreated();
-    if (mounted) context.go(Routes.home);
+    final session = ref.read(appSessionProvider)..pinCreated();
+    if (mounted) {
+      context.go(session.profilePending ? Routes.setupProfile : Routes.home);
+    }
   }
 
   @override

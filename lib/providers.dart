@@ -44,8 +44,10 @@ final profileRepositoryProvider = Provider<ProfileRepository>(
 );
 
 /// The saved child profile, or null before the parent sets one (PRO-01).
-final childProfileProvider = StreamProvider<ChildProfile?>(
-  (ref) => ref.watch(profileRepositoryProvider).watch(),
+/// Not a stream (pending drift timers in widget tests): SCR-12 invalidates
+/// it after a save.
+final childProfileProvider = FutureProvider.autoDispose<ChildProfile?>(
+  (ref) => ref.watch(profileRepositoryProvider).load(),
 );
 
 final usageRepositoryProvider = Provider<UsageRepository>(
