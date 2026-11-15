@@ -1,18 +1,18 @@
 # Handoff: FEAT-05 — Screen-time lock
-Branch: feat/FEAT-05-screen-time · PR: none · Updated: 2026-11-15 by design
-Stage done: design
-Next: build — kickoff: "Build FEAT-05 (from T1) on branch feat/FEAT-05-screen-time. Read AGENTS.md, docs/STATE.md and the feature's handoff.md, then do docs/03-plan.md §2 step 2."
+Branch: feat/FEAT-05-screen-time · PR: [#6](https://github.com/codeforests/number-ninja/pull/6) (draft) · Updated: 2026-11-15 by build
+Stage done: build (T1–T6 of 6)
+Next: verify — kickoff: "Verify FEAT-05 on branch feat/FEAT-05-screen-time. Read AGENTS.md, docs/STATE.md and the feature's handoff.md, then do docs/03-plan.md §2 steps 3–4."
 
 ## What the next stage needs
-- Read `design.md` here (all of it, 70 lines); design §4–§5 of `docs/02-design.md` for the tables and the clock rule. No schema change.
-- Only child routes count (home, `/play`, `/quiz`, `/result`, `/locked`); PIN entry and `/parent*` don't (§9 row 2026-11-15).
-- Keep timers out of the domain: `ScreenTimeClock.flush()` is driven by the controller's `Timer.periodic`; widget tests can drive it with `tester.pump(Duration(seconds: 10))` plus a fake elapsed source and clock.
-- `redirectFor` gains the screen-time argument: update its existing tests in `test/features/pin_flow_test.dart` without weakening them.
-- Test helpers that build the app (quiz_harness.dart, layout tests) need a `screenTimeProvider` override with a large allowance so existing tests don't lock.
-- Gotchas carried from FEAT-04: Ahem test font is wide (use Wrap/FittedBox on narrow rows); layout helpers in `test/ui/layout_checks.dart`.
+- Read `design.md` here, including "Build deviations": SCR-07 itself doesn't count; `redirectFor(session, locked, location)`; router refreshes only on `lockedListenable`; holds live in `QuizScreen`/`ResultScreen`; `elapsedProvider` is the test seam.
+- Code: `lib/domain/screen_time.dart`, `lib/data/usage_repository.dart`, `lib/features/screen_time/` (controller, lock screen), `app.dart` (route, redirect, warning SnackBar), `home_screen.dart`, `parent_screen.dart`, `quiz_screen.dart`, `result_screen.dart`.
+- Tests per AC: AC-1 `test/domain/screen_time_test.dart`; AC-2 `test/data/usage_repository_test.dart` (+ effectiveDay in the domain test); AC-3/AC-6 `test/features/screen_time/lock_test.dart`; AC-4 `grace_test.dart`; AC-5 `parent_time_test.dart`; AC-7 `lock_layout_test.dart`.
+- Test helper changes: `QuizHarness` got `elapsed`, `run(d)` (moves clock and elapsed), `more` overrides; `pin_flow_test.dart` overrides `elapsedProvider` with zero and passes `false` for `locked` in its redirect asserts.
+- Gotcha: refreshing GoRouter while on `/result` loses `extra` and bounces home, so don't put the whole controller in `refreshListenable`.
+- Local run: `scripts/check.sh` all PASS, 507 tests.
 
 ## Left to CI or later
-- APK build (CI only). Ken's M2 tablet check after merge: lock after the limit, PIN unlock, NFR-09 on a small device.
+- APK build and CI on PR #6. Ken's M2 tablet check after merge: lock after the limit, PIN unlock, NFR-09 on a small device; then publish `m2`.
 
 ## Pending for Ken
-- None blocking. FYI: moving the tablet clock forward starts a new day (out of scope; Android's settings lock covers it).
+- None blocking. FYI: moving the tablet clock forward starts a new day (Android's settings lock covers it).
