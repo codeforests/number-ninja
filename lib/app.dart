@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'features/badges/badge_shelf_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/quiz/quiz_controller.dart';
 import 'features/quiz/quiz_screen.dart';
@@ -37,6 +38,7 @@ abstract final class Routes {
   static String quiz(String topicId) => '/quiz/$topicId'; // SCR-04
   static const result = '/result'; // SCR-05, the RoundSummary as extra
   static const locked = '/locked'; // SCR-07
+  static const badges = '/badges'; // SCR-06
 
   /// The routes whose time counts as screen time (TIM-01). SCR-07 itself
   /// doesn't, so extra time a parent grants isn't used up on the lock.
@@ -44,7 +46,8 @@ abstract final class Routes {
       location == home ||
       location.startsWith('/play/') ||
       location.startsWith('/quiz/') ||
-      location == result;
+      location == result ||
+      location == badges;
 }
 
 /// Where a location should go instead, or null to stay (design: Routing).
@@ -94,6 +97,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             state.extra is RoundSummary ? null : Routes.home,
         builder: (context, state) =>
             ResultScreen(summary: state.extra! as RoundSummary),
+      ),
+      GoRoute(
+        path: Routes.badges,
+        builder: (context, state) => const BadgeShelfScreen(),
       ),
       GoRoute(
         path: Routes.locked,

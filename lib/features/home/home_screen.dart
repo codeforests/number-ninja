@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../app.dart';
+import '../../ui/badge_icons.dart';
+import '../badges/badge_shelf_screen.dart';
 import '../../domain/progress.dart';
 import '../../domain/topics.dart';
 import '../../providers.dart';
@@ -87,7 +89,13 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const _MinutesLeft(),
+                    const SizedBox(height: AppSizes.gap),
+                    const Wrap(
+                      spacing: AppSizes.gap * 2,
+                      runSpacing: AppSizes.gap,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [_MinutesLeft(), _BadgesButton()],
+                    ),
                     gap,
                     Expanded(
                       child: Flex(
@@ -127,6 +135,7 @@ class _MinutesLeft extends ConsumerWidget {
       builder: (context, _) {
         final status = screenTime.status;
         return Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.timer, color: AppColors.ninja),
             const SizedBox(width: AppSizes.gap / 2),
@@ -140,6 +149,29 @@ class _MinutesLeft extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Opens SCR-06, showing the latest badge when there is one (BDG-03).
+class _BadgesButton extends ConsumerWidget {
+  const _BadgesButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final latest = latestBadge(
+      ref.watch(earnedBadgesProvider).value ?? const {},
+    );
+    return SizedBox(
+      height: AppSizes.minTap,
+      child: OutlinedButton.icon(
+        key: const Key('badges-button'),
+        onPressed: () => context.go(Routes.badges),
+        icon: latest == null
+            ? const Icon(Icons.emoji_events)
+            : BadgeIcon(latest.id, size: AppSizes.badgeSmall),
+        label: Text(latest == null ? 'My badges' : 'Latest: ${latest.name}'),
+      ),
     );
   }
 }
