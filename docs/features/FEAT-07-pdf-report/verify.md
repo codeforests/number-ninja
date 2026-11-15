@@ -1,6 +1,21 @@
 # FEAT-07: Verify
 
-> Verified 2026-11-15 in a fresh thread that did not write the code · Commit under test: `42376c0` · Verdict: **rework** (one layout defect, small fix)
+> Re-verified 2026-11-15 in a fresh thread that did not write the code · Commit under test: `f16b182` · Verdict: **accepted**
+
+## Re-verify after rework (`f16b182`)
+
+| Check | Result |
+|---|---|
+| Fresh clone, Flutter 3.50.0: `flutter pub get`, `build_runner build`, `generate_bank.dart` | ok, no diff |
+| `scripts/check.sh` (format, analyze, test) | all PASS, 599 tests |
+| CI run [43697516776](https://github.com/codeforests/number-ninja/actions/runs/43697516776) (`f16b182`) | success (incl. APK build) |
+
+- **Rework 1 (chart heading split):** fixed. `_keep` now wraps its Column in `pw.Inseparable`. With the old `report_pdf.dart` restored, the new test "a chart heading stays on the page of its chart" fails (page 1 ends with the heading, no "100 %"); with the fix it passes. Rendered with `pdftoppm`/`pdftotext`: 30 days (3 pages) and all time (3 pages) both open page 2 with "Accuracy, last 8 weeks" and its chart, then the speed chart on the same page; 7 days is 2 pages with no chart split; empty is 1 page. Long topic tables split across pages with the header row repeated, which is fine.
+- **Rework 2 (rounding):** fixed. Mutating `.round()` to `.floor()` in `lib/domain/report.dart` now fails "non-whole accuracy rounds to the nearest whole %".
+- **Test diff since first verify** (`6901331..f16b182`): two tests and one helper added, no line removed. Against `main`: four test files, one doc-comment line reworded, nothing skipped or loosened.
+- AC-1 to AC-6 stand as below; PAR-09 Verified by filled.
+
+## First verify (`42376c0`, verdict rework)
 
 ## Checks re-run from a clean checkout
 

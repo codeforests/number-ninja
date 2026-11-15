@@ -84,7 +84,7 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | PAR-06 | The dashboard shall show weekly trends of accuracy and speed per track and per topic. | M | FEAT-06 | FEAT-06 verify.md (2026-11-15) |
 | PAR-07 | The dashboard shall list "needs practice" topics: accuracy under 70% or average time above her own overall average, with at least 10 attempts. | S | FEAT-06 | FEAT-06 verify.md (2026-11-15) |
 | PAR-08 | The parent shall be able to open a topic and see its most-missed and slowest questions. | S | FEAT-06 | FEAT-06 verify.md (2026-11-15) |
-| PAR-09 | The parent shall be able to export a PDF report (period, per-track summary, per-topic table, trend charts, needs-practice list) and share or save it through Android's share sheet. | M | FEAT-07 | |
+| PAR-09 | The parent shall be able to export a PDF report (period, per-track summary, per-topic table, trend charts, needs-practice list) and share or save it through Android's share sheet. | M | FEAT-07 | FEAT-07 verify.md (2026-11-15) |
 | PAR-10 | The parent shall be able to reset all progress after confirming with the PIN. | C | FEAT-06 | FEAT-06 verify.md (2026-11-15) |
 
 ### Badges (BDG)
