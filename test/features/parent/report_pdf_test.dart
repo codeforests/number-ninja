@@ -28,6 +28,16 @@ int pages(Uint8List bytes) =>
         .allMatches(latin1.decode(bytes))
         .length;
 
+/// The text of each content stream (one per page) in an uncompressed PDF,
+/// with words joined by spaces: `pdf` draws each word as its own string.
+List<String> pageTexts(Uint8List bytes) => [
+  for (final m in RegExp(
+    r'stream\r?\n(.*?)endstream',
+    dotAll: true,
+  ).allMatches(latin1.decode(bytes)))
+    RegExp(r'\[\((.*?)\)\]TJ').allMatches(m[1]!).map((w) => w[1]).join(' '),
+].where((t) => t.isNotEmpty).toList();
+
 void expectPdf(Uint8List bytes) =>
     expect(latin1.decode(bytes.sublist(0, 5)), '%PDF-');
 
@@ -40,6 +50,23 @@ void main() {
       expect(pages(bytes), greaterThanOrEqualTo(2));
       // The default, compressed file is valid too.
       expectPdf(await buildReportPdf(data));
+    });
+
+    test('a chart heading stays on the page of its chart', () async {
+      // 30 days puts the accuracy heading at the foot of page 1.
+      final data = ReportData.build(full(), StatsPeriod.days30, now);
+      final texts = pageTexts(await buildReportPdf(data, compress: false));
+      expect(texts.length, pages(await buildReportPdf(data, compress: false)));
+      final acc = texts.indexWhere((t) => t.contains('Accuracy, last 8 weeks'));
+      expect(acc, isNot(-1));
+      expect(texts[acc], contains('100 %')); // the chart's top axis label
+      final secs = texts.indexWhere(
+        (t) => t.contains('Seconds per question, last 8 weeks'),
+      );
+      expect(secs, isNot(-1));
+      // The speed chart's axis labels end in " s" after the heading.
+      final after = texts[secs].split('Seconds per question, last 8 weeks')[1];
+      expect(after, contains(' s'));
     });
 
     test('an empty report is one page', () async {

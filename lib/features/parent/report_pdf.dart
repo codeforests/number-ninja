@@ -123,9 +123,13 @@ Future<Uint8List> buildReportPdf(ReportData data, {bool compress = true}) {
   return doc.save();
 }
 
-pw.Widget _keep(List<pw.Widget> children) => pw.Column(
-  crossAxisAlignment: pw.CrossAxisAlignment.start,
-  children: children,
+/// Children that MultiPage moves to the next page as one block. A bare
+/// Column is a SpanningWidget, so MultiPage would split it.
+pw.Widget _keep(List<pw.Widget> children) => pw.Inseparable(
+  child: pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: children,
+  ),
 );
 
 List<pw.Widget> _section(String title) => [

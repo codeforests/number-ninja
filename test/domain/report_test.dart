@@ -91,6 +91,21 @@ void main() {
       );
     });
 
+    test('non-whole accuracy rounds to the nearest whole %', () {
+      final d = ReportData.build(
+        [
+          ...many('p1.bonds', 3, correct: 2), // 66.7 %
+          ...many('p2.times', 3, correct: 1), // 33.3 %
+        ],
+        StatsPeriod.days7,
+        now,
+      );
+      String topic(String id) =>
+          d.topics.firstWhere((r) => r.topicId == id).accuracy;
+      expect([topic('p1.bonds'), topic('p2.times')], ['67 %', '33 %']);
+      expect([d.tracks[0].accuracy, d.tracks[1].accuracy], ['67 %', '33 %']);
+    });
+
     test('a track with no answers shows "-"', () {
       final d = ReportData.build(
         many('p2.times', 3, correct: 3),
