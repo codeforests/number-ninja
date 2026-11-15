@@ -120,10 +120,10 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| PRO-01 | In the parent area the parent shall be able to set the child's nickname, school year and an optional starting level (1–3) per track. (D13) | M | FEAT-10 | |
-| PRO-02 | After first-run PIN setup (PAR-01) the app shall ask for the profile before the child can play; an existing install shall keep working and offer the profile in the parent area. | M | FEAT-10 | |
-| PRO-03 | A topic with no finished round shall start at the level the profile gives (the track override if set, else a level worked out from her school year and the topic's year), instead of level 1; after that PRC-09 applies. | M | FEAT-10 | |
-| PRO-04 | The home screen shall greet her by nickname. | C | FEAT-10 | |
+| PRO-01 | In the parent area the parent shall be able to set the child's nickname, school year and an optional starting level (1–3) per track. (D13) | M | FEAT-10 | FEAT-10 verify.md (2026-11-15) |
+| PRO-02 | After first-run PIN setup (PAR-01) the app shall ask for the profile before the child can play; an existing install shall keep working and offer the profile in the parent area. | M | FEAT-10 | FEAT-10 verify.md (2026-11-15) |
+| PRO-03 | A topic with no finished round shall start at the level the profile gives (the track override if set, else a level worked out from her school year and the topic's year), instead of level 1; after that PRC-09 applies. | M | FEAT-10 | FEAT-10 verify.md (2026-11-15) |
+| PRO-04 | The home screen shall greet her by nickname. | C | FEAT-10 | FEAT-10 verify.md (2026-11-15) |
 
 ### Revision (REV)
 
