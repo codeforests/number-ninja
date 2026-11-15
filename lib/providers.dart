@@ -6,6 +6,7 @@ import 'data/database.dart';
 import 'data/pin_repository.dart';
 import 'data/question_bank_loader.dart';
 import 'data/round_repository.dart';
+import 'data/usage_repository.dart';
 import 'domain/question.dart';
 import 'domain/clock.dart';
 import 'domain/progress.dart';
@@ -27,6 +28,11 @@ final pinRepositoryProvider = Provider<PinRepository>(
     ref.watch(databaseProvider),
     clock: ref.watch(clockProvider),
   ),
+);
+
+/// Daily screen-time usage and limit (TIM-01..05).
+final usageRepositoryProvider = Provider<UsageRepository>(
+  (ref) => UsageRepository(ref.watch(databaseProvider)),
 );
 
 /// One per app opening, so its play session is shared by every round.
