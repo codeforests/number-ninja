@@ -38,7 +38,7 @@ Not in scope: music, voice (D6), animations other than the SCR-05 celebration an
       Done when: AC-2 and AC-3 pass (`flutter test test/data test/features/quiz test/features/parent`).
 - [x] T3 — `AppColors` backgrounds and `AppDurations.celebration`, `KidBackground` on SCR-02..07, `Celebration` on SCR-05.
       Done when: AC-4 passes and the touched layout tests still pass (`flutter test test/features test/ui`).
-- [ ] T4 — Icon generator, `flutter_launcher_icons` config, mipmaps; version 1.0.0+2.
+- [x] T4 — Icon generator, `flutter_launcher_icons` config, mipmaps; version 1.0.0+2.
       Done when: AC-6's local parts pass (generator reruns with no diff, mipmaps present).
 - [ ] T5 — AC-5 layout checks; PRC-11, NFR-02, NFR-10 Feature cells; design §4 (`sound_on`) and §9 rows; code-map lines; full `scripts/check.sh`; PR ready for verify.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.
