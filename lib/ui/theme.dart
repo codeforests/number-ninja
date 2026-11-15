@@ -29,11 +29,25 @@ abstract final class AppColors {
   static const trackP2 = Color(0xFFFF8A00);
   static const trackOly = Color(0xFF8E24AA);
   static const chartGrid = Color(0xFFDDDDE6);
+
+  // Child screen backgrounds, top and bottom of the gradient (NFR-10).
+  // Light enough that ink text keeps its contrast.
+  static const bgHomeTop = Color(0xFFFFF3C4); // sunny yellow
+  static const bgHomeBottom = Color(0xFFFFE0EC); // soft pink
+  static const bgSchoolTop = Color(0xFFD9EEFF); // sky
+  static const bgSchoolBottom = Color(0xFFE0F6E6); // mint
+  static const bgOlyTop = Color(0xFFECE0FF); // lilac
+  static const bgOlyBottom = Color(0xFFFFE4F2); // pink
+  static const bgShape = Color(0x66FFFFFF); // faint white shapes
+
+  /// Confetti on SCR-05 (NFR-10).
+  static const confetti = [red, blue, yellow, green, orange, trackOly, sun];
 }
 
 abstract final class AppRadii {
   static const card = 24.0;
   static const button = 20.0;
+  static const confetti = 3.0;
 }
 
 abstract final class AppSizes {
@@ -55,6 +69,12 @@ abstract final class AppSizes {
 abstract final class AppMotion {
   /// The pop-in of a new badge on SCR-05 (BDG-02).
   static const badgePop = Duration(milliseconds: 600);
+
+  /// The confetti on SCR-05 (NFR-10).
+  static const celebration = Duration(milliseconds: 2500);
+
+  /// Each result star pops in this long after the one before (NFR-10).
+  static const starPop = Duration(milliseconds: 350);
 }
 
 abstract final class AppText {

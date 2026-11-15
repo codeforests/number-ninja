@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../ui/kid_background.dart';
 import '../../app.dart';
 import '../../domain/progress.dart';
 import '../../domain/topics.dart';
@@ -45,78 +46,86 @@ class TopicMapScreen extends ConsumerWidget {
           scaler.scale(AppText.small) * 1.5 +
           AppSizes.gap * 2.5,
     ].reduce((a, b) => a > b ? a : b);
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.gap * 2),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  SizedBox.square(
-                    dimension: AppSizes.minTap,
-                    child: IconButton.filledTonal(
-                      key: const Key('back'),
-                      iconSize: 36,
-                      onPressed: () => context.go(Routes.home),
-                      icon: const Icon(Icons.arrow_back, semanticLabel: 'Back'),
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.gap),
-                  Expanded(
-                    child: Text(
-                      track == TrackSlug.olympiad ? 'Olympiad' : 'School',
-                      style: theme.displaySmall,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSizes.gap),
-              Expanded(
-                child: CustomScrollView(
-                  key: const Key('topic-map'),
-                  slivers: [
-                    for (final t in tracks) ...[
-                      if (tracks.length > 1)
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: AppSizes.gap,
-                            ),
-                            child: Text(
-                              _sectionNames[t]!,
-                              key: Key('section-${t.name}'),
-                              style: theme.headlineSmall,
-                            ),
-                          ),
+    return KidBackground(
+      scene: track == TrackSlug.olympiad ? KidScene.olympiad : KidScene.school,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.gap * 2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    SizedBox.square(
+                      dimension: AppSizes.minTap,
+                      child: IconButton.filledTonal(
+                        key: const Key('back'),
+                        iconSize: 36,
+                        onPressed: () => context.go(Routes.home),
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          semanticLabel: 'Back',
                         ),
-                      SliverGrid(
-                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 300,
-                          mainAxisExtent: tileHeight,
-                          mainAxisSpacing: AppSizes.gap,
-                          crossAxisSpacing: AppSizes.gap,
-                        ),
-                        delegate: SliverChildListDelegate([
-                          for (final topic in topics)
-                            if (topic.track == t)
-                              _TopicTile(
-                                topic: topic,
-                                progress:
-                                    progress[topic.id] ?? TopicProgress.none,
-                              ),
-                        ]),
                       ),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: AppSizes.gap),
+                    ),
+                    const SizedBox(width: AppSizes.gap),
+                    Expanded(
+                      child: Text(
+                        track == TrackSlug.olympiad ? 'Olympiad' : 'School',
+                        style: theme.displaySmall,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
+                    ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSizes.gap),
+                Expanded(
+                  child: CustomScrollView(
+                    key: const Key('topic-map'),
+                    slivers: [
+                      for (final t in tracks) ...[
+                        if (tracks.length > 1)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSizes.gap,
+                              ),
+                              child: Text(
+                                _sectionNames[t]!,
+                                key: Key('section-${t.name}'),
+                                style: theme.headlineSmall,
+                              ),
+                            ),
+                          ),
+                        SliverGrid(
+                          gridDelegate:
+                              SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 300,
+                                mainAxisExtent: tileHeight,
+                                mainAxisSpacing: AppSizes.gap,
+                                crossAxisSpacing: AppSizes.gap,
+                              ),
+                          delegate: SliverChildListDelegate([
+                            for (final topic in topics)
+                              if (topic.track == t)
+                                _TopicTile(
+                                  topic: topic,
+                                  progress:
+                                      progress[topic.id] ?? TopicProgress.none,
+                                ),
+                          ]),
+                        ),
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AppSizes.gap),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

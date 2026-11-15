@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../ui/kid_background.dart';
 import '../../app.dart';
 import '../../ui/badge_icons.dart';
 import '../badges/badge_shelf_screen.dart';
@@ -57,58 +58,62 @@ class HomeScreen extends ConsumerWidget {
       ),
     ];
     const gap = SizedBox.square(dimension: AppSizes.gap * 2);
-    return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSizes.gap * 2),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight - AppSizes.gap * 4,
-              ),
-              child: IntrinsicHeight(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Number Ninja',
-                            style: theme.displaySmall,
-                          ),
-                        ),
-                        SizedBox(
-                          height: AppSizes.minTap,
-                          child: OutlinedButton.icon(
-                            key: const Key('parent-button'),
-                            onPressed: () => context.go(Routes.parent),
-                            icon: const Icon(Icons.lock_outline),
-                            label: const Text('Parent'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSizes.gap),
-                    const Wrap(
-                      spacing: AppSizes.gap * 2,
-                      runSpacing: AppSizes.gap,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [_MinutesLeft(), _BadgesButton()],
-                    ),
-                    gap,
-                    Expanded(
-                      child: Flex(
-                        direction: portrait ? Axis.vertical : Axis.horizontal,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return KidBackground(
+      scene: KidScene.home,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSizes.gap * 2),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - AppSizes.gap * 4,
+                ),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
                         children: [
-                          Expanded(child: cards[0]),
-                          gap,
-                          Expanded(child: cards[1]),
+                          Expanded(
+                            child: Text(
+                              'Number Ninja',
+                              style: theme.displaySmall,
+                            ),
+                          ),
+                          SizedBox(
+                            height: AppSizes.minTap,
+                            child: OutlinedButton.icon(
+                              key: const Key('parent-button'),
+                              onPressed: () => context.go(Routes.parent),
+                              icon: const Icon(Icons.lock_outline),
+                              label: const Text('Parent'),
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AppSizes.gap),
+                      const Wrap(
+                        spacing: AppSizes.gap * 2,
+                        runSpacing: AppSizes.gap,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [_MinutesLeft(), _BadgesButton()],
+                      ),
+                      gap,
+                      Expanded(
+                        child: Flex(
+                          direction: portrait ? Axis.vertical : Axis.horizontal,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: cards[0]),
+                            gap,
+                            Expanded(child: cards[1]),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
