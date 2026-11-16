@@ -154,11 +154,13 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                         runSpacing: AppSizes.gap,
                         alignment: WrapAlignment.center,
                         children: [
-                          FilledButton(
-                            key: const Key('play-again'),
-                            onPressed: () => _go(Routes.quiz(summary.topicId)),
-                            child: const Text('Play again'),
-                          ),
+                          if (!summary.revision)
+                            FilledButton(
+                              key: const Key('play-again'),
+                              onPressed: () =>
+                                  _go(Routes.quiz(summary.topicId)),
+                              child: const Text('Play again'),
+                            ),
                           FilledButton.tonal(
                             key: const Key('home'),
                             onPressed: () => _go(Routes.home),

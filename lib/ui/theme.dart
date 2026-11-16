@@ -32,6 +32,8 @@ abstract final class AppColors {
   static const trackP1 = Color(0xFF1E88E5);
   static const trackP2 = Color(0xFFFF8A00);
   static const trackOly = Color(0xFF8E24AA);
+  static const revision = Color(0xFF00897B); // revision card and SCR-14 (teal)
+  static const revisionLight = Color(0xFFDFF5F2);
   static const chartGrid = Color(0xFFDDDDE6);
 
   // Child screen backgrounds, top and bottom of the gradient (NFR-10).
