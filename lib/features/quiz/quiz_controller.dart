@@ -59,9 +59,13 @@ class RoundState {
     this.saving = false,
     this.error,
     this.newBadges = const [],
+    this.locked = false,
   });
 
   final String? topicId;
+
+  /// The topic is locked (PRC-14): no round was started.
+  final bool locked;
   final int level;
   final int? roundId;
 
@@ -97,6 +101,14 @@ class QuizController extends Notifier<RoundState> {
   Future<void> start(String topicId) async {
     state = RoundState(topicId: topicId);
     try {
+      // Listen, not read: an autoDispose provider read once is disposed
+      // before its future completes.
+      final sub = ref.listen(topicLocksProvider.future, (_, _) {});
+      final locks = await sub.read().whenComplete(sub.close);
+      if (locks[topicId]?.isLocked ?? false) {
+        if (ref.mounted) state = RoundState(topicId: topicId, locked: true);
+        return;
+      }
       final bank = await ref.read(bankProvider.future);
       final repo = ref.read(roundRepositoryProvider);
       final profile = await ref.read(profileRepositoryProvider).load();

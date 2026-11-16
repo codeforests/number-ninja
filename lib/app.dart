@@ -17,6 +17,7 @@ import 'features/parent/parent_screen.dart';
 import 'features/parent/pin_entry_screen.dart';
 import 'features/parent/reset_screen.dart';
 import 'features/parent/topic_detail_screen.dart';
+import 'features/parent/topic_locks_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/screen_time/lock_screen.dart';
 import 'features/screen_time/screen_time_controller.dart';
@@ -28,6 +29,7 @@ abstract final class Routes {
   static const setup = '/setup'; // SCR-01
   static const setupProfile = '/setup/profile'; // SCR-12, first run
   static const profile = '/parent/profile'; // SCR-12 from SCR-11
+  static const topicLocks = '/parent/topics'; // SCR-15
   static const home = '/'; // SCR-02
   static const pinEntry = '/parent/pin'; // SCR-08
   static const parent = '/parent'; // SCR-11
@@ -131,6 +133,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'profile',
             builder: (context, state) => const ProfileScreen(firstRun: false),
+          ),
+          GoRoute(
+            path: 'topics',
+            builder: (context, state) => const TopicLocksScreen(),
           ),
           GoRoute(
             path: 'change-pin',

@@ -68,6 +68,7 @@ The School track shows P1 and P2 topics; the Olympiad track shows `oly.*`.
 | `daily_usage` | day (yyyy-MM-dd), seconds_used, extra_seconds_granted | Screen time per day |
 | `badges_earned` | badge_id, earned_at | |
 | `pin_lockout` | id = 1, failed_count, locked_until | PAR-03 |
+| `topic_unlocks` | topic_id (primary key), opened_at | Schema v5 (FEAT-17): topics the parent opened (PRC-14); kept by the PAR-10 reset |
 
 Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored twice. Schema changes bump `schemaVersion` with a migration and a migration test.
 
@@ -78,6 +79,7 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 - **Stars (PRC-06):** 10/10 = 3 stars, 8–9 = 2, 6–7 = 1, else 0. Speed does not reduce stars, so she is never punished for being careful.
 - **Round builder (PRC-08, PRC-09):** picks 10 questions at the topic's current level, preferring ones not answered correctly in her last 3 rounds; mixes in up to 2 questions from a "needs practice" topic on the School track.
 - **Level (PRC-09):** a topic's current level is worked out from its latest finished round (level L, stars S), never stored: S = 3 → L + 1, S ≤ 1 → L − 1, else L, kept within 1–3. No finished round yet → the profile's start level (PRO-03, FEAT-10 design), or 1 without a profile. A quit round doesn't count. Best stars (PRC-07) = most stars in any finished round of the topic, at any level.
+- **Topic lock (PRC-12..14, FEAT-17):** worked out from finished rounds, the profile and `topic_unlocks`, never stored. Pass = a finished round with 7+ right, any level. A School topic is open when passed, played (any finished round), in a year below her profile year (no profile = P1), opened by the parent, or when the topic before it in its year is passed; the first topic of a year opens at or below her year, or when every topic of the year before is passed. Olympiad topics are always open.
 
 ## 6. Screens
 
@@ -95,6 +97,7 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 | SCR-10 | Topic detail | PAR-08 |
 | SCR-11 | Parent settings: daily limit, extra time, change PIN, export PDF, reset | TIM-04, PAR-04, PAR-09, PAR-10 |
 | SCR-12..14 | Phase 2: child profile, account, revision start; see [04-architecture.md](04-architecture.md) §3 | PRO, ACC, SYN, REV |
+| SCR-15 | School topics: lock state of each P1/P2 topic, parent opens one (FEAT-17) | PRC-14 |
 
 **Look:** bright, high-contrast, rounded. Colours, radii and text sizes are defined once in `lib/ui/theme.dart` and never hard-coded in screens. Child screens use 64 dp minimum tap targets and 20 sp minimum text (NFR-03). Landscape layout first: question on the left, answer area on the right (NFR-02). On smaller screens (NFR-09) the layout adapts by width and height rather than by device: halves side by side only when the screen is landscape and at least 600 dp wide, otherwise stacked; anything that doesn't fit scrolls instead of overlapping. The 12-inch landscape tablet still never scrolls during a question.
 
@@ -129,3 +132,4 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 | 2026-11-15 | FEAT-09 build: backgrounds follow the home tracks, School (P1 and P2) and Olympiad, not P1/P2 separately (`KidScene`); SCR-02, SCR-06 and SCR-07 use a sunny home scene; animation durations live in `AppMotion` (`celebration`, `starPop`). |
 | 2026-11-15 | Phase 2 plan: §1's "no server" holds for v1 only; the server, sync, bank hosting and privacy decisions are in [04-architecture.md](04-architecture.md) (ADR-01..08); screens SCR-12..14 added. Requirements 2.0 draft (D10–D16). |
 | 2026-11-15 | FEAT-10: schema v4 (`child_profile`, `app_settings.profile_pending`); an unplayed topic starts at the profile's start level (§5); SCR-12 at `/setup/profile` (first run) and `/parent/profile`. |
+| 2026-11-16 | FEAT-17: School topic lock derived like levels (§5), pass = 7+ right in a finished round, played topics stay open; `topic_unlocks` (schema v5) for parent openings, kept by reset; padlocks on SCR-03, guard in the quiz controller; new SCR-15 from SCR-11 (SCR-09 lists no topics before her first answers, so SCR-10 couldn't host it). |

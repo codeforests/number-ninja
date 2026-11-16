@@ -13,6 +13,8 @@ import 'package:number_ninja/data/round_repository.dart';
 import 'package:number_ninja/data/sound_player.dart';
 import 'package:number_ninja/domain/question.dart';
 import 'package:number_ninja/domain/quiz.dart';
+import 'package:number_ninja/domain/topic_lock.dart';
+import 'package:number_ninja/domain/topics.dart';
 import 'package:number_ninja/features/quiz/quiz_controller.dart';
 import 'package:number_ninja/features/quiz/quiz_screen.dart';
 import 'package:number_ninja/features/screen_time/screen_time_controller.dart';
@@ -152,6 +154,10 @@ class QuizHarness {
 
   final sounds = RecordingSoundPlayer();
 
+  /// False (default): every topic is open, so tests reach any topic
+  /// without seeding passes. True: the real FEAT-17 lock rules.
+  bool lockTopics = false;
+
   /// More overrides for one test, added after the defaults.
   List<Override> more = [];
 
@@ -166,6 +172,12 @@ class QuizHarness {
     appSessionProvider.overrideWithValue(
       AppSession(hasPin: true, clock: clock),
     ),
+    if (!lockTopics)
+      topicLocksProvider.overrideWith(
+        (ref) async => {
+          for (final t in topics) t.id: const TopicOpen(OpenReason.first),
+        },
+      ),
     ...more,
   ];
 

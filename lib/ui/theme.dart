@@ -24,6 +24,10 @@ abstract final class AppColors {
   static const wood = Color(0xFFF3D9A4);
   static const shade = Color(0xFF7E86E8); // shaded fraction parts, bar units
 
+  // Locked School topics (PRC-14).
+  static const locked = Color(0xFFEDEDF3);
+  static const lockedText = Color(0xFF55556A);
+
   // Dashboard tracks and charts (PAR-05, PAR-06).
   static const trackP1 = Color(0xFF1E88E5);
   static const trackP2 = Color(0xFFFF8A00);

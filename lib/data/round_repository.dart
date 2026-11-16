@@ -81,6 +81,7 @@ class RoundRepository {
           topicId: r.topicId,
           level: r.level,
           stars: r.stars,
+          score: r.score,
           startedAt: r.startedAt,
         ),
     ];

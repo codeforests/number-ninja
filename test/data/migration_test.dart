@@ -62,7 +62,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 4);
+    expect(version.data.values.single, 5);
 
     final rounds = await (db.select(
       db.rounds,
@@ -102,7 +102,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 4);
+    expect(version.data.values.single, 5);
     final settings = await db.getSettings();
     expect(settings.soundOn, isTrue);
     expect(settings.pinHash, 'h');
@@ -137,12 +137,63 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 4);
+    expect(version.data.values.single, 5);
     final settings = await db.getSettings();
     expect(settings.profilePending, isFalse);
     expect(settings.soundOn, isFalse);
     expect(settings.pinHash, 'h');
     expect(await db.select(db.childProfiles).get(), isEmpty);
     expect(await db.select(db.rounds).get(), hasLength(1));
+  });
+
+  test('v4 -> v5 adds an empty topic_unlocks (FEAT-17 AC-2)', () async {
+    final executor = NativeDatabase.memory(
+      setup: (raw) {
+        for (final sql in _v1) {
+          raw.execute(sql);
+        }
+        raw.execute('ALTER TABLE rounds ADD COLUMN finished_at INTEGER NULL');
+        raw.execute(
+          'ALTER TABLE app_settings ADD COLUMN sound_on INTEGER NOT NULL '
+          'DEFAULT 1 CHECK ("sound_on" IN (0, 1))',
+        );
+        raw.execute(
+          'ALTER TABLE app_settings ADD COLUMN profile_pending INTEGER NOT NULL '
+          'DEFAULT 1 CHECK ("profile_pending" IN (0, 1))',
+        );
+        raw.execute(
+          'CREATE TABLE "child_profile" ("id" INTEGER NOT NULL DEFAULT 1, '
+          '"nickname" TEXT NOT NULL, "school_year" INTEGER NOT NULL, '
+          '"school_start_level" INTEGER NULL, '
+          '"olympiad_start_level" INTEGER NULL, '
+          '"updated_at" INTEGER NOT NULL, PRIMARY KEY ("id"))',
+        );
+        raw.execute(
+          'INSERT INTO app_settings (id, pin_hash, profile_pending) '
+          'VALUES (1, ?, 0)',
+          ['h'],
+        );
+        raw.execute('INSERT INTO pin_lockout (id) VALUES (1)');
+        raw.execute(
+          'INSERT INTO child_profile (nickname, school_year, updated_at) '
+          "VALUES ('Mia', 2, 1)",
+        );
+        raw.execute('INSERT INTO play_sessions (started_at) VALUES (1)');
+        raw.execute(
+          'INSERT INTO rounds (session_id, topic_id, started_at, score, '
+          "finished_at) VALUES (1, 'p1.place', 1, 8, 2)",
+        );
+        raw.execute('PRAGMA user_version = 4');
+      },
+    );
+    final db = AppDatabase(executor);
+    addTearDown(db.close);
+
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.data.values.single, 5);
+    expect(await db.select(db.topicUnlocks).get(), isEmpty);
+    expect((await db.select(db.childProfiles).getSingle()).nickname, 'Mia');
+    expect((await db.select(db.rounds).getSingle()).score, 8);
+    expect((await db.getSettings()).pinHash, 'h');
   });
 }

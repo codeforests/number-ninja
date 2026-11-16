@@ -10,11 +10,14 @@ import 'data/question_bank_loader.dart';
 import 'data/round_repository.dart';
 import 'data/sound_player.dart';
 import 'data/stats_repository.dart';
+import 'data/topic_lock_repository.dart';
 import 'data/usage_repository.dart';
 import 'domain/question.dart';
 import 'domain/clock.dart';
 import 'domain/profile.dart';
 import 'domain/progress.dart';
+import 'domain/topic_lock.dart';
+import 'domain/topics.dart';
 
 /// Overridden in main() and in tests.
 final databaseProvider = Provider<AppDatabase>(
@@ -98,6 +101,25 @@ final topicProgressProvider =
     FutureProvider.autoDispose<Map<String, TopicProgress>>(
       (ref) => ref.watch(roundRepositoryProvider).progress(),
     );
+
+/// Topics the parent opened by hand (PRC-14).
+final topicLockRepositoryProvider = Provider<TopicLockRepository>(
+  (ref) => TopicLockRepository(
+    ref.watch(databaseProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// Lock state of every topic (PRC-12..14), worked out on each read.
+/// SCR-10 invalidates it after the parent opens or locks a topic.
+final topicLocksProvider = FutureProvider.autoDispose<Map<String, TopicLock>>(
+  (ref) async => topicLocks(
+    topics: topics,
+    rounds: await ref.watch(roundRepositoryProvider).finishedRounds(),
+    schoolYear: (await ref.watch(profileRepositoryProvider).load())?.schoolYear,
+    opened: await ref.watch(topicLockRepositoryProvider).opened(),
+  ),
+);
 
 /// Whether a PIN exists, and whether the parent area is unlocked.
 /// The router listens to it. Unlocking lasts 5 minutes, in memory only.

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../topics/topic_map_screen.dart' show TrackSlug;
 import '../../ui/kid_background.dart';
 import '../../app.dart';
 import '../../domain/question.dart';
@@ -78,6 +79,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // A locked topic starts no round: back to the School map (PRC-14).
+    ref.listen(quizControllerProvider.select((s) => s.locked), (_, locked) {
+      if (locked) context.go(Routes.play(TrackSlug.school));
+    });
     final s = ref.watch(quizControllerProvider);
     final quiz = s.quiz;
     return KidBackground(
