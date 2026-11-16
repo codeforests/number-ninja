@@ -140,13 +140,13 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| ACC-01 | From the parent area the parent shall be able to create an account with email and password (at least 8 characters); the server sends a verification email. (D15) | M | FEAT-13 | |
-| ACC-02 | The parent shall be able to sign in with email and password, or with Google. | M | FEAT-13 | |
-| ACC-03 | The parent shall be able to ask for a forgot-password email and set a new password from its link. | M | FEAT-13 | |
-| ACC-04 | Account screens shall be reachable only inside the PIN-protected parent area; the child never sees a sign-in prompt. | M | FEAT-13 | |
-| ACC-05 | The app shall keep the sign-in session in Android's encrypted storage and never store the password. | M | FEAT-13 | |
-| ACC-06 | The parent shall be able to sign out; progress stays on the device and syncing stops. | M | FEAT-13 | |
-| ACC-07 | The parent shall be able to delete the account, which deletes all of the child's data on the server after confirming with the PIN; data on the device stays. | M | FEAT-13 | |
+| ACC-01 | From the parent area the parent shall be able to create an account with email and password (at least 8 characters); the server sends a verification email. (D15) | M | FEAT-13 | FEAT-13 verify.md (2026-11-16; live at AC-6) |
+| ACC-02 | The parent shall be able to sign in with email and password, or with Google. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16; live at AC-6) |
+| ACC-03 | The parent shall be able to ask for a forgot-password email and set a new password from its link. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16; live at AC-6) |
+| ACC-04 | Account screens shall be reachable only inside the PIN-protected parent area; the child never sees a sign-in prompt. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16) |
+| ACC-05 | The app shall keep the sign-in session in Android's encrypted storage and never store the password. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16) |
+| ACC-06 | The parent shall be able to sign out; progress stays on the device and syncing stops. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16; live at AC-6) |
+| ACC-07 | The parent shall be able to delete the account, which deletes all of the child's data on the server after confirming with the PIN; data on the device stays. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16; live at AC-6) |
 
 ### Sync (SYN)
 
@@ -177,6 +177,6 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | NFR-11 | The app shall work fully with no network connection. It may request only the internet permission, used only for the account, sync and bank updates. (D10, replaces NFR-01) | M | FEAT-12 | FEAT-12 verify.md (2026-11-16) |
 | NFR-12 | All traffic between app and server shall use HTTPS with a valid certificate; the app shall allow no plain-HTTP traffic. | M | FEAT-12 | FEAT-12 verify.md (2026-11-16; live certificate at AC-6) |
 | NFR-13 | The server shall let a signed-in parent read and write only their own child's records, and let nobody write banks except the publish step; automated tests in CI shall prove these rules. | M | FEAT-12 | FEAT-12 verify.md (2026-11-16) |
-| NFR-14 | Child data shall be kept to the minimum (nickname, school year, practice data); no ads, analytics or tracking SDKs; the parent area shall carry a short privacy note on what is stored and where. Data is handled in line with Singapore's PDPA. | M | FEAT-13 | |
+| NFR-14 | Child data shall be kept to the minimum (nickname, school year, practice data); no ads, analytics or tracking SDKs; the parent area shall carry a short privacy note on what is stored and where. Data is handled in line with Singapore's PDPA. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16) |
 | NFR-15 | The server shall be set up from files in the repo (`server/`) with one deploy script, back up its data daily and keep 14 days of backups; a restore shall be tested once before v2.0. | M | FEAT-12 | FEAT-12 verify.md (2026-11-16; live backups and restore drill at AC-6) |
 | NFR-16 | Syncing a year of practice (about 20,000 attempts) for the first time shall finish within 60 seconds on home Wi-Fi, and later syncs shall send only what changed. | S | FEAT-14 | |
