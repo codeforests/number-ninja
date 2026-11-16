@@ -99,19 +99,32 @@ jobs:
           } > android/key.properties
 
       - name: Build release APK
-        run: flutter build apk --release
+        env:
+          SERVER_HOSTNAME: ${{ vars.SERVER_HOSTNAME }}
+        run: |
+          # FEAT-12 (ADR-02): the server URL is baked in; empty = offline only.
+          if [ -n "$SERVER_HOSTNAME" ]; then
+            flutter build apk --release --dart-define=SERVER_URL="https://$SERVER_HOSTNAME"
+          else
+            flutter build apk --release
+          fi
 
-      - name: Check release manifest (NFR-01, NFR-06)
+      - name: Check release manifest (NFR-01, NFR-06, NFR-11, NFR-12)
         run: |
           set -euo pipefail
           m=$(find build/app/intermediates -path '*release*' -name AndroidManifest.xml | grep -i merged | head -1)
           echo "Merged manifest: $m"
-          if grep -q 'android.permission.INTERNET' "$m"; then
-            echo "::error::Release manifest requests INTERNET"; exit 1
-          fi
           grep -o 'android:minSdkVersion="[0-9]*"' "$m"
           grep -q 'android:minSdkVersion="24"' "$m"
-          grep -o 'android.permission.[A-Z_]*' "$m" | sort -u || echo "No permissions"
+          perms=$(grep -o 'android.permission.[A-Z_]*' "$m" | sort -u)
+          echo "Permissions: $perms"
+          # FEAT-12: INTERNET (optional sync server) is the only permission.
+          if [ "$perms" != "android.permission.INTERNET" ]; then
+            echo "::error::Release permissions must be exactly INTERNET, got: $perms"; exit 1
+          fi
+          grep -q 'android:usesCleartextTraffic="false"' "$m" || { echo "::error::usesCleartextTraffic is not false"; exit 1; }
+          grep -q 'android:networkSecurityConfig="@xml/network_security_config"' "$m" || { echo "::error::no network security config"; exit 1; }
+          grep -q 'cleartextTrafficPermitted="false"' android/app/src/main/res/xml/network_security_config.xml
 
       - uses: actions/upload-artifact@v4
         with:
