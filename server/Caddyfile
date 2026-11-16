@@ -1,0 +1,9 @@
+# FEAT-12: the only public entry. Hostname from /etc/default/caddy
+# (SERVER_HOSTNAME=...), written by deploy.sh. Caddy gets the certificate.
+{$SERVER_HOSTNAME} {
+	encode gzip
+	# Admin UI is not public: open it through an SSH tunnel (server/README.md).
+	@admin path /_ /_/*
+	respond @admin 404
+	reverse_proxy 127.0.0.1:8090
+}
