@@ -1,0 +1,14 @@
+name: number_ninja_server_test
+description: API rule and backup tests against a live PocketBase (FEAT-12, NFR-13, NFR-15).
+publish_to: none
+
+environment:
+  sdk: ^3.14.0
+
+dependencies:
+  pocketbase: 0.26.0
+  http: ^1.2.0
+
+dev_dependencies:
+  test: ^1.25.0
+  lints: ^6.0.0

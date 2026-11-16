@@ -9,7 +9,7 @@
 # Superuser: PB_SUPERUSER_EMAIL / PB_SUPERUSER_PASSWORD (test defaults below).
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
-# shellcheck source=../server/VERSION
+# shellcheck source=/dev/null
 . "$root/server/VERSION"
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/pocketbase/$PB_VERSION"
 bin="$cache/pocketbase"

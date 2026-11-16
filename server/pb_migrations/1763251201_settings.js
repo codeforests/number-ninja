@@ -10,6 +10,9 @@ migrate((app) => {
   settings.backups.cronMaxKeep = 14;
   settings.rateLimits.enabled = true;
   settings.batch.enabled = false;
+  // Behind nginx every request comes from 127.0.0.1; take the client IP from
+  // the header nginx sets so rate limits apply per client.
+  settings.trustedProxy.headers = ["X-Real-IP"];
   settings.logs.maxDays = 7;
   app.save(settings);
 }, (app) => {
