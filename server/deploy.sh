@@ -10,6 +10,9 @@
 #   PB_SUPERUSER_EMAIL     PocketBase admin login
 #   PB_SUPERUSER_PASSWORD
 #   CERT_EMAIL             Let's Encrypt notices (default PB_SUPERUSER_EMAIL)
+# Optional (FEAT-13; unset leaves the feature off):
+#   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS
+#   GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
 # Remote paths expand locally on purpose (stage is a path we created).
 # shellcheck disable=SC2029
 set -euo pipefail
@@ -32,7 +35,14 @@ printf '%s\n' \
   "SERVER_HOSTNAME=$SERVER_HOSTNAME" \
   "PB_SUPERUSER_EMAIL=$PB_SUPERUSER_EMAIL" \
   "PB_SUPERUSER_PASSWORD=$PB_SUPERUSER_PASSWORD" \
-  "CERT_EMAIL=${CERT_EMAIL:-}" |
+  "CERT_EMAIL=${CERT_EMAIL:-}" \
+  "SMTP_HOST=${SMTP_HOST:-}" \
+  "SMTP_PORT=${SMTP_PORT:-}" \
+  "SMTP_USERNAME=${SMTP_USERNAME:-}" \
+  "SMTP_PASSWORD=${SMTP_PASSWORD:-}" \
+  "MAIL_SENDER_ADDRESS=${MAIL_SENDER_ADDRESS:-}" \
+  "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}" \
+  "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}" |
   ssh "${ssh_opts[@]}" "$target" "sudo bash '$stage/install.sh'" || status=$?
 ssh "${ssh_opts[@]}" "$target" "rm -rf '$stage'" || true
 [ "$status" -eq 0 ] || exit "$status"
