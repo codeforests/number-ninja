@@ -56,6 +56,14 @@ class ParentHarness extends QuizHarness {
   }
 
   Future<void> tapKey(WidgetTester tester, String key) async {
+    // A lazy list (SCR-11) may not have built a tile far down yet.
+    if (find.byKey(Key(key)).evaluate().isEmpty) {
+      await tester.scrollUntilVisible(
+        find.byKey(Key(key)),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+    }
     await tester.ensureVisible(find.byKey(Key(key)));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(Key(key)));

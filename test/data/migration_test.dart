@@ -62,7 +62,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 3);
+    expect(version.data.values.single, 4);
 
     final rounds = await (db.select(
       db.rounds,
@@ -102,10 +102,47 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 3);
+    expect(version.data.values.single, 4);
     final settings = await db.getSettings();
     expect(settings.soundOn, isTrue);
     expect(settings.pinHash, 'h');
     expect(settings.dailyLimitMin, 35);
+  });
+
+  test('v3 -> v4 adds child_profile, not pending (FEAT-10 AC-2)', () async {
+    final executor = NativeDatabase.memory(
+      setup: (raw) {
+        for (final sql in _v1) {
+          raw.execute(sql);
+        }
+        raw.execute('ALTER TABLE rounds ADD COLUMN finished_at INTEGER NULL');
+        raw.execute(
+          'ALTER TABLE app_settings ADD COLUMN sound_on INTEGER NOT NULL '
+          'DEFAULT 1 CHECK ("sound_on" IN (0, 1))',
+        );
+        raw.execute(
+          'INSERT INTO app_settings (id, pin_hash, sound_on) VALUES (1, ?, 0)',
+          ['h'],
+        );
+        raw.execute('INSERT INTO pin_lockout (id) VALUES (1)');
+        raw.execute('INSERT INTO play_sessions (started_at) VALUES (1)');
+        raw.execute(
+          'INSERT INTO rounds (session_id, topic_id, started_at, finished_at) '
+          "VALUES (1, 'p1.place', 1, 2)",
+        );
+        raw.execute('PRAGMA user_version = 3');
+      },
+    );
+    final db = AppDatabase(executor);
+    addTearDown(db.close);
+
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.data.values.single, 4);
+    final settings = await db.getSettings();
+    expect(settings.profilePending, isFalse);
+    expect(settings.soundOn, isFalse);
+    expect(settings.pinHash, 'h');
+    expect(await db.select(db.childProfiles).get(), isEmpty);
+    expect(await db.select(db.rounds).get(), hasLength(1));
   });
 }

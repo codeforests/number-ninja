@@ -80,6 +80,21 @@ class $AppSettingsTable extends AppSettings
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _profilePendingMeta = const VerificationMeta(
+    'profilePending',
+  );
+  @override
+  late final GeneratedColumn<bool> profilePending = GeneratedColumn<bool>(
+    'profile_pending',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("profile_pending" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -88,6 +103,7 @@ class $AppSettingsTable extends AppSettings
     dailyLimitMin,
     bankVersion,
     soundOn,
+    profilePending,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -140,6 +156,15 @@ class $AppSettingsTable extends AppSettings
         soundOn.isAcceptableOrUnknown(data['sound_on']!, _soundOnMeta),
       );
     }
+    if (data.containsKey('profile_pending')) {
+      context.handle(
+        _profilePendingMeta,
+        profilePending.isAcceptableOrUnknown(
+          data['profile_pending']!,
+          _profilePendingMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -173,6 +198,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.bool,
         data['${effectivePrefix}sound_on'],
       )!,
+      profilePending: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}profile_pending'],
+      )!,
     );
   }
 
@@ -189,6 +218,10 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final int dailyLimitMin;
   final int bankVersion;
   final bool soundOn;
+
+  /// Ask for the child profile before play (PRO-02). True on a new install,
+  /// false on one updated from v3; saving the profile clears it.
+  final bool profilePending;
   const AppSetting({
     required this.id,
     this.pinHash,
@@ -196,6 +229,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.dailyLimitMin,
     required this.bankVersion,
     required this.soundOn,
+    required this.profilePending,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -210,6 +244,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['daily_limit_min'] = Variable<int>(dailyLimitMin);
     map['bank_version'] = Variable<int>(bankVersion);
     map['sound_on'] = Variable<bool>(soundOn);
+    map['profile_pending'] = Variable<bool>(profilePending);
     return map;
   }
 
@@ -225,6 +260,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       dailyLimitMin: Value(dailyLimitMin),
       bankVersion: Value(bankVersion),
       soundOn: Value(soundOn),
+      profilePending: Value(profilePending),
     );
   }
 
@@ -240,6 +276,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       dailyLimitMin: serializer.fromJson<int>(json['dailyLimitMin']),
       bankVersion: serializer.fromJson<int>(json['bankVersion']),
       soundOn: serializer.fromJson<bool>(json['soundOn']),
+      profilePending: serializer.fromJson<bool>(json['profilePending']),
     );
   }
   @override
@@ -252,6 +289,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'dailyLimitMin': serializer.toJson<int>(dailyLimitMin),
       'bankVersion': serializer.toJson<int>(bankVersion),
       'soundOn': serializer.toJson<bool>(soundOn),
+      'profilePending': serializer.toJson<bool>(profilePending),
     };
   }
 
@@ -262,6 +300,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     int? dailyLimitMin,
     int? bankVersion,
     bool? soundOn,
+    bool? profilePending,
   }) => AppSetting(
     id: id ?? this.id,
     pinHash: pinHash.present ? pinHash.value : this.pinHash,
@@ -269,6 +308,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     dailyLimitMin: dailyLimitMin ?? this.dailyLimitMin,
     bankVersion: bankVersion ?? this.bankVersion,
     soundOn: soundOn ?? this.soundOn,
+    profilePending: profilePending ?? this.profilePending,
   );
   AppSetting copyWithCompanion(AppSettingsCompanion data) {
     return AppSetting(
@@ -282,6 +322,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ? data.bankVersion.value
           : this.bankVersion,
       soundOn: data.soundOn.present ? data.soundOn.value : this.soundOn,
+      profilePending: data.profilePending.present
+          ? data.profilePending.value
+          : this.profilePending,
     );
   }
 
@@ -293,14 +336,22 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('pinSalt: $pinSalt, ')
           ..write('dailyLimitMin: $dailyLimitMin, ')
           ..write('bankVersion: $bankVersion, ')
-          ..write('soundOn: $soundOn')
+          ..write('soundOn: $soundOn, ')
+          ..write('profilePending: $profilePending')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, pinHash, pinSalt, dailyLimitMin, bankVersion, soundOn);
+  int get hashCode => Object.hash(
+    id,
+    pinHash,
+    pinSalt,
+    dailyLimitMin,
+    bankVersion,
+    soundOn,
+    profilePending,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -310,7 +361,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.pinSalt == this.pinSalt &&
           other.dailyLimitMin == this.dailyLimitMin &&
           other.bankVersion == this.bankVersion &&
-          other.soundOn == this.soundOn);
+          other.soundOn == this.soundOn &&
+          other.profilePending == this.profilePending);
 }
 
 class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
@@ -320,6 +372,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<int> dailyLimitMin;
   final Value<int> bankVersion;
   final Value<bool> soundOn;
+  final Value<bool> profilePending;
   const AppSettingsCompanion({
     this.id = const Value.absent(),
     this.pinHash = const Value.absent(),
@@ -327,6 +380,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.dailyLimitMin = const Value.absent(),
     this.bankVersion = const Value.absent(),
     this.soundOn = const Value.absent(),
+    this.profilePending = const Value.absent(),
   });
   AppSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -335,6 +389,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.dailyLimitMin = const Value.absent(),
     this.bankVersion = const Value.absent(),
     this.soundOn = const Value.absent(),
+    this.profilePending = const Value.absent(),
   });
   static Insertable<AppSetting> custom({
     Expression<int>? id,
@@ -343,6 +398,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<int>? dailyLimitMin,
     Expression<int>? bankVersion,
     Expression<bool>? soundOn,
+    Expression<bool>? profilePending,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -351,6 +407,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (dailyLimitMin != null) 'daily_limit_min': dailyLimitMin,
       if (bankVersion != null) 'bank_version': bankVersion,
       if (soundOn != null) 'sound_on': soundOn,
+      if (profilePending != null) 'profile_pending': profilePending,
     });
   }
 
@@ -361,6 +418,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<int>? dailyLimitMin,
     Value<int>? bankVersion,
     Value<bool>? soundOn,
+    Value<bool>? profilePending,
   }) {
     return AppSettingsCompanion(
       id: id ?? this.id,
@@ -369,6 +427,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       dailyLimitMin: dailyLimitMin ?? this.dailyLimitMin,
       bankVersion: bankVersion ?? this.bankVersion,
       soundOn: soundOn ?? this.soundOn,
+      profilePending: profilePending ?? this.profilePending,
     );
   }
 
@@ -393,6 +452,9 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (soundOn.present) {
       map['sound_on'] = Variable<bool>(soundOn.value);
     }
+    if (profilePending.present) {
+      map['profile_pending'] = Variable<bool>(profilePending.value);
+    }
     return map;
   }
 
@@ -404,7 +466,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('pinSalt: $pinSalt, ')
           ..write('dailyLimitMin: $dailyLimitMin, ')
           ..write('bankVersion: $bankVersion, ')
-          ..write('soundOn: $soundOn')
+          ..write('soundOn: $soundOn, ')
+          ..write('profilePending: $profilePending')
           ..write(')'))
         .toString();
   }
@@ -2427,6 +2490,427 @@ class PinLockoutCompanion extends UpdateCompanion<PinLockoutData> {
   }
 }
 
+class $ChildProfilesTable extends ChildProfiles
+    with TableInfo<$ChildProfilesTable, ProfileRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChildProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _nicknameMeta = const VerificationMeta(
+    'nickname',
+  );
+  @override
+  late final GeneratedColumn<String> nickname = GeneratedColumn<String>(
+    'nickname',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _schoolYearMeta = const VerificationMeta(
+    'schoolYear',
+  );
+  @override
+  late final GeneratedColumn<int> schoolYear = GeneratedColumn<int>(
+    'school_year',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _schoolStartLevelMeta = const VerificationMeta(
+    'schoolStartLevel',
+  );
+  @override
+  late final GeneratedColumn<int> schoolStartLevel = GeneratedColumn<int>(
+    'school_start_level',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _olympiadStartLevelMeta =
+      const VerificationMeta('olympiadStartLevel');
+  @override
+  late final GeneratedColumn<int> olympiadStartLevel = GeneratedColumn<int>(
+    'olympiad_start_level',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    nickname,
+    schoolYear,
+    schoolStartLevel,
+    olympiadStartLevel,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'child_profile';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ProfileRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('nickname')) {
+      context.handle(
+        _nicknameMeta,
+        nickname.isAcceptableOrUnknown(data['nickname']!, _nicknameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nicknameMeta);
+    }
+    if (data.containsKey('school_year')) {
+      context.handle(
+        _schoolYearMeta,
+        schoolYear.isAcceptableOrUnknown(data['school_year']!, _schoolYearMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_schoolYearMeta);
+    }
+    if (data.containsKey('school_start_level')) {
+      context.handle(
+        _schoolStartLevelMeta,
+        schoolStartLevel.isAcceptableOrUnknown(
+          data['school_start_level']!,
+          _schoolStartLevelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('olympiad_start_level')) {
+      context.handle(
+        _olympiadStartLevelMeta,
+        olympiadStartLevel.isAcceptableOrUnknown(
+          data['olympiad_start_level']!,
+          _olympiadStartLevelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ProfileRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProfileRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      nickname: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}nickname'],
+      )!,
+      schoolYear: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}school_year'],
+      )!,
+      schoolStartLevel: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}school_start_level'],
+      ),
+      olympiadStartLevel: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}olympiad_start_level'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ChildProfilesTable createAlias(String alias) {
+    return $ChildProfilesTable(attachedDatabase, alias);
+  }
+}
+
+class ProfileRow extends DataClass implements Insertable<ProfileRow> {
+  final int id;
+  final String nickname;
+  final int schoolYear;
+  final int? schoolStartLevel;
+  final int? olympiadStartLevel;
+  final DateTime updatedAt;
+  const ProfileRow({
+    required this.id,
+    required this.nickname,
+    required this.schoolYear,
+    this.schoolStartLevel,
+    this.olympiadStartLevel,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['nickname'] = Variable<String>(nickname);
+    map['school_year'] = Variable<int>(schoolYear);
+    if (!nullToAbsent || schoolStartLevel != null) {
+      map['school_start_level'] = Variable<int>(schoolStartLevel);
+    }
+    if (!nullToAbsent || olympiadStartLevel != null) {
+      map['olympiad_start_level'] = Variable<int>(olympiadStartLevel);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ChildProfilesCompanion toCompanion(bool nullToAbsent) {
+    return ChildProfilesCompanion(
+      id: Value(id),
+      nickname: Value(nickname),
+      schoolYear: Value(schoolYear),
+      schoolStartLevel: schoolStartLevel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(schoolStartLevel),
+      olympiadStartLevel: olympiadStartLevel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(olympiadStartLevel),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ProfileRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProfileRow(
+      id: serializer.fromJson<int>(json['id']),
+      nickname: serializer.fromJson<String>(json['nickname']),
+      schoolYear: serializer.fromJson<int>(json['schoolYear']),
+      schoolStartLevel: serializer.fromJson<int?>(json['schoolStartLevel']),
+      olympiadStartLevel: serializer.fromJson<int?>(json['olympiadStartLevel']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'nickname': serializer.toJson<String>(nickname),
+      'schoolYear': serializer.toJson<int>(schoolYear),
+      'schoolStartLevel': serializer.toJson<int?>(schoolStartLevel),
+      'olympiadStartLevel': serializer.toJson<int?>(olympiadStartLevel),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ProfileRow copyWith({
+    int? id,
+    String? nickname,
+    int? schoolYear,
+    Value<int?> schoolStartLevel = const Value.absent(),
+    Value<int?> olympiadStartLevel = const Value.absent(),
+    DateTime? updatedAt,
+  }) => ProfileRow(
+    id: id ?? this.id,
+    nickname: nickname ?? this.nickname,
+    schoolYear: schoolYear ?? this.schoolYear,
+    schoolStartLevel: schoolStartLevel.present
+        ? schoolStartLevel.value
+        : this.schoolStartLevel,
+    olympiadStartLevel: olympiadStartLevel.present
+        ? olympiadStartLevel.value
+        : this.olympiadStartLevel,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ProfileRow copyWithCompanion(ChildProfilesCompanion data) {
+    return ProfileRow(
+      id: data.id.present ? data.id.value : this.id,
+      nickname: data.nickname.present ? data.nickname.value : this.nickname,
+      schoolYear: data.schoolYear.present
+          ? data.schoolYear.value
+          : this.schoolYear,
+      schoolStartLevel: data.schoolStartLevel.present
+          ? data.schoolStartLevel.value
+          : this.schoolStartLevel,
+      olympiadStartLevel: data.olympiadStartLevel.present
+          ? data.olympiadStartLevel.value
+          : this.olympiadStartLevel,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProfileRow(')
+          ..write('id: $id, ')
+          ..write('nickname: $nickname, ')
+          ..write('schoolYear: $schoolYear, ')
+          ..write('schoolStartLevel: $schoolStartLevel, ')
+          ..write('olympiadStartLevel: $olympiadStartLevel, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    nickname,
+    schoolYear,
+    schoolStartLevel,
+    olympiadStartLevel,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProfileRow &&
+          other.id == this.id &&
+          other.nickname == this.nickname &&
+          other.schoolYear == this.schoolYear &&
+          other.schoolStartLevel == this.schoolStartLevel &&
+          other.olympiadStartLevel == this.olympiadStartLevel &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ChildProfilesCompanion extends UpdateCompanion<ProfileRow> {
+  final Value<int> id;
+  final Value<String> nickname;
+  final Value<int> schoolYear;
+  final Value<int?> schoolStartLevel;
+  final Value<int?> olympiadStartLevel;
+  final Value<DateTime> updatedAt;
+  const ChildProfilesCompanion({
+    this.id = const Value.absent(),
+    this.nickname = const Value.absent(),
+    this.schoolYear = const Value.absent(),
+    this.schoolStartLevel = const Value.absent(),
+    this.olympiadStartLevel = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  ChildProfilesCompanion.insert({
+    this.id = const Value.absent(),
+    required String nickname,
+    required int schoolYear,
+    this.schoolStartLevel = const Value.absent(),
+    this.olympiadStartLevel = const Value.absent(),
+    required DateTime updatedAt,
+  }) : nickname = Value(nickname),
+       schoolYear = Value(schoolYear),
+       updatedAt = Value(updatedAt);
+  static Insertable<ProfileRow> custom({
+    Expression<int>? id,
+    Expression<String>? nickname,
+    Expression<int>? schoolYear,
+    Expression<int>? schoolStartLevel,
+    Expression<int>? olympiadStartLevel,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (nickname != null) 'nickname': nickname,
+      if (schoolYear != null) 'school_year': schoolYear,
+      if (schoolStartLevel != null) 'school_start_level': schoolStartLevel,
+      if (olympiadStartLevel != null)
+        'olympiad_start_level': olympiadStartLevel,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  ChildProfilesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? nickname,
+    Value<int>? schoolYear,
+    Value<int?>? schoolStartLevel,
+    Value<int?>? olympiadStartLevel,
+    Value<DateTime>? updatedAt,
+  }) {
+    return ChildProfilesCompanion(
+      id: id ?? this.id,
+      nickname: nickname ?? this.nickname,
+      schoolYear: schoolYear ?? this.schoolYear,
+      schoolStartLevel: schoolStartLevel ?? this.schoolStartLevel,
+      olympiadStartLevel: olympiadStartLevel ?? this.olympiadStartLevel,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (nickname.present) {
+      map['nickname'] = Variable<String>(nickname.value);
+    }
+    if (schoolYear.present) {
+      map['school_year'] = Variable<int>(schoolYear.value);
+    }
+    if (schoolStartLevel.present) {
+      map['school_start_level'] = Variable<int>(schoolStartLevel.value);
+    }
+    if (olympiadStartLevel.present) {
+      map['olympiad_start_level'] = Variable<int>(olympiadStartLevel.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChildProfilesCompanion(')
+          ..write('id: $id, ')
+          ..write('nickname: $nickname, ')
+          ..write('schoolYear: $schoolYear, ')
+          ..write('schoolStartLevel: $schoolStartLevel, ')
+          ..write('olympiadStartLevel: $olympiadStartLevel, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2437,6 +2921,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DailyUsageTable dailyUsage = $DailyUsageTable(this);
   late final $BadgesEarnedTable badgesEarned = $BadgesEarnedTable(this);
   late final $PinLockoutTable pinLockout = $PinLockoutTable(this);
+  late final $ChildProfilesTable childProfiles = $ChildProfilesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2449,6 +2934,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     dailyUsage,
     badgesEarned,
     pinLockout,
+    childProfiles,
   ];
 }
 
@@ -2460,6 +2946,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<int> dailyLimitMin,
       Value<int> bankVersion,
       Value<bool> soundOn,
+      Value<bool> profilePending,
     });
 typedef $$AppSettingsTableUpdateCompanionBuilder =
     AppSettingsCompanion Function({
@@ -2469,6 +2956,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<int> dailyLimitMin,
       Value<int> bankVersion,
       Value<bool> soundOn,
+      Value<bool> profilePending,
     });
 
 class $$AppSettingsTableFilterComposer
@@ -2507,6 +2995,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<bool> get soundOn => $composableBuilder(
     column: $table.soundOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get profilePending => $composableBuilder(
+    column: $table.profilePending,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2549,6 +3042,11 @@ class $$AppSettingsTableOrderingComposer
     column: $table.soundOn,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get profilePending => $composableBuilder(
+    column: $table.profilePending,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AppSettingsTableAnnotationComposer
@@ -2581,6 +3079,11 @@ class $$AppSettingsTableAnnotationComposer
 
   GeneratedColumn<bool> get soundOn =>
       $composableBuilder(column: $table.soundOn, builder: (column) => column);
+
+  GeneratedColumn<bool> get profilePending => $composableBuilder(
+    column: $table.profilePending,
+    builder: (column) => column,
+  );
 }
 
 class $$AppSettingsTableTableManager
@@ -2620,6 +3123,7 @@ class $$AppSettingsTableTableManager
                 Value<int> dailyLimitMin = const Value.absent(),
                 Value<int> bankVersion = const Value.absent(),
                 Value<bool> soundOn = const Value.absent(),
+                Value<bool> profilePending = const Value.absent(),
               }) => AppSettingsCompanion(
                 id: id,
                 pinHash: pinHash,
@@ -2627,6 +3131,7 @@ class $$AppSettingsTableTableManager
                 dailyLimitMin: dailyLimitMin,
                 bankVersion: bankVersion,
                 soundOn: soundOn,
+                profilePending: profilePending,
               ),
           createCompanionCallback:
               ({
@@ -2636,6 +3141,7 @@ class $$AppSettingsTableTableManager
                 Value<int> dailyLimitMin = const Value.absent(),
                 Value<int> bankVersion = const Value.absent(),
                 Value<bool> soundOn = const Value.absent(),
+                Value<bool> profilePending = const Value.absent(),
               }) => AppSettingsCompanion.insert(
                 id: id,
                 pinHash: pinHash,
@@ -2643,6 +3149,7 @@ class $$AppSettingsTableTableManager
                 dailyLimitMin: dailyLimitMin,
                 bankVersion: bankVersion,
                 soundOn: soundOn,
+                profilePending: profilePending,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -4253,6 +4760,234 @@ typedef $$PinLockoutTableProcessedTableManager =
       PinLockoutData,
       PrefetchHooks Function()
     >;
+typedef $$ChildProfilesTableCreateCompanionBuilder =
+    ChildProfilesCompanion Function({
+      Value<int> id,
+      required String nickname,
+      required int schoolYear,
+      Value<int?> schoolStartLevel,
+      Value<int?> olympiadStartLevel,
+      required DateTime updatedAt,
+    });
+typedef $$ChildProfilesTableUpdateCompanionBuilder =
+    ChildProfilesCompanion Function({
+      Value<int> id,
+      Value<String> nickname,
+      Value<int> schoolYear,
+      Value<int?> schoolStartLevel,
+      Value<int?> olympiadStartLevel,
+      Value<DateTime> updatedAt,
+    });
+
+class $$ChildProfilesTableFilterComposer
+    extends Composer<_$AppDatabase, $ChildProfilesTable> {
+  $$ChildProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nickname => $composableBuilder(
+    column: $table.nickname,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get schoolYear => $composableBuilder(
+    column: $table.schoolYear,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get schoolStartLevel => $composableBuilder(
+    column: $table.schoolStartLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get olympiadStartLevel => $composableBuilder(
+    column: $table.olympiadStartLevel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ChildProfilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChildProfilesTable> {
+  $$ChildProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nickname => $composableBuilder(
+    column: $table.nickname,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get schoolYear => $composableBuilder(
+    column: $table.schoolYear,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get schoolStartLevel => $composableBuilder(
+    column: $table.schoolStartLevel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get olympiadStartLevel => $composableBuilder(
+    column: $table.olympiadStartLevel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ChildProfilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChildProfilesTable> {
+  $$ChildProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get nickname =>
+      $composableBuilder(column: $table.nickname, builder: (column) => column);
+
+  GeneratedColumn<int> get schoolYear => $composableBuilder(
+    column: $table.schoolYear,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get schoolStartLevel => $composableBuilder(
+    column: $table.schoolStartLevel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get olympiadStartLevel => $composableBuilder(
+    column: $table.olympiadStartLevel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ChildProfilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChildProfilesTable,
+          ProfileRow,
+          $$ChildProfilesTableFilterComposer,
+          $$ChildProfilesTableOrderingComposer,
+          $$ChildProfilesTableAnnotationComposer,
+          $$ChildProfilesTableCreateCompanionBuilder,
+          $$ChildProfilesTableUpdateCompanionBuilder,
+          (
+            ProfileRow,
+            BaseReferences<_$AppDatabase, $ChildProfilesTable, ProfileRow>,
+          ),
+          ProfileRow,
+          PrefetchHooks Function()
+        > {
+  $$ChildProfilesTableTableManager(_$AppDatabase db, $ChildProfilesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ChildProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChildProfilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChildProfilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> nickname = const Value.absent(),
+                Value<int> schoolYear = const Value.absent(),
+                Value<int?> schoolStartLevel = const Value.absent(),
+                Value<int?> olympiadStartLevel = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => ChildProfilesCompanion(
+                id: id,
+                nickname: nickname,
+                schoolYear: schoolYear,
+                schoolStartLevel: schoolStartLevel,
+                olympiadStartLevel: olympiadStartLevel,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String nickname,
+                required int schoolYear,
+                Value<int?> schoolStartLevel = const Value.absent(),
+                Value<int?> olympiadStartLevel = const Value.absent(),
+                required DateTime updatedAt,
+              }) => ChildProfilesCompanion.insert(
+                id: id,
+                nickname: nickname,
+                schoolYear: schoolYear,
+                schoolStartLevel: schoolStartLevel,
+                olympiadStartLevel: olympiadStartLevel,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ChildProfilesTable, ProfileRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $ChildProfilesTable,
+                    ProfileRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ChildProfilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChildProfilesTable,
+      ProfileRow,
+      $$ChildProfilesTableFilterComposer,
+      $$ChildProfilesTableOrderingComposer,
+      $$ChildProfilesTableAnnotationComposer,
+      $$ChildProfilesTableCreateCompanionBuilder,
+      $$ChildProfilesTableUpdateCompanionBuilder,
+      (
+        ProfileRow,
+        BaseReferences<_$AppDatabase, $ChildProfilesTable, ProfileRow>,
+      ),
+      ProfileRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4271,4 +5006,6 @@ class $AppDatabaseManager {
       $$BadgesEarnedTableTableManager(_db, _db.badgesEarned);
   $$PinLockoutTableTableManager get pinLockout =>
       $$PinLockoutTableTableManager(_db, _db.pinLockout);
+  $$ChildProfilesTableTableManager get childProfiles =>
+      $$ChildProfilesTableTableManager(_db, _db.childProfiles);
 }

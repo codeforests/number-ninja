@@ -17,6 +17,7 @@ import 'features/parent/parent_screen.dart';
 import 'features/parent/pin_entry_screen.dart';
 import 'features/parent/reset_screen.dart';
 import 'features/parent/topic_detail_screen.dart';
+import 'features/profile/profile_screen.dart';
 import 'features/screen_time/lock_screen.dart';
 import 'features/screen_time/screen_time_controller.dart';
 import 'features/setup/setup_pin_screen.dart';
@@ -25,6 +26,8 @@ import 'ui/theme.dart';
 
 abstract final class Routes {
   static const setup = '/setup'; // SCR-01
+  static const setupProfile = '/setup/profile'; // SCR-12, first run
+  static const profile = '/parent/profile'; // SCR-12 from SCR-11
   static const home = '/'; // SCR-02
   static const pinEntry = '/parent/pin'; // SCR-08
   static const parent = '/parent'; // SCR-11
@@ -54,7 +57,12 @@ abstract final class Routes {
 /// [locked] is [ScreenTimeController.locked]; `/parent*` is never locked.
 String? redirectFor(AppSession session, bool locked, String location) {
   if (!session.hasPin) return location == Routes.setup ? null : Routes.setup;
-  if (location == Routes.setup) return Routes.home;
+  if (session.profilePending) {
+    return location == Routes.setupProfile ? null : Routes.setupProfile;
+  }
+  if (location == Routes.setup || location == Routes.setupProfile) {
+    return Routes.home;
+  }
   final isParent = location.startsWith(Routes.parent);
   if (isParent && location != Routes.pinEntry && !session.parentUnlocked) {
     return Routes.pinEntry;
@@ -76,6 +84,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.setup,
         builder: (context, state) => const SetupPinScreen(),
+        routes: [
+          GoRoute(
+            path: 'profile',
+            builder: (context, state) => const ProfileScreen(firstRun: true),
+          ),
+        ],
       ),
       GoRoute(
         path: Routes.home,
@@ -113,6 +127,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'pin',
             builder: (context, state) => const PinEntryScreen(),
+          ),
+          GoRoute(
+            path: 'profile',
+            builder: (context, state) => const ProfileScreen(firstRun: false),
           ),
           GoRoute(
             path: 'change-pin',

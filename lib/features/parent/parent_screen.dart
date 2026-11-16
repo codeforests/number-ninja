@@ -36,6 +36,8 @@ class ParentScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.gap),
         children: [
+          const _ProfileTile(),
+          const Divider(height: AppSizes.gap * 2),
           ListTile(
             key: const Key('open-dashboard'),
             minTileHeight: AppSizes.minTap,
@@ -213,6 +215,28 @@ class _SoundSectionState extends ConsumerState<_SoundSection> {
       subtitle: const Text('Short sounds for answers and finished rounds'),
       value: on ?? true,
       onChanged: on == null ? null : _set,
+    );
+  }
+}
+
+/// Opens SCR-12; shows the nickname and year (PRO-01, PRO-02).
+class _ProfileTile extends ConsumerWidget {
+  const _ProfileTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = ref.watch(childProfileProvider).value;
+    return ListTile(
+      key: const Key('open-profile'),
+      minTileHeight: AppSizes.minTap,
+      leading: const Icon(Icons.face),
+      title: const Text('Child profile'),
+      subtitle: Text(
+        p == null ? 'Not set yet' : '${p.nickname} · P${p.schoolYear}',
+        key: const Key('profile-subtitle'),
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.go(Routes.profile),
     );
   }
 }

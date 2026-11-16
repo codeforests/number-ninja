@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../ui/kid_background.dart';
 import '../../app.dart';
+import '../../domain/profile.dart';
 import '../../domain/progress.dart';
 import '../../domain/topics.dart';
 import '../../providers.dart';
@@ -37,6 +38,7 @@ class TopicMapScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context).textTheme;
     final progress = ref.watch(topicProgressProvider).value ?? const {};
+    final profile = ref.watch(childProfileProvider).value;
     final tracks = TrackSlug.tracks(track);
     final scaler = MediaQuery.textScalerOf(context);
     // Two lines of name plus the stars row, with padding, at her text size.
@@ -113,7 +115,10 @@ class TopicMapScreen extends ConsumerWidget {
                                 _TopicTile(
                                   topic: topic,
                                   progress:
-                                      progress[topic.id] ?? TopicProgress.none,
+                                      progress[topic.id] ??
+                                      TopicProgress.fresh(
+                                        startLevel(profile, topic),
+                                      ),
                                 ),
                           ]),
                         ),

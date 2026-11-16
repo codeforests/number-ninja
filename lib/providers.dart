@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'data/badge_repository.dart';
 import 'data/database.dart';
 import 'data/pin_repository.dart';
+import 'data/profile_repository.dart';
 import 'data/question_bank_loader.dart';
 import 'data/round_repository.dart';
 import 'data/sound_player.dart';
@@ -12,6 +13,7 @@ import 'data/stats_repository.dart';
 import 'data/usage_repository.dart';
 import 'domain/question.dart';
 import 'domain/clock.dart';
+import 'domain/profile.dart';
 import 'domain/progress.dart';
 
 /// Overridden in main() and in tests.
@@ -34,6 +36,20 @@ final pinRepositoryProvider = Provider<PinRepository>(
 );
 
 /// Daily screen-time usage and limit (TIM-01..05).
+final profileRepositoryProvider = Provider<ProfileRepository>(
+  (ref) => ProfileRepository(
+    ref.watch(databaseProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// The saved child profile, or null before the parent sets one (PRO-01).
+/// Not a stream (pending drift timers in widget tests): SCR-12 invalidates
+/// it after a save.
+final childProfileProvider = FutureProvider.autoDispose<ChildProfile?>(
+  (ref) => ref.watch(profileRepositoryProvider).load(),
+);
+
 final usageRepositoryProvider = Provider<UsageRepository>(
   (ref) => UsageRepository(ref.watch(databaseProvider)),
 );
@@ -86,21 +102,34 @@ final topicProgressProvider =
 /// Whether a PIN exists, and whether the parent area is unlocked.
 /// The router listens to it. Unlocking lasts 5 minutes, in memory only.
 class AppSession extends ChangeNotifier {
-  AppSession({required this._hasPin, required this.clock});
+  AppSession({
+    required this._hasPin,
+    this._profilePending = false,
+    required this.clock,
+  });
 
   static const unlockFor = Duration(minutes: 5);
 
   final Clock clock;
   bool _hasPin;
+  bool _profilePending;
   DateTime? _unlockedAt;
 
   bool get hasPin => _hasPin;
+
+  /// The child profile must be set before play (PRO-02).
+  bool get profilePending => _profilePending;
 
   bool get parentUnlocked =>
       _unlockedAt != null && clock().difference(_unlockedAt!) < unlockFor;
 
   void pinCreated() {
     _hasPin = true;
+    notifyListeners();
+  }
+
+  void profileSaved() {
+    _profilePending = false;
     notifyListeners();
   }
 

@@ -90,10 +90,11 @@ class RoundRepository {
   Future<Map<String, TopicProgress>> progress() async =>
       progressByTopic(await finishedRounds());
 
-  /// The level her next round of [topicId] is played at (PRC-09).
-  Future<int> levelFor(String topicId) async =>
+  /// The level her next round of [topicId] is played at (PRC-09), or
+  /// [start] when it has no finished round yet (PRO-03).
+  Future<int> levelFor(String topicId, {int start = minLevel}) async =>
       progressByTopic(await finishedRounds(topicId: topicId))[topicId]?.level ??
-      minLevel;
+      start;
 
   /// Question ids answered correctly in the topic's last [rounds] rounds,
   /// by start time (PRC-08).

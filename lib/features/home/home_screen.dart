@@ -39,6 +39,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context).textTheme;
     final progress = ref.watch(topicProgressProvider).value ?? const {};
+    final nickname = ref.watch(childProfileProvider).value?.nickname;
     final size = MediaQuery.sizeOf(context);
     final portrait = size.width < size.height;
     final cards = [
@@ -78,7 +79,12 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              'Number Ninja',
+                              nickname == null
+                                  ? 'Number Ninja'
+                                  : 'Hi, $nickname!',
+                              key: const Key('greeting'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: theme.displaySmall,
                             ),
                           ),
