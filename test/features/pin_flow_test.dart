@@ -167,6 +167,12 @@ void main() {
     await tester.tap(find.byKey(const Key('parent-button')));
     await tester.pumpAndSettle();
     await enter(tester, '2468');
+    // SCR-11 is a lazy list; scroll the tile into view first (code-map).
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('change-pin')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.byKey(const Key('change-pin')));
     await tester.pumpAndSettle();
 
