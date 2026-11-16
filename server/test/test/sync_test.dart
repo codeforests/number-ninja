@@ -4,7 +4,7 @@ library;
 import 'package:pocketbase/pocketbase.dart';
 import 'package:test/test.dart';
 
-import '../lib/fixtures.dart';
+import 'package:number_ninja_server_test/fixtures.dart';
 
 Future<Map<String, dynamic>> reset(PocketBase pb, String child) async =>
     await pb.send<Map<String, dynamic>>(
