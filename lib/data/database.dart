@@ -101,6 +101,15 @@ class PinLockout extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Topics the parent opened by hand (PRC-14, FEAT-17); kept by the reset.
+class TopicUnlocks extends Table {
+  TextColumn get topicId => text()();
+  DateTimeColumn get openedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {topicId};
+}
+
 @DriftDatabase(
   tables: [
     AppSettings,
@@ -111,6 +120,7 @@ class PinLockout extends Table {
     BadgesEarned,
     PinLockout,
     ChildProfiles,
+    TopicUnlocks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -118,7 +128,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'number_ninja'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -136,6 +146,7 @@ class AppDatabase extends _$AppDatabase {
         // An updated install keeps working without a profile (PRO-02).
         await customStatement('UPDATE app_settings SET profile_pending = 0');
       }
+      if (from < 5) await m.createTable(topicUnlocks);
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

@@ -2911,6 +2911,223 @@ class ChildProfilesCompanion extends UpdateCompanion<ProfileRow> {
   }
 }
 
+class $TopicUnlocksTable extends TopicUnlocks
+    with TableInfo<$TopicUnlocksTable, TopicUnlock> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TopicUnlocksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _topicIdMeta = const VerificationMeta(
+    'topicId',
+  );
+  @override
+  late final GeneratedColumn<String> topicId = GeneratedColumn<String>(
+    'topic_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _openedAtMeta = const VerificationMeta(
+    'openedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> openedAt = GeneratedColumn<DateTime>(
+    'opened_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [topicId, openedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'topic_unlocks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TopicUnlock> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('topic_id')) {
+      context.handle(
+        _topicIdMeta,
+        topicId.isAcceptableOrUnknown(data['topic_id']!, _topicIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_topicIdMeta);
+    }
+    if (data.containsKey('opened_at')) {
+      context.handle(
+        _openedAtMeta,
+        openedAt.isAcceptableOrUnknown(data['opened_at']!, _openedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_openedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {topicId};
+  @override
+  TopicUnlock map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TopicUnlock(
+      topicId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}topic_id'],
+      )!,
+      openedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}opened_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TopicUnlocksTable createAlias(String alias) {
+    return $TopicUnlocksTable(attachedDatabase, alias);
+  }
+}
+
+class TopicUnlock extends DataClass implements Insertable<TopicUnlock> {
+  final String topicId;
+  final DateTime openedAt;
+  const TopicUnlock({required this.topicId, required this.openedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['topic_id'] = Variable<String>(topicId);
+    map['opened_at'] = Variable<DateTime>(openedAt);
+    return map;
+  }
+
+  TopicUnlocksCompanion toCompanion(bool nullToAbsent) {
+    return TopicUnlocksCompanion(
+      topicId: Value(topicId),
+      openedAt: Value(openedAt),
+    );
+  }
+
+  factory TopicUnlock.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TopicUnlock(
+      topicId: serializer.fromJson<String>(json['topicId']),
+      openedAt: serializer.fromJson<DateTime>(json['openedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'topicId': serializer.toJson<String>(topicId),
+      'openedAt': serializer.toJson<DateTime>(openedAt),
+    };
+  }
+
+  TopicUnlock copyWith({String? topicId, DateTime? openedAt}) => TopicUnlock(
+    topicId: topicId ?? this.topicId,
+    openedAt: openedAt ?? this.openedAt,
+  );
+  TopicUnlock copyWithCompanion(TopicUnlocksCompanion data) {
+    return TopicUnlock(
+      topicId: data.topicId.present ? data.topicId.value : this.topicId,
+      openedAt: data.openedAt.present ? data.openedAt.value : this.openedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TopicUnlock(')
+          ..write('topicId: $topicId, ')
+          ..write('openedAt: $openedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(topicId, openedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TopicUnlock &&
+          other.topicId == this.topicId &&
+          other.openedAt == this.openedAt);
+}
+
+class TopicUnlocksCompanion extends UpdateCompanion<TopicUnlock> {
+  final Value<String> topicId;
+  final Value<DateTime> openedAt;
+  final Value<int> rowid;
+  const TopicUnlocksCompanion({
+    this.topicId = const Value.absent(),
+    this.openedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TopicUnlocksCompanion.insert({
+    required String topicId,
+    required DateTime openedAt,
+    this.rowid = const Value.absent(),
+  }) : topicId = Value(topicId),
+       openedAt = Value(openedAt);
+  static Insertable<TopicUnlock> custom({
+    Expression<String>? topicId,
+    Expression<DateTime>? openedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (topicId != null) 'topic_id': topicId,
+      if (openedAt != null) 'opened_at': openedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TopicUnlocksCompanion copyWith({
+    Value<String>? topicId,
+    Value<DateTime>? openedAt,
+    Value<int>? rowid,
+  }) {
+    return TopicUnlocksCompanion(
+      topicId: topicId ?? this.topicId,
+      openedAt: openedAt ?? this.openedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (topicId.present) {
+      map['topic_id'] = Variable<String>(topicId.value);
+    }
+    if (openedAt.present) {
+      map['opened_at'] = Variable<DateTime>(openedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TopicUnlocksCompanion(')
+          ..write('topicId: $topicId, ')
+          ..write('openedAt: $openedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2922,6 +3139,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $BadgesEarnedTable badgesEarned = $BadgesEarnedTable(this);
   late final $PinLockoutTable pinLockout = $PinLockoutTable(this);
   late final $ChildProfilesTable childProfiles = $ChildProfilesTable(this);
+  late final $TopicUnlocksTable topicUnlocks = $TopicUnlocksTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2935,6 +3153,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     badgesEarned,
     pinLockout,
     childProfiles,
+    topicUnlocks,
   ];
 }
 
@@ -4988,6 +5207,158 @@ typedef $$ChildProfilesTableProcessedTableManager =
       ProfileRow,
       PrefetchHooks Function()
     >;
+typedef $$TopicUnlocksTableCreateCompanionBuilder =
+    TopicUnlocksCompanion Function({
+      required String topicId,
+      required DateTime openedAt,
+      Value<int> rowid,
+    });
+typedef $$TopicUnlocksTableUpdateCompanionBuilder =
+    TopicUnlocksCompanion Function({
+      Value<String> topicId,
+      Value<DateTime> openedAt,
+      Value<int> rowid,
+    });
+
+class $$TopicUnlocksTableFilterComposer
+    extends Composer<_$AppDatabase, $TopicUnlocksTable> {
+  $$TopicUnlocksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get topicId => $composableBuilder(
+    column: $table.topicId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get openedAt => $composableBuilder(
+    column: $table.openedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TopicUnlocksTableOrderingComposer
+    extends Composer<_$AppDatabase, $TopicUnlocksTable> {
+  $$TopicUnlocksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get topicId => $composableBuilder(
+    column: $table.topicId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get openedAt => $composableBuilder(
+    column: $table.openedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TopicUnlocksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TopicUnlocksTable> {
+  $$TopicUnlocksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get topicId =>
+      $composableBuilder(column: $table.topicId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get openedAt =>
+      $composableBuilder(column: $table.openedAt, builder: (column) => column);
+}
+
+class $$TopicUnlocksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TopicUnlocksTable,
+          TopicUnlock,
+          $$TopicUnlocksTableFilterComposer,
+          $$TopicUnlocksTableOrderingComposer,
+          $$TopicUnlocksTableAnnotationComposer,
+          $$TopicUnlocksTableCreateCompanionBuilder,
+          $$TopicUnlocksTableUpdateCompanionBuilder,
+          (
+            TopicUnlock,
+            BaseReferences<_$AppDatabase, $TopicUnlocksTable, TopicUnlock>,
+          ),
+          TopicUnlock,
+          PrefetchHooks Function()
+        > {
+  $$TopicUnlocksTableTableManager(_$AppDatabase db, $TopicUnlocksTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TopicUnlocksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TopicUnlocksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TopicUnlocksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> topicId = const Value.absent(),
+                Value<DateTime> openedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TopicUnlocksCompanion(
+                topicId: topicId,
+                openedAt: openedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String topicId,
+                required DateTime openedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => TopicUnlocksCompanion.insert(
+                topicId: topicId,
+                openedAt: openedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TopicUnlocksTable, TopicUnlock>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $TopicUnlocksTable,
+                    TopicUnlock
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TopicUnlocksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TopicUnlocksTable,
+      TopicUnlock,
+      $$TopicUnlocksTableFilterComposer,
+      $$TopicUnlocksTableOrderingComposer,
+      $$TopicUnlocksTableAnnotationComposer,
+      $$TopicUnlocksTableCreateCompanionBuilder,
+      $$TopicUnlocksTableUpdateCompanionBuilder,
+      (
+        TopicUnlock,
+        BaseReferences<_$AppDatabase, $TopicUnlocksTable, TopicUnlock>,
+      ),
+      TopicUnlock,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5008,4 +5379,6 @@ class $AppDatabaseManager {
       $$PinLockoutTableTableManager(_db, _db.pinLockout);
   $$ChildProfilesTableTableManager get childProfiles =>
       $$ChildProfilesTableTableManager(_db, _db.childProfiles);
+  $$TopicUnlocksTableTableManager get topicUnlocks =>
+      $$TopicUnlocksTableTableManager(_db, _db.topicUnlocks);
 }
