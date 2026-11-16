@@ -1,0 +1,47 @@
+name: Deploy server
+
+# FEAT-12 (ADR-08): deploys server/ to the droplet. Manual only.
+# Secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS,
+# PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD, optional CERT_EMAIL.
+# Variable: SERVER_HOSTNAME. Steps: server/README.md.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-server
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SSH key and known host
+        env:
+          SSH_KEY_CONTENT: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$SSH_KEY_CONTENT" > ~/.ssh/deploy_key
+          chmod 0600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          SSH_KEY: /home/runner/.ssh/deploy_key
+          SSH_KNOWN_HOSTS: /home/runner/.ssh/known_hosts
+          SERVER_HOSTNAME: ${{ vars.SERVER_HOSTNAME }}
+          PB_SUPERUSER_EMAIL: ${{ secrets.PB_SUPERUSER_EMAIL }}
+          PB_SUPERUSER_PASSWORD: ${{ secrets.PB_SUPERUSER_PASSWORD }}
+          CERT_EMAIL: ${{ secrets.CERT_EMAIL }}
+        run: server/deploy.sh
+
+      - name: Remove key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

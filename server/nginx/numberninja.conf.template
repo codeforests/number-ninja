@@ -1,7 +1,8 @@
 # FEAT-12: Number Ninja API site for the droplet's existing nginx.
 # deploy.sh fills in ${SERVER_HOSTNAME} (envsubst, that variable only) and
 # writes this to /etc/nginx/sites-available/numberninja.conf. It is the only
-# nginx file the deploy touches. Certificate: certbot (deploy.sh, first run).
+# nginx file the deploy touches. Certificate: certbot --webroot into
+# /var/www/numberninja-acme (install.sh, first run; renewals reload nginx).
 
 server {
     listen 80;
@@ -9,7 +10,7 @@ server {
     server_name ${SERVER_HOSTNAME};
 
     location /.well-known/acme-challenge/ {
-        root /var/www/html;
+        root /var/www/numberninja-acme;
     }
 
     location / {
@@ -25,8 +26,6 @@ server {
 
     ssl_certificate /etc/letsencrypt/live/${SERVER_HOSTNAME}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${SERVER_HOSTNAME}/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
     # Bank files (FEAT-15) are up to 20 MB.
     client_max_body_size 25m;
