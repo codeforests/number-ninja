@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../domain/badges.dart';
 import '../domain/clock.dart';
 import 'database.dart';
+import 'round_repository.dart' show roundKindRevision;
 import 'stats_repository.dart';
 
 /// Awards and lists badges (BDG-01). Rules are evaluated from scratch over
@@ -34,6 +35,7 @@ class BadgeRepository {
             stars: r.stars,
             durationMs: r.durationMs,
             finishedAt: r.finishedAt!,
+            revision: r.kind == roundKindRevision,
           ),
       ],
       attempts: await stats.records(),

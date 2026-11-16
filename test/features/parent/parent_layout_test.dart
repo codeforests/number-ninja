@@ -75,6 +75,13 @@ void main() {
         await open(tester, Routes.topicDetail(numberTopic, StatsPeriod.all));
         expect(find.byType(TopicDetailScreen), findsOneWidget);
         expectNoOverlap(tester, ['topic-tally', 'trend-accuracy']);
+        // FEAT-11 AC-6: the weak types card, with a row for 4/12 right.
+        expect(find.byKey(Key('weak-$numberTopic.t')), findsOneWidget);
+        expectNoOverlap(tester, [
+          'topic-tally',
+          'weak-types',
+          'trend-accuracy',
+        ]);
         await scrollAll(tester);
       });
 

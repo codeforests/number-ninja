@@ -129,12 +129,12 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| REV-01 | The app shall work out her weak question types (a question type = one generator template inside a topic): enough recent attempts with low accuracy or slow answers, by rules defined in the design. (D12) | M | FEAT-11 | |
-| REV-02 | The app shall keep a list of recent mistakes: questions answered wrong recently and not answered right since. | M | FEAT-11 | |
-| REV-03 | After a round in a topic that has weak types or recent mistakes, the result screen shall offer a revision round for that topic; the home screen shall offer a revision round across all topics when there is enough to revise. | M | FEAT-11 | |
-| REV-04 | A revision round shall be built from her recent mistakes and her weakest types, use the normal quiz screen, feedback and timing (PRC-03..06), count as screen time, in stats and for badges, and not change topic levels (PRC-09). | M | FEAT-11 | |
-| REV-05 | The topic detail in the dashboard shall list the topic's weak question types. | S | FEAT-11 | |
-| REV-06 | Weak-spot analysis and revision building shall sit behind one planner interface in the domain layer, so a later AI planner can replace it without changing screens. | S | FEAT-11 | |
+| REV-01 | The app shall work out her weak question types (a question type = one generator template inside a topic): enough recent attempts with low accuracy or slow answers, by rules defined in the design. (D12) | M | FEAT-11 | FEAT-11 verify.md (2026-11-16) |
+| REV-02 | The app shall keep a list of recent mistakes: questions answered wrong recently and not answered right since. | M | FEAT-11 | FEAT-11 verify.md (2026-11-16) |
+| REV-03 | After a round in a topic that has weak types or recent mistakes, the result screen shall offer a revision round for that topic; the home screen shall offer a revision round across all topics when there is enough to revise. | M | FEAT-11 | FEAT-11 verify.md (2026-11-16) |
+| REV-04 | A revision round shall be built from her recent mistakes and her weakest types, use the normal quiz screen, feedback and timing (PRC-03..06), count as screen time, in stats and for badges, and not change topic levels (PRC-09). | M | FEAT-11 | FEAT-11 verify.md (2026-11-16) |
+| REV-05 | The topic detail in the dashboard shall list the topic's weak question types. | S | FEAT-11 | FEAT-11 verify.md (2026-11-16) |
+| REV-06 | Weak-spot analysis and revision building shall sit behind one planner interface in the domain layer, so a later AI planner can replace it without changing screens. | S | FEAT-11 | FEAT-11 verify.md (2026-11-16) |
 
 ### Account (ACC)
 

@@ -78,9 +78,13 @@ class CountingRepository extends RoundRepository {
   Completer<void>? gate;
 
   @override
-  Future<int> startRound(String topicId, int level) {
+  Future<int> startRound(
+    String topicId,
+    int level, {
+    String kind = roundKindNormal,
+  }) {
     calls++;
-    return super.startRound(topicId, level);
+    return super.startRound(topicId, level, kind: kind);
   }
 
   @override

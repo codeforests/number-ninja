@@ -7,6 +7,7 @@ import 'data/database.dart';
 import 'data/pin_repository.dart';
 import 'data/profile_repository.dart';
 import 'data/question_bank_loader.dart';
+import 'data/revision_repository.dart';
 import 'data/round_repository.dart';
 import 'data/sound_player.dart';
 import 'data/stats_repository.dart';
@@ -16,6 +17,7 @@ import 'domain/question.dart';
 import 'domain/clock.dart';
 import 'domain/profile.dart';
 import 'domain/progress.dart';
+import 'domain/revision.dart';
 import 'domain/topic_lock.dart';
 import 'domain/topics.dart';
 
@@ -102,6 +104,37 @@ final topicProgressProvider =
       (ref) => ref.watch(roundRepositoryProvider).progress(),
     );
 
+/// The revision rules (REV-06, ADR-06). Tests and a later AI planner
+/// override it.
+final revisionPlannerProvider = Provider<RevisionPlanner>(
+  (ref) => const RuleRevisionPlanner(),
+);
+
+final revisionRepositoryProvider = FutureProvider<RevisionRepository>(
+  (ref) async => RevisionRepository(
+    await ref.watch(statsRepositoryProvider.future),
+    ref.watch(roundRepositoryProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// What the planner works from (REV-01, REV-02), read fresh by each screen
+/// that shows it; the quiz invalidates it after a round.
+final revisionHistoryProvider = FutureProvider.autoDispose<RevisionHistory>(
+  (ref) async => (await ref.watch(revisionRepositoryProvider.future)).history(),
+);
+
+/// Whether to offer a revision round of a scope id (REV-03): a topic id
+/// on SCR-05, [mixedScopeId] on SCR-02. False until the history is read.
+final revisionOffersProvider = FutureProvider.autoDispose.family<bool, String>(
+  (ref, scopeId) async => ref
+      .watch(revisionPlannerProvider)
+      .offers(
+        await ref.watch(revisionHistoryProvider.future),
+        RevisionScope.fromId(scopeId),
+      ),
+);
+
 /// Topics the parent opened by hand (PRC-14).
 final topicLockRepositoryProvider = Provider<TopicLockRepository>(
   (ref) => TopicLockRepository(
@@ -111,7 +144,7 @@ final topicLockRepositoryProvider = Provider<TopicLockRepository>(
 );
 
 /// Lock state of every topic (PRC-12..14), worked out on each read.
-/// SCR-10 invalidates it after the parent opens or locks a topic.
+/// SCR-15 invalidates it after the parent opens or locks a topic.
 final topicLocksProvider = FutureProvider.autoDispose<Map<String, TopicLock>>(
   (ref) async => topicLocks(
     topics: topics,

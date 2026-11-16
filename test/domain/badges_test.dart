@@ -10,11 +10,13 @@ BadgeRound round(
   int stars = 1,
   int ms = 300000,
   DateTime? at,
+  bool revision = false,
 }) => BadgeRound(
   topicId: topic,
   stars: stars,
   durationMs: ms,
   finishedAt: at ?? day0,
+  revision: revision,
 );
 
 /// [n] attempts in [topic], oldest first; the oldest [correct] are right, or
@@ -264,5 +266,16 @@ void main() {
     expect(eval(rounds: missing.toList()), isNot(contains('ninja-master')));
     final twoStars = [...missing, round('oly.models', stars: 2)];
     expect(eval(rounds: twoStars), isNot(contains('ninja-master')));
+  });
+
+  test('a revision round earns round badges, not topic-map ones (FEAT-11 '
+      'AC-2)', () {
+    final rev = [
+      for (final t in topics) round(t.id, stars: 3, ms: 60000, revision: true),
+    ];
+    final got = eval(rounds: rev);
+    expect(got, containsAll(['first-round', 'perfect-10', 'speedy']));
+    expect(got, isNot(contains('school-explorer')));
+    expect(got, isNot(contains('ninja-master')));
   });
 }

@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../app.dart';
 import '../../domain/question.dart';
+import '../../domain/revision.dart';
 import '../../domain/stats.dart';
 import '../../domain/topics.dart';
 import '../../providers.dart';
@@ -55,67 +56,75 @@ class TopicDetailScreen extends ConsumerWidget {
   Widget _body(StatsData data, QuestionBank bank, Topic? topic) {
     final rs = data.inPeriod(period, topicId: topicId);
     final tally = overall(rs);
-    final byId = {for (final q in bank.byTopic[topicId] ?? const []) q.id: q};
+    final byId = <String, Question>{
+      for (final q in bank.byTopic[topicId] ?? const <Question>[]) q.id: q,
+    };
     final track = topic?.track ?? Track.p1;
-    return ListView(
+    // Not a lazy ListView: the cards are few, and tests find rows far down.
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSizes.gap),
-      children: [
-        Text(period.longLabel, style: StatsText.muted),
-        const SizedBox(height: AppSizes.gap / 2),
-        StatsCard(
-          key: const Key('topic-tally'),
-          child: Wrap(
-            spacing: AppSizes.gap * 2,
-            runSpacing: AppSizes.gap / 2,
-            children: [
-              _Figure(label: 'right', value: pct(tally)),
-              _Figure(label: 'per question', value: secs(tally)),
-              _Figure(label: 'answers', value: count(tally)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(period.longLabel, style: StatsText.muted),
+          const SizedBox(height: AppSizes.gap / 2),
+          StatsCard(
+            key: const Key('topic-tally'),
+            child: Wrap(
+              spacing: AppSizes.gap * 2,
+              runSpacing: AppSizes.gap / 2,
+              children: [
+                _Figure(label: 'right', value: pct(tally)),
+                _Figure(label: 'per question', value: secs(tally)),
+                _Figure(label: 'answers', value: count(tally)),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSizes.gap),
+          _WeakTypesCard(topicId: topicId, byId: byId),
+          const SizedBox(height: AppSizes.gap),
+          StatsCard(
+            child: TrendCharts(
+              now: data.now,
+              lines: [
+                (
+                  topic?.name ?? topicId,
+                  trackColors[track]!,
+                  [
+                    for (final r in data.all)
+                      if (r.topicId == topicId) r,
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSizes.gap),
+          _QuestionList(
+            key: const Key('most-missed'),
+            title: 'Most missed',
+            empty: 'No wrong answers in this period.',
+            items: [
+              for (final m in mostMissed(rs))
+                (
+                  m.questionId,
+                  byId[m.questionId],
+                  'wrong ${m.tally.wrong} of ${m.tally.attempts}',
+                ),
+            ],
+            showAnswer: true,
+          ),
+          const SizedBox(height: AppSizes.gap),
+          _QuestionList(
+            key: const Key('slowest'),
+            title: 'Slowest',
+            empty: 'No answers in this period.',
+            items: [
+              for (final s in slowest(rs))
+                (s.questionId, byId[s.questionId], 'avg ${secs(s.tally)}'),
             ],
           ),
-        ),
-        const SizedBox(height: AppSizes.gap),
-        StatsCard(
-          child: TrendCharts(
-            now: data.now,
-            lines: [
-              (
-                topic?.name ?? topicId,
-                trackColors[track]!,
-                [
-                  for (final r in data.all)
-                    if (r.topicId == topicId) r,
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSizes.gap),
-        _QuestionList(
-          key: const Key('most-missed'),
-          title: 'Most missed',
-          empty: 'No wrong answers in this period.',
-          items: [
-            for (final m in mostMissed(rs))
-              (
-                m.questionId,
-                byId[m.questionId],
-                'wrong ${m.tally.wrong} of ${m.tally.attempts}',
-              ),
-          ],
-          showAnswer: true,
-        ),
-        const SizedBox(height: AppSizes.gap),
-        _QuestionList(
-          key: const Key('slowest'),
-          title: 'Slowest',
-          empty: 'No answers in this period.',
-          items: [
-            for (final s in slowest(rs))
-              (s.questionId, byId[s.questionId], 'avg ${secs(s.tally)}'),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -199,4 +208,74 @@ class _QuestionList extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// The topic's weak question types (REV-05), over the planner's fixed
+/// 30-day window whatever the period.
+class _WeakTypesCard extends ConsumerWidget {
+  const _WeakTypesCard({required this.topicId, required this.byId});
+
+  final String topicId;
+  final Map<String, Question> byId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final history = ref.watch(revisionHistoryProvider).value;
+    final weak = history == null
+        ? const <WeakType>[]
+        : ref
+              .watch(revisionPlannerProvider)
+              .weakTypes(history, topicId: topicId);
+    String? example(String typeId) {
+      AttemptRecord? latest;
+      for (final a in history?.attempts ?? const <AttemptRecord>[]) {
+        if (typeOf(a.questionId) == typeId &&
+            byId.containsKey(a.questionId) &&
+            (latest == null || !a.answeredAt.isBefore(latest.answeredAt))) {
+          latest = a;
+        }
+      }
+      return latest == null ? null : byId[latest.questionId]!.prompt;
+    }
+
+    return StatsCard(
+      key: const Key('weak-types'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Weak question types', style: StatsText.heading),
+          const Text('Last 30 days', style: StatsText.muted),
+          const SizedBox(height: AppSizes.gap / 2),
+          if (weak.isEmpty)
+            const Text('No weak types', style: StatsText.body)
+          else
+            for (final w in weak)
+              Padding(
+                key: Key('weak-${w.typeId}'),
+                padding: const EdgeInsets.symmetric(vertical: AppSizes.gap / 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${typeLabel(w.typeId)}: '
+                      '${w.tally.correct}/${w.tally.attempts} right · '
+                      '${secs(w.tally)}',
+                      style: StatsText.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (example(w.typeId) case final prompt?)
+                      Text(
+                        prompt,
+                        style: StatsText.muted,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+        ],
+      ),
+    );
+  }
 }

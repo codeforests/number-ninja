@@ -5,12 +5,14 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart' show immutable;
 
+import '../../data/round_repository.dart' show roundKindRevision;
 import '../../data/sound_player.dart';
 import '../../domain/badges.dart';
 import '../../domain/profile.dart';
 import '../../domain/progress.dart' as progress;
 import '../../domain/question.dart';
 import '../../domain/quiz.dart';
+import '../../domain/revision.dart';
 import '../../domain/round_builder.dart';
 import '../../domain/topics.dart';
 import '../../providers.dart';
@@ -29,9 +31,14 @@ class RoundSummary {
     required this.durationMs,
     required this.stars,
     this.newBadges = const [],
+    this.revision = false,
   });
 
+  /// The topic, or [mixedScopeId] for a mixed revision round.
   final String topicId;
+
+  /// A revision round (REV-04): no level change, no Play again.
+  final bool revision;
 
   /// The level the round was played at.
   final int level;
@@ -46,7 +53,7 @@ class RoundSummary {
   /// The level the topic's next round is played at (PRC-09).
   int get nextLevel => progress.nextLevel(level, stars);
 
-  bool get levelUp => nextLevel > level;
+  bool get levelUp => !revision && nextLevel > level;
 }
 
 @immutable
@@ -60,9 +67,17 @@ class RoundState {
     this.error,
     this.newBadges = const [],
     this.locked = false,
+    this.revision = false,
+    this.empty = false,
   });
 
   final String? topicId;
+
+  /// A revision round (REV-04); [topicId] is then the scope id.
+  final bool revision;
+
+  /// A revision round found nothing to revise: no round was started.
+  final bool empty;
 
   /// The topic is locked (PRC-14): no round was started.
   final bool locked;
@@ -87,6 +102,7 @@ class RoundState {
     durationMs: quiz!.durationMs,
     stars: quiz!.stars,
     newBadges: newBadges,
+    revision: revision,
   );
 }
 
@@ -147,6 +163,57 @@ class QuizController extends Notifier<RoundState> {
     }
   }
 
+  /// Builds and starts a revision round of [scopeId] (a topic id or
+  /// [mixedScopeId]) from the planner (REV-03, REV-04). Its `rounds` row has
+  /// kind `revision`; the topic lock isn't checked (only answered topics
+  /// are revised, and those are open).
+  Future<void> startRevision(String scopeId) async {
+    state = RoundState(topicId: scopeId, revision: true);
+    try {
+      final sub = ref.listen(revisionHistoryProvider.future, (_, _) {});
+      final history = await sub.read().whenComplete(sub.close);
+      final bank = await ref.read(bankProvider.future);
+      final scope = RevisionScope.fromId(scopeId);
+      final plan = ref
+          .read(revisionPlannerProvider)
+          .plan(history, bank, scope, ref.read(quizRandomProvider));
+      if (plan.isEmpty) {
+        if (ref.mounted) {
+          state = RoundState(topicId: scopeId, revision: true, empty: true);
+        }
+        return;
+      }
+      final repo = ref.read(roundRepositoryProvider);
+      final level = switch (scope) {
+        TopicScope(:final topicId) => await repo.levelFor(
+          topicId,
+          start: startLevel(
+            await ref.read(profileRepositoryProvider).load(),
+            topicsById[topicId],
+          ),
+        ),
+        MixedScope() => progress.minLevel,
+      };
+      final roundId = await repo.startRound(
+        scopeId,
+        level,
+        kind: roundKindRevision,
+      );
+      if (!ref.mounted) return;
+      state = RoundState(
+        topicId: scopeId,
+        level: level,
+        roundId: roundId,
+        quiz: Quiz.start(plan.questions, ref.read(clockProvider)()),
+        revision: true,
+      );
+    } catch (e) {
+      if (ref.mounted) {
+        state = RoundState(topicId: scopeId, revision: true, error: e);
+      }
+    }
+  }
+
   /// Checks [given], saves the attempt (and, after the last question, the
   /// round), then shows feedback.
   Future<void> check(Object given) async {
@@ -169,6 +236,7 @@ class QuizController extends Notifier<RoundState> {
       roundId: s.roundId,
       quiz: quiz,
       saving: true,
+      revision: s.revision,
     );
     final repo = ref.read(roundRepositoryProvider);
     await repo.saveAttempt(s.roundId!, answered.lastResult!);
@@ -181,6 +249,7 @@ class QuizController extends Notifier<RoundState> {
         stars: answered.stars,
       );
       newBadges = await _awardBadges();
+      ref.invalidate(revisionHistoryProvider);
     }
     if (!ref.mounted) return;
     state = RoundState(
@@ -189,6 +258,7 @@ class QuizController extends Notifier<RoundState> {
       roundId: s.roundId,
       quiz: answered,
       newBadges: newBadges,
+      revision: s.revision,
     );
   }
 
@@ -203,6 +273,7 @@ class QuizController extends Notifier<RoundState> {
       roundId: s.roundId,
       quiz: quiz.next(ref.read(clockProvider)()),
       newBadges: s.newBadges,
+      revision: s.revision,
     );
   }
 

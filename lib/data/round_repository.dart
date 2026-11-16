@@ -5,6 +5,9 @@ import '../domain/progress.dart';
 import '../domain/quiz.dart';
 import 'database.dart';
 
+const roundKindNormal = 'normal';
+const roundKindRevision = 'revision';
+
 /// Saves rounds and attempts (PRC-04, PRC-06) and reads recent results
 /// (PRC-08).
 class RoundRepository {
@@ -25,8 +28,13 @@ class RoundRepository {
       .into(db.playSessions)
       .insert(PlaySessionsCompanion.insert(startedAt: clock()));
 
-  /// Creates a `rounds` row and returns its id.
-  Future<int> startRound(String topicId, int level) async {
+  /// Creates a `rounds` row and returns its id. [kind] is `normal` or
+  /// `revision` (REV-04).
+  Future<int> startRound(
+    String topicId,
+    int level, {
+    String kind = roundKindNormal,
+  }) async {
     final session = await _session();
     return db
         .into(db.rounds)
@@ -36,6 +44,7 @@ class RoundRepository {
             topicId: topicId,
             level: Value(level),
             startedAt: clock(),
+            kind: Value(kind),
           ),
         );
   }
@@ -70,9 +79,12 @@ class RoundRepository {
     ),
   );
 
-  /// Rounds with a `finished_at`, optionally of one topic.
+  /// Normal rounds with a `finished_at`, optionally of one topic. Revision
+  /// rounds are left out, so levels, best stars and the topic lock ignore
+  /// them (REV-04).
   Future<List<FinishedRound>> finishedRounds({String? topicId}) async {
-    final q = db.select(db.rounds)..where((r) => r.finishedAt.isNotNull());
+    final q = db.select(db.rounds)
+      ..where((r) => r.finishedAt.isNotNull() & r.kind.equals(roundKindNormal));
     if (topicId != null) q.where((r) => r.topicId.equals(topicId));
     return [
       for (final r in await q.get())

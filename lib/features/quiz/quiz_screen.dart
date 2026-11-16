@@ -7,6 +7,7 @@ import '../../ui/kid_background.dart';
 import '../../app.dart';
 import '../../domain/question.dart';
 import '../../domain/quiz.dart';
+import '../../domain/topics.dart';
 import '../../ui/layout.dart';
 import '../../ui/theme.dart';
 import '../../ui/visuals/question_visual.dart';
@@ -17,11 +18,13 @@ import 'answers/number_answer.dart';
 import 'feedback_panel.dart';
 import 'quiz_controller.dart';
 
-/// SCR-04: one round of 10 questions in [topicId].
+/// SCR-04: one round of 10 questions in [topicId], or a revision round of
+/// [topicId] as a revision scope id (REV-04).
 class QuizScreen extends ConsumerStatefulWidget {
-  const QuizScreen({super.key, required this.topicId});
+  const QuizScreen({super.key, required this.topicId, this.revision = false});
 
   final String topicId;
+  final bool revision;
 
   @override
   ConsumerState<QuizScreen> createState() => _QuizScreenState();
@@ -39,7 +42,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     _held = true;
     Future.microtask(() {
       if (mounted) {
-        ref.read(quizControllerProvider.notifier).start(widget.topicId);
+        final c = ref.read(quizControllerProvider.notifier);
+        widget.revision
+            ? c.startRevision(widget.topicId)
+            : c.start(widget.topicId);
       }
     });
   }
@@ -83,6 +89,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     ref.listen(quizControllerProvider.select((s) => s.locked), (_, locked) {
       if (locked) context.go(Routes.play(TrackSlug.school));
     });
+    // Nothing to revise (a stale link): home.
+    ref.listen(quizControllerProvider.select((s) => s.empty), (_, empty) {
+      if (empty) context.go(Routes.home);
+    });
     final s = ref.watch(quizControllerProvider);
     final quiz = s.quiz;
     return KidBackground(
@@ -94,6 +104,18 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
             padding: const EdgeInsets.all(AppSizes.gap),
             child: Column(
               children: [
+                if (widget.revision)
+                  Text(
+                    revisionHeader(widget.topicId),
+                    key: const Key('quiz-revision'),
+                    style: const TextStyle(
+                      fontSize: AppText.small,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.revision,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 _TopBar(quiz: quiz),
                 const SizedBox(height: AppSizes.gap),
                 Expanded(
@@ -116,6 +138,12 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     );
   }
 }
+
+/// "Revision" for a mixed round, "Revision: Topic name" for a topic.
+String revisionHeader(String scopeId) => switch (topicsById[scopeId]) {
+  final t? => 'Revision: ${t.name}',
+  null => 'Revision',
+};
 
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.quiz});

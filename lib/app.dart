@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'features/revision/revision_start_screen.dart';
 import 'features/badges/badge_shelf_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/quiz/quiz_controller.dart';
@@ -41,6 +42,9 @@ abstract final class Routes {
       '/parent/topic/$topicId?p=${p.query}'; // SCR-10
   static String play(String track) => '/play/$track'; // SCR-03
   static String quiz(String topicId) => '/quiz/$topicId'; // SCR-04
+  static String revise(String scopeId) => '/revise/$scopeId'; // SCR-14
+  static String reviseQuiz(String scopeId) =>
+      '/revise/$scopeId/quiz'; // SCR-04, revision round
   static const result = '/result'; // SCR-05, the RoundSummary as extra
   static const locked = '/locked'; // SCR-07
   static const badges = '/badges'; // SCR-06
@@ -51,6 +55,7 @@ abstract final class Routes {
       location == home ||
       location.startsWith('/play/') ||
       location.startsWith('/quiz/') ||
+      location.startsWith('/revise/') ||
       location == result ||
       location == badges;
 }
@@ -106,6 +111,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/quiz/:topicId',
         builder: (context, state) =>
             QuizScreen(topicId: state.pathParameters['topicId']!),
+      ),
+      GoRoute(
+        path: '/revise/:scopeId',
+        builder: (context, state) =>
+            RevisionStartScreen(scopeId: state.pathParameters['scopeId']!),
+        routes: [
+          GoRoute(
+            path: 'quiz',
+            builder: (context, state) => QuizScreen(
+              topicId: state.pathParameters['scopeId']!,
+              revision: true,
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: Routes.result,
