@@ -77,9 +77,9 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | PRC-08 | Rounds shall avoid repeating a question she answered correctly in her last 3 rounds of that topic, while questions remain. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
 | PRC-09 | Difficulty shall step up after a 3-star round and down after a 0–1-star round in that topic. | S | FEAT-04 | FEAT-04 verify.md (2026-11-15) |
 | PRC-10 | Pictures (clocks, shapes, coins, bar models, picture graphs) shall be drawn from question data, not image files. | S | FEAT-03 | FEAT-03 verify.md (2026-11-15) |
-| PRC-12 | On the School track, each year's topics (P1, P2) shall unlock in the order of the design's topic list: the first P1 topic is open, the first topic of the next year opens when every topic of the year before is passed, and each later topic opens when the topic before it has a finished normal round with at least 7 of 10 correct (70 %), at any level. Olympiad topics are always open. (D17) | M | FEAT-17 | |
-| PRC-13 | Topics of a school year below the year in her profile (PRO-01) shall be open from the start, and a topic she has already passed, or that the parent has opened, stays open. | M | FEAT-17 | |
-| PRC-14 | A locked topic shall show a padlock and which topic to pass first, and shall not start a round; in the parent area, with the PIN, the parent shall be able to open any locked topic. | M | FEAT-17 | |
+| PRC-12 | On the School track, each year's topics (P1, P2) shall unlock in the order of the design's topic list: the first P1 topic is open, the first topic of the next year opens when every topic of the year before is passed, and each later topic opens when the topic before it has a finished normal round with at least 7 of 10 correct (70 %), at any level. Olympiad topics are always open. (D17) | M | FEAT-17 | FEAT-17 verify.md (2026-11-16) |
+| PRC-13 | Topics of a school year below the year in her profile (PRO-01) shall be open from the start, and a topic she has already passed, or that the parent has opened, stays open. | M | FEAT-17 | FEAT-17 verify.md (2026-11-16) |
+| PRC-14 | A locked topic shall show a padlock and which topic to pass first, and shall not start a round; in the parent area, with the PIN, the parent shall be able to open any locked topic. | M | FEAT-17 | FEAT-17 verify.md (2026-11-16) |
 | PRC-11 | The app shall play short sound effects (right answer, wrong answer, round complete, 3 stars), bundled with the app; the parent shall be able to turn sound off. (D9) | S | FEAT-09 | FEAT-09 verify.md (2026-11-15) |
 
 ### Screen time (TIM)

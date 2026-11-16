@@ -57,6 +57,21 @@ void main() {
     expect(text('topic-p1.groups-hint'), 'Pass Number bonds first');
   });
 
+  testWidgets('a pass while the app runs opens the topic on return', (
+    tester,
+  ) async {
+    // Verify: locks are re-derived when SCR-03 is shown again (autoDispose).
+    await h.pumpApp(tester, location: Routes.play('school'), size: tall);
+    expect(find.byKey(const Key('topic-p1.bonds-lock')), findsOneWidget);
+    h.container(tester).read(routerProvider).go(Routes.home);
+    await tester.pumpAndSettle();
+    await tester.runAsync(() => finished('p1.place', 7));
+    h.container(tester).read(routerProvider).go(Routes.play('school'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('topic-p1.bonds-lock')), findsNothing);
+    expect(find.byKey(const Key('topic-p1.bonds-icon')), findsOneWidget);
+  });
+
   testWidgets('a locked topic by URL starts no round, back to the map', (
     tester,
   ) async {
