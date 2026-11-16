@@ -69,7 +69,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21' # Android lint calls List.removeLast (JDK 21); see code-map Gotchas
 
       - uses: subosito/flutter-action@v2
         with:

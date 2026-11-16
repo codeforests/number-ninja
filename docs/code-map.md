@@ -70,3 +70,4 @@
 - Server nginx site: write `listen 443 ssl http2;`, never `http2 on;` (stock Ubuntu/Debian nginx ≤1.24 rejects it; CI `server` job runs `nginx -t` on the rendered template). Search `sites-enabled` with `grep -R`: its entries are symlinks, which `grep -r` skips.
 - The PocketBase SDK clears its auth store before a request when the token isn't an unexpired JWT: app tests must use a real-shaped JWT (see `account_repository_test.dart`). `FakeServerClient.authMethods` ignores `fail`, since SCR-13 calls it on open (FEAT-13).
 - An unverified user can't create a `children` record: server test parents are verified through the superuser in `Parent.signUp` (FEAT-13).
+- CI builds with JDK 21: release lint (`lintVitalAnalyzeRelease`) on `url_launcher_android` crashes on JDK 17 (`NoSuchMethodError List.removeLast`). Source/target stay Java 17 (FEAT-13).
