@@ -250,6 +250,8 @@ class QuizController extends Notifier<RoundState> {
       );
       newBadges = await _awardBadges();
       ref.invalidate(revisionHistoryProvider);
+      // Never awaited: the result shows at once (SYN-01, SYN-05).
+      ref.read(syncProvider.notifier).requestSync();
     }
     if (!ref.mounted) return;
     state = RoundState(

@@ -12,7 +12,7 @@ import 'package:number_ninja/data/usage_repository.dart';
 import 'package:number_ninja/domain/profile.dart';
 import 'package:number_ninja/domain/quiz.dart';
 
-import 'fake_server_client.dart';
+import '../fake_server_client.dart';
 
 const day = '2027-01-05';
 

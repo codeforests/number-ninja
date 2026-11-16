@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../app.dart';
@@ -9,6 +10,71 @@ import '../../data/sync/server_client.dart';
 import '../../providers.dart';
 import '../../ui/pin_pad.dart';
 import '../../ui/theme.dart';
+
+/// SCR-13 sync error lines (SYN-07). An expired session signs out and shows
+/// the FEAT-13 "Please sign in again." instead.
+String syncErrorText(SyncError e) => switch (e) {
+  SyncError.offline => 'Not synced: no internet. It will try again.',
+  SyncError.server => 'The server had a problem. It will try again.',
+  SyncError.rejected => "Some records weren't accepted by the server.",
+  SyncError.expired => 'Please sign in again.',
+  SyncError.unknown => 'Not synced. It will try again.',
+};
+
+/// "Last synced: today, 2:31 pm" (SYN-07).
+String lastSyncText(DateTime? at, DateTime now) {
+  if (at == null) return 'Not synced yet';
+  final time = DateFormat('h:mm a').format(at).toLowerCase();
+  final today = DateTime(now.year, now.month, now.day);
+  final day = DateTime(at.year, at.month, at.day);
+  final when = switch (today.difference(day).inDays) {
+    0 => 'today',
+    1 => 'yesterday',
+    _ => DateFormat('d MMM').format(at),
+  };
+  return 'Last synced: $when, $time';
+}
+
+/// The SCR-13 sync section while signed in (SYN-07).
+class SyncSection extends ConsumerWidget {
+  const SyncSection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(syncProvider);
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          s.running
+              ? 'Syncing…'
+              : lastSyncText(s.lastSyncAt, ref.watch(clockProvider)()),
+          key: const Key('account-last-sync'),
+          style: const TextStyle(fontSize: AppText.body),
+        ),
+        if (s.lastError != null && !s.running)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSizes.gap / 2),
+            child: Text(
+              syncErrorText(s.lastError!),
+              key: const Key('account-sync-error'),
+              style: TextStyle(fontSize: AppText.body, color: scheme.error),
+            ),
+          ),
+        const SizedBox(height: AppSizes.gap / 2),
+        OutlinedButton.icon(
+          key: const Key('account-sync-now'),
+          onPressed: s.running
+              ? null
+              : ref.read(syncProvider.notifier).requestSync,
+          icon: const Icon(Icons.sync),
+          label: const Text('Sync now'),
+        ),
+      ],
+    );
+  }
+}
 
 /// What's stored and where (NFR-14, ADR-07); always shown on SCR-13.
 const privacyNote =
@@ -216,6 +282,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
             account.viaGoogle ? 'Signed in with Google' : 'Signed in',
           ),
         ),
+        const SizedBox(height: AppSizes.gap),
+        const SyncSection(),
         const SizedBox(height: AppSizes.gap),
         Wrap(
           spacing: AppSizes.gap,

@@ -209,10 +209,16 @@ class NumberNinjaApp extends ConsumerStatefulWidget {
 class _NumberNinjaAppState extends ConsumerState<NumberNinjaApp> {
   final _messenger = GlobalKey<ScaffoldMessengerState>();
   StreamSubscription<void>? _warnings;
+  AppLifecycleListener? _lifecycle;
 
   @override
   void initState() {
     super.initState();
+    // Sync runs while signed in (FEAT-14): keep it alive, and sync on resume.
+    ref.listenManual(syncProvider, (_, _) {});
+    _lifecycle = AppLifecycleListener(
+      onResume: () => ref.read(syncProvider.notifier).requestSync(),
+    );
     _warnings = ref.read(screenTimeProvider).warnings.listen((_) {
       _messenger.currentState?.showSnackBar(
         const SnackBar(
@@ -230,6 +236,7 @@ class _NumberNinjaAppState extends ConsumerState<NumberNinjaApp> {
   @override
   void dispose() {
     _warnings?.cancel();
+    _lifecycle?.dispose();
     super.dispose();
   }
 

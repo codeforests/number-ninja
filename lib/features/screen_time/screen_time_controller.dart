@@ -24,6 +24,8 @@ final screenTimeProvider = Provider<ScreenTimeController>((ref) {
     elapsed: ref.watch(elapsedProvider),
   );
   ref.onDispose(c.dispose);
+  // Screen time synced from her other tablets counts today (FEAT-14).
+  ref.listen(syncDataVersionProvider, (_, _) => c.flush());
   return c;
 });
 

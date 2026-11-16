@@ -155,6 +155,18 @@ class AccountRepository extends Notifier<AccountState> {
 
   Future<void> signOut() => _run(_client.signOut);
 
+  /// A sync found the session expired (FEAT-14): signed out, with
+  /// "Please sign in again.".
+  Future<void> sessionExpired() async {
+    await _client.signOut();
+    if (ref.mounted) {
+      state = const AccountState(
+        loaded: true,
+        notice: AccountNotice.signInAgain,
+      );
+    }
+  }
+
   /// The PIN is checked by SCR-13 before this is called (ACC-07).
   Future<void> deleteAccount() =>
       _run(_client.deleteAccount, onDone: AccountNotice.deleted);

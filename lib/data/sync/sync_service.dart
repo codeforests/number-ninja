@@ -82,6 +82,15 @@ class SyncService {
   Future<void> _setState(SyncStateCompanion c) =>
       (db.update(db.syncState)..where((s) => s.id.equals(1))).write(c);
 
+  /// The last sync time and error kept on the device (SYN-07).
+  Future<({DateTime? lastSyncAt, SyncError? lastError})> savedStatus() async {
+    final s = await _state();
+    return (
+      lastSyncAt: s.lastSyncAt,
+      lastError: SyncError.values.asNameMap()[s.lastError],
+    );
+  }
+
   /// Records why the last run failed (SCR-13 shows it).
   Future<void> recordError(SyncError? e) =>
       _setState(SyncStateCompanion(lastError: Value(e?.name)));
