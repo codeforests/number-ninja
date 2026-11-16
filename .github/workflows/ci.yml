@@ -16,6 +16,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  server:
+    # FEAT-12: a real PocketBase proves the API rules (NFR-13) and a backup
+    # restore (NFR-15). The server is set up only from server/ (NFR-15).
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.50.0
+          cache: true
+
+      - name: Shellcheck
+        run: shellcheck server/*.sh server/test/run.sh scripts/server-local.sh
+
+      - name: Format and analyze server tests
+        working-directory: server/test
+        run: |
+          dart pub get
+          dart format --output=none --set-exit-if-changed .
+          dart analyze --fatal-infos
+
+      - name: API rules and backup restore against the pinned PocketBase
+        run: server/test/run.sh
+
+      - name: nginx -t on the rendered site file (stock Ubuntu nginx)
+        run: |
+          host=api.example.test
+          sudo apt-get update -q && sudo apt-get install -y -q nginx
+          nginx -v
+          sudo mkdir -p "/etc/letsencrypt/live/$host"
+          sudo openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj "/CN=$host" \
+            -keyout "/etc/letsencrypt/live/$host/privkey.pem" \
+            -out "/etc/letsencrypt/live/$host/fullchain.pem"
+          # Same render as install.sh.
+          sed "s|\${SERVER_HOSTNAME}|$host|g" server/nginx/numberninja.conf.template \
+            | sudo tee /etc/nginx/sites-available/numberninja.conf >/dev/null
+          sudo ln -sf /etc/nginx/sites-available/numberninja.conf /etc/nginx/sites-enabled/numberninja.conf
+          sudo nginx -t
+
   build:
     runs-on: ubuntu-latest
     permissions:
@@ -72,19 +114,36 @@ jobs:
           } > android/key.properties
 
       - name: Build release APK
-        run: flutter build apk --release
+        env:
+          SERVER_HOSTNAME: ${{ vars.SERVER_HOSTNAME }}
+        run: |
+          # FEAT-12 (ADR-02): the server URL is baked in; empty = offline only.
+          if [ -n "$SERVER_HOSTNAME" ]; then
+            flutter build apk --release --dart-define=SERVER_URL="https://$SERVER_HOSTNAME"
+          else
+            flutter build apk --release
+          fi
 
-      - name: Check release manifest (NFR-01, NFR-06)
+      - name: Check release manifest (NFR-01, NFR-06, NFR-11, NFR-12)
         run: |
           set -euo pipefail
           m=$(find build/app/intermediates -path '*release*' -name AndroidManifest.xml | grep -i merged | head -1)
           echo "Merged manifest: $m"
-          if grep -q 'android.permission.INTERNET' "$m"; then
-            echo "::error::Release manifest requests INTERNET"; exit 1
-          fi
           grep -o 'android:minSdkVersion="[0-9]*"' "$m"
           grep -q 'android:minSdkVersion="24"' "$m"
-          grep -o 'android.permission.[A-Z_]*' "$m" | sort -u || echo "No permissions"
+          # Requested permissions only (<uses-permission>); a receiver's
+          # android:permission="...DUMP" (androidx profileinstaller) is a guard, not a request.
+          # Joined to one line first: the merged manifest puts each attribute of a
+          # multi-attribute element on its own line.
+          perms=$(tr '\n' ' ' < "$m" | grep -oE '<uses-permission[^>]*android:name="android\.permission\.[A-Z_]+"' | grep -oE 'android\.permission\.[A-Z_]+' | sort -u)
+          echo "Permissions: $perms"
+          # FEAT-12: INTERNET (optional sync server) is the only permission.
+          if [ "$perms" != "android.permission.INTERNET" ]; then
+            echo "::error::Release permissions must be exactly INTERNET, got: $perms"; exit 1
+          fi
+          grep -q 'android:usesCleartextTraffic="false"' "$m" || { echo "::error::usesCleartextTraffic is not false"; exit 1; }
+          grep -q 'android:networkSecurityConfig="@xml/network_security_config"' "$m" || { echo "::error::no network security config"; exit 1; }
+          grep -q 'cleartextTrafficPermitted="false"' android/app/src/main/res/xml/network_security_config.xml
 
       - uses: actions/upload-artifact@v4
         with:

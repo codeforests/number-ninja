@@ -1,0 +1,56 @@
+# FEAT-12: Number Ninja API site for the droplet's existing nginx.
+# install.sh fills in ${SERVER_HOSTNAME} (a sed of that variable only) and
+# writes this to /etc/nginx/sites-available/numberninja.conf. It is the only
+# nginx file the deploy touches. Certificate: certbot --webroot into
+# /var/www/numberninja-acme (install.sh, first run; renewals reload nginx).
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${SERVER_HOSTNAME};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/numberninja-acme;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    # "listen ... http2" rather than "http2 on;": stock Ubuntu/Debian nginx
+    # (1.18-1.24) has no http2 directive; 1.25.1+ only warns.
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ${SERVER_HOSTNAME};
+
+    ssl_certificate /etc/letsencrypt/live/${SERVER_HOSTNAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${SERVER_HOSTNAME}/privkey.pem;
+
+    # Bank files (FEAT-15) are up to 20 MB.
+    client_max_body_size 25m;
+
+    # Admin UI is not public: open it through an SSH tunnel (server/README.md).
+    location /_/ {
+        return 404;
+    }
+    location = /_ {
+        return 404;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8090;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        # PocketBase reads the client IP from X-Real-IP (settings migration:
+        # trustedProxy), so rate limits are per client, not per nginx.
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Realtime is server-sent events: keep the stream open, unbuffered.
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_read_timeout 360s;
+    }
+}

@@ -10,6 +10,8 @@ import 'data/question_bank_loader.dart';
 import 'data/revision_repository.dart';
 import 'data/round_repository.dart';
 import 'data/sound_player.dart';
+import 'data/sync/server_client.dart';
+import 'data/sync/server_config.dart';
 import 'data/stats_repository.dart';
 import 'data/topic_lock_repository.dart';
 import 'data/usage_repository.dart';
@@ -32,6 +34,16 @@ final bankProvider = FutureProvider<QuestionBank>(
 );
 
 final clockProvider = Provider<Clock>((ref) => systemClock);
+
+/// The sync server (FEAT-12). Built with `--dart-define=SERVER_URL`; tests
+/// override [serverClientProvider] with a fake.
+final serverConfigProvider = Provider<ServerConfig>(
+  (ref) => ServerConfig.fromEnvironment(),
+);
+
+final serverClientProvider = Provider<ServerClient>(
+  (ref) => PocketBaseServerClient(ref.watch(serverConfigProvider)),
+);
 
 final pinRepositoryProvider = Provider<PinRepository>(
   (ref) => PinRepository(
