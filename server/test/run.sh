@@ -26,7 +26,7 @@ SERVER_HOSTNAME=$PB_TEST_HOST SMTP_HOST=127.0.0.1 SMTP_PORT=$PB_SMTP_PORT \
   GOOGLE_CLIENT_ID=dummy-id GOOGLE_CLIENT_SECRET=dummy-secret \
   PB_PORT=8090 "$root/scripts/server-local.sh" start "$work/main"
 PB_URL=http://127.0.0.1:8090 PB_BACKUP_OUT="$work/backup.zip" \
-  dart test --concurrency=1 test/api_rules_test.dart test/auth_test.dart test/backup_test.dart
+  dart test --concurrency=1 test/api_rules_test.dart test/auth_test.dart test/sync_test.dart test/backup_test.dart
 
 PB_HOME="$work/restored" PB_SERVICE='' PB_OWNER='' \
   "$root/server/restore.sh" "$work/backup.zip"
