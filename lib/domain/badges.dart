@@ -81,9 +81,13 @@ class BadgeRound {
     required this.stars,
     required this.durationMs,
     required this.finishedAt,
+    this.revision = false,
   });
 
   final String topicId;
+
+  /// A revision round (REV-04): counts for round rules, not topic-map ones.
+  final bool revision;
   final int stars;
   final int durationMs;
   final DateTime finishedAt;
@@ -151,6 +155,7 @@ Set<String> evaluateBadges(BadgeFacts f) {
   final streak = longestStreak(rounds.map((r) => r.finishedAt));
   final bestStars = <String, int>{};
   for (final r in rounds) {
+    if (r.revision) continue;
     final s = bestStars[r.topicId];
     if (s == null || r.stars > s) bestStars[r.topicId] = r.stars;
   }

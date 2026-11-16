@@ -4,6 +4,8 @@ import 'package:number_ninja/data/database.dart';
 import 'package:number_ninja/data/round_repository.dart';
 import 'package:number_ninja/domain/progress.dart';
 import 'package:number_ninja/domain/quiz.dart';
+import 'package:number_ninja/domain/topic_lock.dart';
+import 'package:number_ninja/domain/topics.dart';
 
 void main() {
   late AppDatabase db;
@@ -127,6 +129,39 @@ void main() {
       final p = await repo.progress();
       expect(p['t'], const TopicProgress(bestStars: 3, level: 1, rounds: 2));
       expect(p['u'], const TopicProgress(bestStars: 2, level: 1, rounds: 1));
+    });
+  });
+
+  group('revision rounds (FEAT-11 AC-2, REV-04)', () {
+    test('kind defaults to normal; revision is stored', () async {
+      final a = await repo.startRound('p1.place', 1);
+      final b = await repo.startRound('p1.place', 2, kind: roundKindRevision);
+      final rows = await db.select(db.rounds).get();
+      expect(rows.firstWhere((r) => r.id == a).kind, roundKindNormal);
+      expect(rows.firstWhere((r) => r.id == b).kind, roundKindRevision);
+    });
+
+    test('a 3-star revision round changes no level, stars or lock', () async {
+      final id = await repo.startRound('p1.place', 1, kind: roundKindRevision);
+      await repo.finishRound(id, score: 10, durationMs: 60000, stars: 3);
+      expect(await repo.finishedRounds(), isEmpty);
+      expect(await repo.progress(), isEmpty);
+      expect(await repo.levelFor('p1.place'), 1);
+      final locks = topicLocks(
+        topics: topics,
+        rounds: await repo.finishedRounds(),
+        schoolYear: 1,
+      );
+      expect(locks['p1.bonds'], isA<TopicLocked>());
+
+      final n = await repo.startRound('p1.place', 1);
+      await repo.finishRound(n, score: 7, durationMs: 60000, stars: 1);
+      final after = topicLocks(
+        topics: topics,
+        rounds: await repo.finishedRounds(),
+        schoolYear: 1,
+      );
+      expect(after['p1.bonds'], isNot(isA<TopicLocked>()));
     });
   });
 }

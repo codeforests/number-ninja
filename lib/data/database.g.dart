@@ -831,6 +831,16 @@ class $RoundsTable extends Rounds with TableInfo<$RoundsTable, Round> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('normal'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -842,6 +852,7 @@ class $RoundsTable extends Rounds with TableInfo<$RoundsTable, Round> {
     durationMs,
     stars,
     finishedAt,
+    kind,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -912,6 +923,12 @@ class $RoundsTable extends Rounds with TableInfo<$RoundsTable, Round> {
         finishedAt.isAcceptableOrUnknown(data['finished_at']!, _finishedAtMeta),
       );
     }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    }
     return context;
   }
 
@@ -957,6 +974,10 @@ class $RoundsTable extends Rounds with TableInfo<$RoundsTable, Round> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}finished_at'],
       ),
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
     );
   }
 
@@ -978,6 +999,10 @@ class Round extends DataClass implements Insertable<Round> {
 
   /// Null until the last answer is saved; a quit round stays null (schema v2).
   final DateTime? finishedAt;
+
+  /// `normal` or `revision` (schema v6, REV-04). A revision round never
+  /// counts for levels, best stars or the topic lock.
+  final String kind;
   const Round({
     required this.id,
     required this.sessionId,
@@ -988,6 +1013,7 @@ class Round extends DataClass implements Insertable<Round> {
     required this.durationMs,
     required this.stars,
     this.finishedAt,
+    required this.kind,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1003,6 +1029,7 @@ class Round extends DataClass implements Insertable<Round> {
     if (!nullToAbsent || finishedAt != null) {
       map['finished_at'] = Variable<DateTime>(finishedAt);
     }
+    map['kind'] = Variable<String>(kind);
     return map;
   }
 
@@ -1019,6 +1046,7 @@ class Round extends DataClass implements Insertable<Round> {
       finishedAt: finishedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(finishedAt),
+      kind: Value(kind),
     );
   }
 
@@ -1037,6 +1065,7 @@ class Round extends DataClass implements Insertable<Round> {
       durationMs: serializer.fromJson<int>(json['durationMs']),
       stars: serializer.fromJson<int>(json['stars']),
       finishedAt: serializer.fromJson<DateTime?>(json['finishedAt']),
+      kind: serializer.fromJson<String>(json['kind']),
     );
   }
   @override
@@ -1052,6 +1081,7 @@ class Round extends DataClass implements Insertable<Round> {
       'durationMs': serializer.toJson<int>(durationMs),
       'stars': serializer.toJson<int>(stars),
       'finishedAt': serializer.toJson<DateTime?>(finishedAt),
+      'kind': serializer.toJson<String>(kind),
     };
   }
 
@@ -1065,6 +1095,7 @@ class Round extends DataClass implements Insertable<Round> {
     int? durationMs,
     int? stars,
     Value<DateTime?> finishedAt = const Value.absent(),
+    String? kind,
   }) => Round(
     id: id ?? this.id,
     sessionId: sessionId ?? this.sessionId,
@@ -1075,6 +1106,7 @@ class Round extends DataClass implements Insertable<Round> {
     durationMs: durationMs ?? this.durationMs,
     stars: stars ?? this.stars,
     finishedAt: finishedAt.present ? finishedAt.value : this.finishedAt,
+    kind: kind ?? this.kind,
   );
   Round copyWithCompanion(RoundsCompanion data) {
     return Round(
@@ -1091,6 +1123,7 @@ class Round extends DataClass implements Insertable<Round> {
       finishedAt: data.finishedAt.present
           ? data.finishedAt.value
           : this.finishedAt,
+      kind: data.kind.present ? data.kind.value : this.kind,
     );
   }
 
@@ -1105,7 +1138,8 @@ class Round extends DataClass implements Insertable<Round> {
           ..write('score: $score, ')
           ..write('durationMs: $durationMs, ')
           ..write('stars: $stars, ')
-          ..write('finishedAt: $finishedAt')
+          ..write('finishedAt: $finishedAt, ')
+          ..write('kind: $kind')
           ..write(')'))
         .toString();
   }
@@ -1121,6 +1155,7 @@ class Round extends DataClass implements Insertable<Round> {
     durationMs,
     stars,
     finishedAt,
+    kind,
   );
   @override
   bool operator ==(Object other) =>
@@ -1134,7 +1169,8 @@ class Round extends DataClass implements Insertable<Round> {
           other.score == this.score &&
           other.durationMs == this.durationMs &&
           other.stars == this.stars &&
-          other.finishedAt == this.finishedAt);
+          other.finishedAt == this.finishedAt &&
+          other.kind == this.kind);
 }
 
 class RoundsCompanion extends UpdateCompanion<Round> {
@@ -1147,6 +1183,7 @@ class RoundsCompanion extends UpdateCompanion<Round> {
   final Value<int> durationMs;
   final Value<int> stars;
   final Value<DateTime?> finishedAt;
+  final Value<String> kind;
   const RoundsCompanion({
     this.id = const Value.absent(),
     this.sessionId = const Value.absent(),
@@ -1157,6 +1194,7 @@ class RoundsCompanion extends UpdateCompanion<Round> {
     this.durationMs = const Value.absent(),
     this.stars = const Value.absent(),
     this.finishedAt = const Value.absent(),
+    this.kind = const Value.absent(),
   });
   RoundsCompanion.insert({
     this.id = const Value.absent(),
@@ -1168,6 +1206,7 @@ class RoundsCompanion extends UpdateCompanion<Round> {
     this.durationMs = const Value.absent(),
     this.stars = const Value.absent(),
     this.finishedAt = const Value.absent(),
+    this.kind = const Value.absent(),
   }) : sessionId = Value(sessionId),
        topicId = Value(topicId),
        startedAt = Value(startedAt);
@@ -1181,6 +1220,7 @@ class RoundsCompanion extends UpdateCompanion<Round> {
     Expression<int>? durationMs,
     Expression<int>? stars,
     Expression<DateTime>? finishedAt,
+    Expression<String>? kind,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1192,6 +1232,7 @@ class RoundsCompanion extends UpdateCompanion<Round> {
       if (durationMs != null) 'duration_ms': durationMs,
       if (stars != null) 'stars': stars,
       if (finishedAt != null) 'finished_at': finishedAt,
+      if (kind != null) 'kind': kind,
     });
   }
 
@@ -1205,6 +1246,7 @@ class RoundsCompanion extends UpdateCompanion<Round> {
     Value<int>? durationMs,
     Value<int>? stars,
     Value<DateTime?>? finishedAt,
+    Value<String>? kind,
   }) {
     return RoundsCompanion(
       id: id ?? this.id,
@@ -1216,6 +1258,7 @@ class RoundsCompanion extends UpdateCompanion<Round> {
       durationMs: durationMs ?? this.durationMs,
       stars: stars ?? this.stars,
       finishedAt: finishedAt ?? this.finishedAt,
+      kind: kind ?? this.kind,
     );
   }
 
@@ -1249,6 +1292,9 @@ class RoundsCompanion extends UpdateCompanion<Round> {
     if (finishedAt.present) {
       map['finished_at'] = Variable<DateTime>(finishedAt.value);
     }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
     return map;
   }
 
@@ -1263,7 +1309,8 @@ class RoundsCompanion extends UpdateCompanion<Round> {
           ..write('score: $score, ')
           ..write('durationMs: $durationMs, ')
           ..write('stars: $stars, ')
-          ..write('finishedAt: $finishedAt')
+          ..write('finishedAt: $finishedAt, ')
+          ..write('kind: $kind')
           ..write(')'))
         .toString();
   }
@@ -3673,6 +3720,7 @@ typedef $$RoundsTableCreateCompanionBuilder = RoundsCompanion Function({
   Value<int> durationMs,
   Value<int> stars,
   Value<DateTime?> finishedAt,
+  Value<String> kind,
 });
 typedef $$RoundsTableUpdateCompanionBuilder = RoundsCompanion Function({
   Value<int> id,
@@ -3684,6 +3732,7 @@ typedef $$RoundsTableUpdateCompanionBuilder = RoundsCompanion Function({
   Value<int> durationMs,
   Value<int> stars,
   Value<DateTime?> finishedAt,
+  Value<String> kind,
 });
 
 final class $$RoundsTableReferences
@@ -3773,6 +3822,11 @@ class $$RoundsTableFilterComposer
 
   ColumnFilters<DateTime> get finishedAt => $composableBuilder(
     column: $table.finishedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3874,6 +3928,11 @@ class $$RoundsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PlaySessionsTableOrderingComposer get sessionId {
     final $$PlaySessionsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3934,6 +3993,9 @@ class $$RoundsTableAnnotationComposer
     column: $table.finishedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
 
   $$PlaySessionsTableAnnotationComposer get sessionId {
     final $$PlaySessionsTableAnnotationComposer composer = $composerBuilder(
@@ -4021,6 +4083,7 @@ class $$RoundsTableTableManager
                 Value<int> durationMs = const Value.absent(),
                 Value<int> stars = const Value.absent(),
                 Value<DateTime?> finishedAt = const Value.absent(),
+                Value<String> kind = const Value.absent(),
               }) => RoundsCompanion(
                 id: id,
                 sessionId: sessionId,
@@ -4031,6 +4094,7 @@ class $$RoundsTableTableManager
                 durationMs: durationMs,
                 stars: stars,
                 finishedAt: finishedAt,
+                kind: kind,
               ),
           createCompanionCallback:
               ({
@@ -4043,6 +4107,7 @@ class $$RoundsTableTableManager
                 Value<int> durationMs = const Value.absent(),
                 Value<int> stars = const Value.absent(),
                 Value<DateTime?> finishedAt = const Value.absent(),
+                Value<String> kind = const Value.absent(),
               }) => RoundsCompanion.insert(
                 id: id,
                 sessionId: sessionId,
@@ -4053,6 +4118,7 @@ class $$RoundsTableTableManager
                 durationMs: durationMs,
                 stars: stars,
                 finishedAt: finishedAt,
+                kind: kind,
               ),
           withReferenceMapper: (p0) => p0
               .map(

@@ -41,6 +41,10 @@ class Rounds extends Table {
 
   /// Null until the last answer is saved; a quit round stays null (schema v2).
   DateTimeColumn get finishedAt => dateTime().nullable()();
+
+  /// `normal` or `revision` (schema v6, REV-04). A revision round never
+  /// counts for levels, best stars or the topic lock.
+  TextColumn get kind => text().withDefault(const Constant('normal'))();
 }
 
 /// Every answer she gives: the raw record behind every chart.
@@ -128,7 +132,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'number_ninja'));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -147,6 +151,7 @@ class AppDatabase extends _$AppDatabase {
         await customStatement('UPDATE app_settings SET profile_pending = 0');
       }
       if (from < 5) await m.createTable(topicUnlocks);
+      if (from < 6) await m.addColumn(rounds, rounds.kind);
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
