@@ -71,11 +71,12 @@ class RoundRepository {
     required int durationMs,
     required int stars,
   }) => (db.update(db.rounds)..where((r) => r.id.equals(roundId))).write(
-    RoundsCompanion(
-      score: Value(score),
-      durationMs: Value(durationMs),
-      stars: Value(stars),
-      finishedAt: Value(clock()),
+    RoundsCompanion.custom(
+      score: Constant(score),
+      durationMs: Constant(durationMs),
+      stars: Constant(stars),
+      finishedAt: Constant(clock()),
+      dirty: db.rounds.dirty + const Constant(1),
     ),
   );
 

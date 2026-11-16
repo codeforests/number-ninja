@@ -99,7 +99,10 @@ final childProfileProvider = FutureProvider.autoDispose<ChildProfile?>(
 );
 
 final usageRepositoryProvider = Provider<UsageRepository>(
-  (ref) => UsageRepository(ref.watch(databaseProvider)),
+  (ref) => UsageRepository(
+    ref.watch(databaseProvider),
+    clock: ref.watch(clockProvider),
+  ),
 );
 
 /// One per app opening, so its play session is shared by every round.
