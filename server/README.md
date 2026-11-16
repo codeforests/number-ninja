@@ -43,7 +43,6 @@ The A record for `api.brainbubblz.audiodenoiser.com` is done. On your computer:
      characters), optionally `CERT_EMAIL` (Let's Encrypt notices; defaults to the
      superuser email).
    - Variable: `SERVER_HOSTNAME` = `api.brainbubblz.audiodenoiser.com`.
-   - The workflow uses an environment called `production`; GitHub creates it on the first run.
 
 Ports 80 and 443 are already open for audiodenoiser.com, so the firewall needs nothing.
 
