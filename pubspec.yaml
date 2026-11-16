@@ -43,6 +43,9 @@ dependencies:
   printing: ^5.15.1
   audioplayers: ^6.8.1
   pocketbase: ^0.26.0
+  flutter_secure_storage: ^11.2.0
+  url_launcher: ^6.3.3
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

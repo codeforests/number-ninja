@@ -10,6 +10,7 @@ import 'data/question_bank_loader.dart';
 import 'data/revision_repository.dart';
 import 'data/round_repository.dart';
 import 'data/sound_player.dart';
+import 'data/sync/account_repository.dart';
 import 'data/sync/server_client.dart';
 import 'data/sync/server_config.dart';
 import 'data/stats_repository.dart';
@@ -43,6 +44,11 @@ final serverConfigProvider = Provider<ServerConfig>(
 
 final serverClientProvider = Provider<ServerClient>(
   (ref) => PocketBaseServerClient(ref.watch(serverConfigProvider)),
+);
+
+/// The parent's account (FEAT-13); FEAT-14 watches it to sync.
+final accountProvider = NotifierProvider<AccountRepository, AccountState>(
+  () => AccountRepository(serverClientProvider),
 );
 
 final pinRepositoryProvider = Provider<PinRepository>(
