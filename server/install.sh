@@ -4,6 +4,9 @@
 # as root, with settings on stdin as KEY=VALUE lines (so the password never
 # shows in a process list):
 #   SERVER_HOSTNAME  PB_SUPERUSER_EMAIL  PB_SUPERUSER_PASSWORD  CERT_EMAIL
+# and, optional (FEAT-13; empty leaves email or Google sign-in off):
+#   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS
+#   GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
 # Idempotent: re-running is the upgrade path.
 #
 # nginx: the droplet's nginx already serves other sites. This only ever
@@ -20,9 +23,13 @@ site_link=/etc/nginx/sites-enabled/numberninja.conf
 acme=/var/www/numberninja-acme
 
 SERVER_HOSTNAME='' PB_SUPERUSER_EMAIL='' PB_SUPERUSER_PASSWORD='' CERT_EMAIL=''
+pb_env_keys=(SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET)
+for k in "${pb_env_keys[@]}"; do printf -v "$k" '%s' ''; done
 while IFS='=' read -r key value; do
   case "$key" in
-    SERVER_HOSTNAME | PB_SUPERUSER_EMAIL | PB_SUPERUSER_PASSWORD | CERT_EMAIL)
+    SERVER_HOSTNAME | PB_SUPERUSER_EMAIL | PB_SUPERUSER_PASSWORD | CERT_EMAIL | \
+      SMTP_HOST | SMTP_PORT | SMTP_USERNAME | SMTP_PASSWORD | MAIL_SENDER_ADDRESS | \
+      GOOGLE_CLIENT_ID | GOOGLE_CLIENT_SECRET)
       printf -v "$key" '%s' "$value" ;;
     '') ;;
     *) echo "Unknown setting: $key" >&2; exit 2 ;;
@@ -71,8 +78,8 @@ if [ "$("$home/pocketbase" --version 2>/dev/null || true)" != "pocketbase versio
   replace_binary=1
 fi
 
-step "Migrations and hooks"
-for d in pb_migrations pb_hooks; do
+step "Migrations, hooks and web pages"
+for d in pb_migrations pb_hooks pb_public; do
   rm -rf "$home/$d.new"
   cp -r "$here/$d" "$home/$d.new"
   chown -R root:root "$home/$d.new"
@@ -82,8 +89,21 @@ done
 install -m 0755 "$here/restore.sh" "$home/restore.sh"
 
 step "Service unit"
-printf 'SERVER_HOSTNAME=%s\n' "$host" >/etc/default/numberninja-pb
-chmod 0644 /etc/default/numberninja-pb
+# Read by the unit; pb_hooks/config.pb.js applies it on every start. Holds
+# the SMTP password and Google secret, so root-only (systemd reads it as root).
+env_file=/etc/default/numberninja-pb
+quote() { local v="${1//\\/\\\\}"; printf '"%s"' "${v//\"/\\\"}"; }
+umask_old="$(umask)"; umask 077
+{
+  printf 'SERVER_HOSTNAME=%s\n' "$host"
+  for k in "${pb_env_keys[@]}"; do
+    if [ -n "${!k}" ]; then printf '%s=%s\n' "$k" "$(quote "${!k}")"; fi
+  done
+} >"$env_file.new"
+umask "$umask_old"
+chmod 0600 "$env_file.new"
+mv "$env_file.new" "$env_file"
+echo "Email: $([ -n "$SMTP_HOST" ] && [ -n "$MAIL_SENDER_ADDRESS" ] && echo on || echo off), Google sign-in: $([ -n "$GOOGLE_CLIENT_ID" ] && [ -n "$GOOGLE_CLIENT_SECRET" ] && echo on || echo off)"
 install -m 0644 "$here/numberninja-pb.service" /etc/systemd/system/numberninja-pb.service
 systemctl daemon-reload
 systemctl enable --quiet numberninja-pb
@@ -138,7 +158,7 @@ rm -f "$full"
 step "Database migrations and superuser"
 systemctl stop numberninja-pb || true
 if [ "${replace_binary:-0}" -eq 1 ]; then mv "$home/pocketbase.new" "$home/pocketbase"; fi
-for d in pb_migrations pb_hooks; do
+for d in pb_migrations pb_hooks pb_public; do
   rm -rf "${home:?}/$d"
   mv "$home/$d.new" "$home/$d"
 done

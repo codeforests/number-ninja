@@ -37,7 +37,7 @@ case "$cmd" in
     "$bin" migrate up --dir="$dir/pb_data" --migrationsDir="$root/server/pb_migrations" >"$dir/migrate.log" 2>&1
     "$bin" superuser upsert "$email" "$password" --dir="$dir/pb_data" >/dev/null
     "$bin" serve --http="127.0.0.1:$port" --dir="$dir/pb_data" \
-      --migrationsDir="$root/server/pb_migrations" --hooksDir="$root/server/pb_hooks" \
+      --migrationsDir="$root/server/pb_migrations" --hooksDir="$root/server/pb_hooks" --publicDir="$root/server/pb_public" \
       >"$dir/serve.log" 2>&1 &
     echo $! >"$dir/pid"
     for _ in $(seq 1 50); do

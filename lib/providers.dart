@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'data/badge_repository.dart';
 import 'data/database.dart';
@@ -10,6 +11,7 @@ import 'data/question_bank_loader.dart';
 import 'data/revision_repository.dart';
 import 'data/round_repository.dart';
 import 'data/sound_player.dart';
+import 'data/sync/account_repository.dart';
 import 'data/sync/server_client.dart';
 import 'data/sync/server_config.dart';
 import 'data/stats_repository.dart';
@@ -43,6 +45,35 @@ final serverConfigProvider = Provider<ServerConfig>(
 
 final serverClientProvider = Provider<ServerClient>(
   (ref) => PocketBaseServerClient(ref.watch(serverConfigProvider)),
+);
+
+/// Opens and closes the browser tab for Google sign-in (FEAT-13); tests
+/// override it.
+class SignInBrowser {
+  const SignInBrowser();
+
+  Future<void> open(Uri url) async {
+    await launchUrl(url, mode: LaunchMode.inAppBrowserView);
+  }
+
+  Future<void> close() async {
+    try {
+      if (await supportsCloseForLaunchMode(LaunchMode.inAppBrowserView)) {
+        await closeInAppWebView();
+      }
+    } on Object {
+      // The parent closes the tab.
+    }
+  }
+}
+
+final signInBrowserProvider = Provider<SignInBrowser>(
+  (ref) => const SignInBrowser(),
+);
+
+/// The parent's account (FEAT-13); FEAT-14 watches it to sync.
+final accountProvider = NotifierProvider<AccountRepository, AccountState>(
+  () => AccountRepository(serverClientProvider),
 );
 
 final pinRepositoryProvider = Provider<PinRepository>(

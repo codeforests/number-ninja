@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Confirm email</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #f4f7fb; color: #1d2433; margin: 0; padding: 24px 16px; }
+  main { max-width: 420px; margin: 40px auto; background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+  h1 { font-size: 22px; margin: 0 0 12px; }
+  p { font-size: 17px; line-height: 1.5; }
+  .err { color: #b3261e; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Confirm your email</h1>
+  <p id="msg">Confirming…</p>
+</main>
+<script>
+(function () {
+  var msg = document.getElementById("msg");
+  var token = new URLSearchParams(location.search).get("token");
+  function show(text, bad) { msg.textContent = text; msg.className = bad ? "err" : ""; }
+  if (!token) { show("This link is missing its code. Open the link from the email again.", true); return; }
+  fetch("/api/collections/users/confirm-verification", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: token })
+  }).then(function (r) {
+    if (r.ok) show("Done. Go back to the app and sign in.");
+    else show("This link has expired or was already used. Ask the app to send the email again.", true);
+  }, function () { show("Can't reach the server. Check the internet and try again.", true); });
+})();
+</script>
+</body>
+</html>

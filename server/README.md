@@ -8,7 +8,8 @@ in `pb_migrations/` and redeploy.
 |---|---|
 | `VERSION` | Pinned PocketBase version and sha256 |
 | `pb_migrations/` | Collections, API rules, indexes, settings (applied on deploy) |
-| `pb_hooks/` | Server hooks (FEAT-13 adds the account ones) |
+| `pb_hooks/config.pb.js` | Applies email (SMTP) and Google sign-in settings from the environment on every start (FEAT-13) |
+| `pb_public/` | `verify.html`, `reset.html`: the pages the account emails link to (FEAT-13) |
 | `nginx/numberninja.conf.template` | The one nginx site this server adds |
 | `numberninja-pb.service` | systemd unit, PocketBase on `127.0.0.1:8090` |
 | `deploy.sh` | Copies this folder to the droplet and runs `install.sh` |
@@ -45,6 +46,39 @@ The A record for `api.brainbubblz.audiodenoiser.com` is done. On your computer:
    - Variable: `SERVER_HOSTNAME` = `api.brainbubblz.audiodenoiser.com`.
 
 Ports 80 and 443 are already open for audiodenoiser.com, so the firewall needs nothing.
+
+## Email and Google sign-in (FEAT-13, Ken, about 20 minutes)
+
+Both are optional: without these secrets the server deploys and works, but
+sign-up emails aren't sent and the app hides "Sign in with Google". Add them,
+then run "Deploy server" again; nothing else changes.
+
+**Email (Brevo, free plan, 300 emails/day).** DigitalOcean blocks the usual
+mail ports, so this uses Brevo's port 2525.
+
+1. Sign up at brevo.com. Under Senders, domains & dedicated IPs → Senders, add the
+   address the emails come from (e.g. your Gmail or `noreply@audiodenoiser.com`) and
+   confirm it from its inbox. (Authenticating the domain with its DNS records is
+   better for spam filters, but not required.)
+2. Under SMTP & API → SMTP, create an SMTP key. Note the login shown there.
+3. Repo secrets: `SMTP_HOST` = `smtp-relay.brevo.com`, `SMTP_PORT` = `2525`,
+   `SMTP_USERNAME` = the SMTP login, `SMTP_PASSWORD` = the SMTP key,
+   `MAIL_SENDER_ADDRESS` = the sender from step 1.
+
+**Google sign-in.**
+
+1. console.cloud.google.com → create a project (e.g. "BrainBubblz").
+2. APIs & Services → OAuth consent screen: External, app name, your email as support
+   and developer contact; scopes `email` and `profile` only. Publish it (or add your
+   own Google account as a test user while it's in testing).
+3. APIs & Services → Credentials → Create credentials → OAuth client ID →
+   **Web application** (not Android). Authorized redirect URI:
+   `https://api.brainbubblz.audiodenoiser.com/api/oauth2-redirect` (use the
+   `SERVER_HOSTNAME` value; add the new one if the hostname changes).
+4. Repo secrets: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+
+The deploy log prints `Email: on|off, Google sign-in: on|off`. The secrets end up
+in `/etc/default/numberninja-pb` on the droplet (root only, mode 600).
 
 ## Deploy
 

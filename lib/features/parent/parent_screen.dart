@@ -63,6 +63,7 @@ class ParentScreen extends ConsumerWidget {
           const Divider(height: AppSizes.gap * 2),
           const _SoundSection(),
           const Divider(height: AppSizes.gap * 2),
+          const _AccountTile(),
           const _ServerSection(),
           const Divider(height: AppSizes.gap * 2),
           ListTile(
@@ -259,6 +260,29 @@ class _TopicLocksTile extends StatelessWidget {
     trailing: const Icon(Icons.chevron_right),
     onTap: () => context.go(Routes.topicLocks),
   );
+}
+
+/// Opens SCR-13 (FEAT-13); shows the signed-in email. Reading the account
+/// state is local only (NFR-11).
+class _AccountTile extends ConsumerWidget {
+  const _AccountTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final account = ref.watch(accountProvider).account;
+    return ListTile(
+      key: const Key('account-row'),
+      minTileHeight: AppSizes.minTap,
+      leading: const Icon(Icons.account_circle_outlined),
+      title: const Text('Account'),
+      subtitle: Text(
+        account?.email ?? 'Not signed in',
+        key: const Key('account-row-subtitle'),
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.go(Routes.account),
+    );
+  }
 }
 
 /// FEAT-12: the sync server's hostname and a check the parent starts. No

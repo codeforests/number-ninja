@@ -12,6 +12,7 @@ import 'features/quiz/quiz_screen.dart';
 import 'features/topics/topic_map_screen.dart';
 import 'features/quiz/result_screen.dart';
 import 'domain/stats.dart';
+import 'features/parent/account_screen.dart';
 import 'features/parent/change_pin_screen.dart';
 import 'features/parent/dashboard_screen.dart';
 import 'features/parent/parent_screen.dart';
@@ -31,6 +32,7 @@ abstract final class Routes {
   static const setupProfile = '/setup/profile'; // SCR-12, first run
   static const profile = '/parent/profile'; // SCR-12 from SCR-11
   static const topicLocks = '/parent/topics'; // SCR-15
+  static const account = '/parent/account'; // SCR-13
   static const home = '/'; // SCR-02
   static const pinEntry = '/parent/pin'; // SCR-08
   static const parent = '/parent'; // SCR-11
@@ -156,6 +158,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'topics',
             builder: (context, state) => const TopicLocksScreen(),
+          ),
+          GoRoute(
+            path: 'account',
+            builder: (context, state) => const AccountScreen(),
           ),
           GoRoute(
             path: 'change-pin',

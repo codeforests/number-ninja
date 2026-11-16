@@ -4,12 +4,13 @@
 
 ## Entry and wiring
 
-- `lib/main.dart` → `lib/app.dart`: `NumberNinjaApp`, `routerProvider` (go_router). Routes: `/setup`, `/setup/profile` (SCR-12 first run, while `AppSession.profilePending`), `/play/:track`, `/quiz/:topicId`, `/locked`, parent area under `/parent`: `pin`, `change-pin`, `dashboard`, `topic/:topicId`, `reset`, `profile`, `topics` (SCR-15). `/revise/:scopeId` (SCR-14) and `/revise/:scopeId/quiz` (revision round).
+- `lib/main.dart` → `lib/app.dart`: `NumberNinjaApp`, `routerProvider` (go_router). Routes: `/setup`, `/setup/profile` (SCR-12 first run, while `AppSession.profilePending`), `/play/:track`, `/quiz/:topicId`, `/locked`, parent area under `/parent`: `pin`, `change-pin`, `dashboard`, `topic/:topicId`, `reset`, `profile`, `topics` (SCR-15), `account` (SCR-13). `/revise/:scopeId` (SCR-14) and `/revise/:scopeId/quiz` (revision round).
 - `lib/providers.dart`: `databaseProvider`, `bankProvider`, `clockProvider`, the repository providers, `topicProgressProvider`. Tests override these.
 
 ## Server (`server/`, FEAT-12)
 
 - `server/README.md` is the guide (Ken's setup, deploy, tunnel, restore). `VERSION` pins PocketBase; `pb_migrations/*.js` are the only schema and rule source; `nginx/numberninja.conf.template` + `install.sh` (runs on the droplet, called by `deploy.sh`, workflow `deploy-server.yml`); `restore.sh`.
+- FEAT-13: `pb_hooks/config.pb.js` (SMTP, Google OAuth2 and appURL from env on every start), `pb_migrations/1763251202_auth.js` (users auth settings, email templates, verified-only child create), `pb_public/verify.html` + `reset.html` (email link pages). Tests: `test/auth_test.dart` with `lib/mail_sink.dart` (in-test SMTP sink on `PB_SMTP_PORT`).
 - Tests: `server/test/run.sh` (CI job `server`): `scripts/server-local.sh` starts the pinned PocketBase; `test/api_rules_test.dart` (NFR-13), `backup_test.dart` + `restore_check_test.dart` (NFR-15). Helpers in `server/test/lib/fixtures.dart`.
 
 ## Domain (`lib/domain`, pure Dart)
@@ -24,6 +25,7 @@
 - `database.dart`: Drift tables `AppSettings`, `PlaySessions`, `Rounds`, `Attempts`, `DailyUsage`, `BadgesEarned`, `PinLockout`, `ChildProfiles` (`child_profile`, row class `ProfileRow`), `TopicUnlocks`; `schemaVersion` and migrations at the bottom. After a table change: `dart run build_runner build`, bump `schemaVersion`, add a case to `test/data/migration_test.dart`.
 - `sound_player.dart`: `SoundEffect`, `SoundPlayer` (`AudioSoundPlayer`, `audioplayers`), `SoundEffects` (checks `UsageRepository.soundOn`); `soundEffectsProvider` in `providers.dart`. Tests use `RecordingSoundPlayer` from the quiz harness.
 - `sync/server_config.dart` (`ServerConfig`, from `--dart-define=SERVER_URL`, https only), `sync/server_client.dart` (`ServerClient`, `PocketBaseServerClient`, `ServerHealth`); `serverConfigProvider`, `serverClientProvider` in `providers.dart`. Tests use `test/data/fake_server_client.dart`.
+- FEAT-13: `sync/token_store.dart` (`TokenStore`, `SecureTokenStore`, `MemoryTokenStore`); `ServerClient` auth calls throw `AuthException(AuthError)`; `sync/account_repository.dart` (`AccountRepository` notifier, `AccountState`, `AccountNotice`) = `accountProvider`; `signInBrowserProvider` (Custom Tab for Google) in `providers.dart`.
 - `revision_repository.dart` (`RevisionRepository.history()`); `revisionPlannerProvider`, `revisionHistoryProvider`, `revisionOffersProvider(scopeId)` in `providers.dart`. `round_repository.dart` has `roundKindNormal`/`roundKindRevision`; `finishedRounds()` is normal-only.
 - Repositories: `topic_lock_repository.dart` (`topicLocksProvider` in `providers.dart`), `profile_repository.dart` (`childProfileProvider` is a FutureProvider; invalidate after a save), `pin_repository.dart`, `round_repository.dart`, `stats_repository.dart`, `usage_repository.dart`; `question_bank_loader.dart` (`loadBank`).
 
@@ -33,7 +35,7 @@
 - `home/home_screen.dart`, `topics/topic_map_screen.dart` (+ `topic_icons.dart`), `setup/setup_pin_screen.dart`, `profile/profile_screen.dart` (SCR-12).
 - `quiz/`: `quiz_controller.dart` (`QuizController`, `RoundState`, `RoundSummary`), `quiz_screen.dart`, `result_screen.dart`, `feedback_panel.dart`, `answers/` (`mcq_answer`, `number_answer`, `drag_answer`).
 - `screen_time/`: `screen_time_controller.dart` (`ScreenTimeController`, `screenTimeProvider`), `lock_screen.dart`.
-- `parent/`: `pin_entry_screen`, `parent_screen` (incl. screen-time section), `change_pin_screen`, `dashboard_screen`, `stats_view` (`statsDataProvider`, `StatsCard`, `TrendCharts`), `topic_detail_screen`, `reset_screen`, `report_pdf` and `report_export` (`exportReport`, `reportSharerProvider`), `topic_locks_screen` (SCR-15).
+- `parent/`: `pin_entry_screen`, `parent_screen` (incl. screen-time section), `change_pin_screen`, `dashboard_screen`, `stats_view` (`statsDataProvider`, `StatsCard`, `TrendCharts`), `topic_detail_screen`, `reset_screen`, `report_pdf` and `report_export` (`exportReport`, `reportSharerProvider`), `topic_locks_screen` (SCR-15), `account_screen` (SCR-13, `/parent/account`; SCR-11 "Account" row).
 
 ## Shared UI (`lib/ui`)
 
@@ -66,3 +68,6 @@
 - PocketBase's built-in rate limit allows 2 sign-ins per 3 s per IP: server tests sign in through `signIn()` (retries on 429), and behind nginx the client IP comes from `X-Real-IP` (`trustedProxy` in the settings migration), or every user would share one limit (FEAT-12).
 - `flutter analyze` excludes `server/**`; the server test package is analyzed by its own `dart analyze` in the CI `server` job (FEAT-12).
 - Server nginx site: write `listen 443 ssl http2;`, never `http2 on;` (stock Ubuntu/Debian nginx ≤1.24 rejects it; CI `server` job runs `nginx -t` on the rendered template). Search `sites-enabled` with `grep -R`: its entries are symlinks, which `grep -r` skips.
+- The PocketBase SDK clears its auth store before a request when the token isn't an unexpired JWT: app tests must use a real-shaped JWT (see `account_repository_test.dart`). `FakeServerClient.authMethods` ignores `fail`, since SCR-13 calls it on open (FEAT-13).
+- An unverified user can't create a `children` record: server test parents are verified through the superuser in `Parent.signUp` (FEAT-13).
+- CI builds with JDK 21: release lint (`lintVitalAnalyzeRelease`) on `url_launcher_android` crashes on JDK 17 (`NoSuchMethodError List.removeLast`). Source/target stay Java 17 (FEAT-13).

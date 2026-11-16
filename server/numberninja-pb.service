@@ -9,7 +9,7 @@ User=numberninja
 Group=numberninja
 WorkingDirectory=/opt/numberninja
 EnvironmentFile=-/etc/default/numberninja-pb
-ExecStart=/opt/numberninja/pocketbase serve --http=127.0.0.1:8090 --dir=/opt/numberninja/pb_data --migrationsDir=/opt/numberninja/pb_migrations --hooksDir=/opt/numberninja/pb_hooks
+ExecStart=/opt/numberninja/pocketbase serve --http=127.0.0.1:8090 --dir=/opt/numberninja/pb_data --migrationsDir=/opt/numberninja/pb_migrations --hooksDir=/opt/numberninja/pb_hooks --publicDir=/opt/numberninja/pb_public
 Restart=always
 RestartSec=5
 LimitNOFILE=4096
