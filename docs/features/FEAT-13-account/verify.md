@@ -11,7 +11,7 @@ Fresh clone at `0ee851e`, Flutter 3.50.0, PocketBase 0.40.6. `build_runner` and 
 | `scripts/check.sh` (format, analyze, test) | all PASS, 917 tests |
 | `server/test/run.sh` (rules, auth with SMTP sink, backup, restore, restored check) | PASS, 32 + 2 tests |
 | shellcheck | not installable here; runs in the CI `server` job |
-| CI on the final head | see the PR checks (server job + APK build + manifest check) |
+| CI on `2a2fed6` | green: server job (shellcheck, server tests) and build (tests, APK, manifest check), [run 43881602165](https://github.com/codeforests/number-ninja/actions/runs/43881602165) |
 
 ## Acceptance criteria
 
