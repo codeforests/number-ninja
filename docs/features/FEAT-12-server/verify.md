@@ -38,7 +38,7 @@ Fresh clone at `d392ebc`, Flutter 3.50.0 (CI's pin), PocketBase 0.40.6 (sha256 c
 | AC-3 | pass | `backup_test.dart` (cron `0 19 * * *`, keep 14, backup zip via API) → `restore.sh` with `PB_SERVICE=` → `restore_check_test.dart` signs in as A on the restored server and reads every record and the settings. |
 | AC-4 | pass (CI part pending in `build`) | `server_config_test.dart` covers empty, `http://`, junk, `https://host`; manifest and network config read; CI check now requires exactly INTERNET, cleartext false, the config. |
 | AC-5 | pass | `server_row_test.dart`: "Not set up" with no call, Connected, offline text, layout checks at 1.3. |
-| AC-6 | not run | Needs Ken's setup in `server/README.md`; blocked by Rework 1 until fixed. |
+| AC-6 | partly | Deploy server run 43872815823 green (2026-11-16): certificate valid to 2027-02-14, `/api/health` 200, `/_/` 404. Restore drill after the first nightly backup and the tablet "Connected" check (M6 test APK) still to do. |
 
 ## Beyond the tests
 
