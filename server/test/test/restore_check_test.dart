@@ -30,4 +30,12 @@ void main() {
     },
     skip: marker == null ? 'run by server/test/run.sh after a restore' : false,
   );
+
+  test('without the FEAT-13 env, mail and Google sign-in are off', () async {
+    final su = await superuser();
+    final settings = await su.settings.getAll();
+    expect((settings['smtp'] as Map)['enabled'], isFalse);
+    final methods = await anonymous().collection('users').listAuthMethods();
+    expect(methods.oauth2.providers, isEmpty);
+  });
 }

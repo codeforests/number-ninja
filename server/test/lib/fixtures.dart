@@ -57,6 +57,8 @@ class Parent {
   final String email;
   final String password;
 
+  /// Verified through the superuser, as the email link would (FEAT-13:
+  /// only a verified account can create a child).
   static Future<Parent> signUp(String name) async {
     final email = '${uniq(name)}@test.local';
     const password = 'parent-password-1';
@@ -70,6 +72,9 @@ class Parent {
             'passwordConfirm': password,
           },
         );
+    await (await superuser())
+        .collection('users')
+        .update(user.id, body: {'verified': true});
     await signIn(pb, 'users', email, password);
     return Parent(pb, user.id, email, password);
   }
