@@ -1,6 +1,6 @@
 # FEAT-12: Verify
 
-> Verified 2026-11-16 in a fresh thread that did not write the code · Commit under test: `d392ebc` · Verdict: **rework** (two small deploy-script defects; AC-1..AC-5 pass)
+> Verified 2026-11-16 in a fresh thread that did not write the code · Commit under test: `d392ebc` (plus `797b8a2`, a one-line README change) · Verdict: **rework** (two small deploy-script defects; AC-1..AC-5 pass)
 
 ## Rework
 
