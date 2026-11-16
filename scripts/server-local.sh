@@ -46,7 +46,7 @@ case "$cmd" in
     done
     echo "PocketBase did not start; see $dir/serve.log" >&2; exit 1 ;;
   stop)
-    [ -f "$dir/pid" ] && kill "$(cat "$dir/pid")" 2>/dev/null || true
+    if [ -f "$dir/pid" ]; then kill "$(cat "$dir/pid")" 2>/dev/null || true; fi
     rm -f "$dir/pid" ;;
   *) echo "usage: $0 start|stop|bin [dir]" >&2; exit 2 ;;
 esac

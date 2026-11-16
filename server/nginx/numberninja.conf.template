@@ -1,5 +1,5 @@
 # FEAT-12: Number Ninja API site for the droplet's existing nginx.
-# deploy.sh fills in ${SERVER_HOSTNAME} (envsubst, that variable only) and
+# install.sh fills in ${SERVER_HOSTNAME} (a sed of that variable only) and
 # writes this to /etc/nginx/sites-available/numberninja.conf. It is the only
 # nginx file the deploy touches. Certificate: certbot --webroot into
 # /var/www/numberninja-acme (install.sh, first run; renewals reload nginx).
@@ -19,9 +19,10 @@ server {
 }
 
 server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    http2 on;
+    # "listen ... http2" rather than "http2 on;": stock Ubuntu/Debian nginx
+    # (1.18-1.24) has no http2 directive; 1.25.1+ only warns.
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
     server_name ${SERVER_HOSTNAME};
 
     ssl_certificate /etc/letsencrypt/live/${SERVER_HOSTNAME}/fullchain.pem;

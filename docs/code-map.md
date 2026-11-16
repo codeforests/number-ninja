@@ -65,3 +65,4 @@
 - A mixed revision round has `topic_id = 'mixed'`: code that looks up `topicsById[round.topicId]` must tolerate a miss (FEAT-11).
 - PocketBase's built-in rate limit allows 2 sign-ins per 3 s per IP: server tests sign in through `signIn()` (retries on 429), and behind nginx the client IP comes from `X-Real-IP` (`trustedProxy` in the settings migration), or every user would share one limit (FEAT-12).
 - `flutter analyze` excludes `server/**`; the server test package is analyzed by its own `dart analyze` in the CI `server` job (FEAT-12).
+- Server nginx site: write `listen 443 ssl http2;`, never `http2 on;` (stock Ubuntu/Debian nginx ≤1.24 rejects it; CI `server` job runs `nginx -t` on the rendered template). Search `sites-enabled` with `grep -R`: its entries are symlinks, which `grep -r` skips.

@@ -43,6 +43,21 @@ jobs:
       - name: API rules and backup restore against the pinned PocketBase
         run: server/test/run.sh
 
+      - name: nginx -t on the rendered site file (stock Ubuntu nginx)
+        run: |
+          host=api.example.test
+          sudo apt-get update -q && sudo apt-get install -y -q nginx
+          nginx -v
+          sudo mkdir -p "/etc/letsencrypt/live/$host"
+          sudo openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj "/CN=$host" \
+            -keyout "/etc/letsencrypt/live/$host/privkey.pem" \
+            -out "/etc/letsencrypt/live/$host/fullchain.pem"
+          # Same render as install.sh.
+          sed "s|\${SERVER_HOSTNAME}|$host|g" server/nginx/numberninja.conf.template \
+            | sudo tee /etc/nginx/sites-available/numberninja.conf >/dev/null
+          sudo ln -sf /etc/nginx/sites-available/numberninja.conf /etc/nginx/sites-enabled/numberninja.conf
+          sudo nginx -t
+
   build:
     runs-on: ubuntu-latest
     permissions:
