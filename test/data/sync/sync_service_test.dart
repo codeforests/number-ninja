@@ -306,6 +306,34 @@ void main() {
       await a.sync.run();
       expect((await a.allRounds()).map((r) => r.topicId), ['p1.shapes']);
     });
+
+    Future<void> resetBeforeFirstSync(void Function() failFirstRun) async {
+      await b.play('p1.money');
+      await b.sync.run();
+      expect(server.of('rounds'), hasLength(1));
+      failFirstRun();
+      await expectLater(a.sync.run(), throwsA(isA<SyncException>()));
+      await localReset(a);
+      server.time = DateTime(2027, 1, 5, 11).toUtc();
+      await a.sync.run();
+      await a.sync.run();
+      await b.sync.run();
+      expect(server.of('rounds'), isEmpty);
+      expect(server.of('children').single['reset_epoch'], 1);
+      expect(await a.count(a.db.rounds), 0);
+      expect(await a.count(a.db.attempts), 0);
+      expect(await b.count(b.db.rounds), 0);
+    }
+
+    test('before the first sync reached the child: all clear (rework)', () {
+      return resetBeforeFirstSync(
+        () => a.client.syncFail = const SyncException(SyncError.offline),
+      );
+    });
+
+    test('before the first sync linked the account: all clear (rework)', () {
+      return resetBeforeFirstSync(() => a.client.fail = AuthError.offline);
+    });
   });
 
   test(

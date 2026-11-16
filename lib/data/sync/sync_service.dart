@@ -114,7 +114,10 @@ class SyncService {
             accountId: Value(accountId),
             childId: const Value(null),
             resetEpoch: const Value(0),
-            pendingReset: const Value(false),
+            // A reset made while signed in to this account before its first
+            // sync on this device still applies; one left from another
+            // account doesn't (SYN-06).
+            pendingReset: switched ? const Value(false) : const Value.absent(),
             cursors: const Value('{}'),
           ),
         );
@@ -161,18 +164,21 @@ class SyncService {
     final c = children.first;
     final id = c['id'] as String;
     final remoteEpoch = _int(c['reset_epoch']);
-    if (state.childId == null) {
-      // Newly linked: take the account's epoch, keep this device's progress.
-      await _setState(
-        SyncStateCompanion(childId: Value(id), resetEpoch: Value(remoteEpoch)),
-      );
-    } else if (state.pendingReset) {
+    if (state.pendingReset) {
+      // Also when newly linked: a reset made before this device's first
+      // successful sync clears the server before the pull (SYN-06).
       final r = await client.resetChild(id);
       await _setState(
         SyncStateCompanion(
+          childId: Value(id),
           resetEpoch: Value(r.epoch),
           pendingReset: const Value(false),
         ),
+      );
+    } else if (state.childId == null) {
+      // Newly linked: take the account's epoch, keep this device's progress.
+      await _setState(
+        SyncStateCompanion(childId: Value(id), resetEpoch: Value(remoteEpoch)),
       );
     } else if (remoteEpoch > state.resetEpoch) {
       final at = _date(c['reset_at']);
