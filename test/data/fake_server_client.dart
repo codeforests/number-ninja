@@ -54,7 +54,11 @@ class FakeServerClient implements ServerClient {
 
   @override
   Future<AuthMethods> authMethods() async {
-    await _step('authMethods');
+    // Doesn't use [fail]: SCR-13 asks for it on open, before other calls.
+    log.add('authMethods');
+    if (!config.isConfigured) {
+      throw const AuthException(AuthError.notConfigured);
+    }
     return AuthMethods(google: google);
   }
 

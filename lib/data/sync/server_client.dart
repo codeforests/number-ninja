@@ -115,6 +115,7 @@ class PocketBaseServerClient implements ServerClient {
   final Duration timeout;
   final Duration googleTimeout;
   final TokenStore _store;
+
   /// Tests pass a mock HTTP client.
   final http.Client Function()? httpClientFactory;
   bool _viaGoogle = false;

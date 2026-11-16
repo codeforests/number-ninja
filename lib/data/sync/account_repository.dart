@@ -9,6 +9,7 @@ enum AccountNotice {
   verificationSent,
   resetSent,
   signInAgain,
+  deleted,
 }
 
 /// The parent's account as SCR-13 sees it.
@@ -47,6 +48,10 @@ class AccountRepository extends Notifier<AccountState> {
 
   final Provider<ServerClient> _clientProvider;
   bool _refreshed = false;
+  Future<void> _ready = Future.value();
+
+  /// Completes once the stored session has been read.
+  Future<void> get ready => _ready;
 
   ServerClient get _client => ref.read(_clientProvider);
 
@@ -54,7 +59,7 @@ class AccountRepository extends Notifier<AccountState> {
   AccountState build() {
     final client = ref.watch(_clientProvider);
     _refreshed = false;
-    client.loadSession().then(
+    _ready = client.loadSession().then(
       (account) {
         if (ref.mounted) state = AccountState(loaded: true, account: account);
       },
@@ -69,6 +74,7 @@ class AccountRepository extends Notifier<AccountState> {
     Future<void> Function() body, {
     AccountNotice? onDone,
   }) async {
+    await _ready;
     state = AccountState(loaded: true, account: state.account, busy: true);
     try {
       await body();
@@ -131,13 +137,14 @@ class AccountRepository extends Notifier<AccountState> {
 
   /// Called when SCR-13 opens: renews the session once. Offline keeps it.
   Future<void> refreshOnOpen() async {
-    if (_refreshed || !state.signedIn) return;
+    await _ready;
+    if (_refreshed || !ref.mounted || !state.signedIn) return;
     _refreshed = true;
     try {
       final account = await _client.refresh();
-      state = AccountState(loaded: true, account: account);
+      if (ref.mounted) state = AccountState(loaded: true, account: account);
     } on AuthException catch (e) {
-      if (e.error == AuthError.expired) {
+      if (e.error == AuthError.expired && ref.mounted) {
         state = const AccountState(
           loaded: true,
           notice: AccountNotice.signInAgain,
@@ -149,7 +156,18 @@ class AccountRepository extends Notifier<AccountState> {
   Future<void> signOut() => _run(_client.signOut);
 
   /// The PIN is checked by SCR-13 before this is called (ACC-07).
-  Future<void> deleteAccount() => _run(_client.deleteAccount);
+  Future<void> deleteAccount() =>
+      _run(_client.deleteAccount, onDone: AccountNotice.deleted);
+
+  /// Whether to offer "Sign in with Google"; false offline or when the
+  /// server has no Google secrets.
+  Future<bool> googleOffered() async {
+    try {
+      return (await _client.authMethods()).google;
+    } on AuthException {
+      return false;
+    }
+  }
 
   void clearMessage() =>
       state = AccountState(loaded: state.loaded, account: state.account);

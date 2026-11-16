@@ -98,7 +98,8 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 | SCR-09 | Parent dashboard | PAR-05..07 |
 | SCR-10 | Topic detail | PAR-08 |
 | SCR-11 | Parent settings: daily limit, extra time, change PIN, export PDF, reset | TIM-04, PAR-04, PAR-09, PAR-10 |
-| SCR-12..13 | Phase 2: child profile, account; see [04-architecture.md](04-architecture.md) §3 | PRO, ACC, SYN |
+| SCR-12 | Phase 2: child profile; see [04-architecture.md](04-architecture.md) §3 | PRO |
+| SCR-13 | Account (`/parent/account`, from SCR-11's "Account" row): create, sign in (email or Google), verify/resend, forgot password, sign out, delete with PIN, privacy note (FEAT-13); FEAT-14 adds sync status | ACC-01..07, NFR-14, SYN |
 | SCR-14 | Revision start (`/revise/<topic or mixed>`): mistakes count, tricky kinds, Go (FEAT-11) | REV-03, REV-04 |
 | SCR-15 | School topics: lock state of each P1/P2 topic, parent opens one (FEAT-17) | PRC-14 |
 
@@ -138,3 +139,4 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 | 2026-11-16 | FEAT-17: School topic lock derived like levels (§5), pass = 7+ right in a finished round, played topics stay open; `topic_unlocks` (schema v5) for parent openings, kept by reset; padlocks on SCR-03, guard in the quiz controller; new SCR-15 from SCR-11 (SCR-09 lists no topics before her first answers, so SCR-10 couldn't host it). |
 | 2026-11-16 | FEAT-11: revision planner (§5) behind `RevisionPlanner`; `rounds.kind` (schema v6); `finishedRounds()` normal-only so revision never moves level, stars or lock; topic-map badges use normal rounds only; SCR-14 at `/revise/<scope>` (counts as screen time); entries on SCR-05 and SCR-02; weak types card on SCR-10, which became a non-lazy scroll view. |
 | 2026-11-16 | FEAT-12: server in `server/` (PocketBase 0.40.6 behind the droplet's nginx, certbot webroot certificate; migrations hold collections and API rules); app gets INTERNET + HTTPS-only network config, `SERVER_URL` build define (`ServerConfig`, `ServerClient`), and a "Server" row with a Check button on SCR-11. No schema change. |
+| 2026-11-16 | FEAT-13: parent account on SCR-13; session (token + record, never the password) in `flutter_secure_storage`; Google through PocketBase's browser OAuth2 flow in a Custom Tab (`url_launcher`); server email and Google settings applied from env by `pb_hooks/config.pb.js` on each start; email links open `pb_public/verify.html` / `reset.html`; `children` create needs a verified account. No schema change. |
