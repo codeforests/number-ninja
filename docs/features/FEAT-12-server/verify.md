@@ -1,5 +1,14 @@
 # FEAT-12: Verify
 
+## Re-verify (2026-11-16, `d392ebc`..`1e6914a` plus one CI-check fix)
+
+> Fresh thread · Verdict: **PENDING CI**
+
+- Rework 1 (http2): template now `listen 443 ssl http2;` / `listen [::]:443 ssl http2;`, no `http2 on;`; header comment fixed. CI step renders it with install.sh's `sed` and runs `nginx -t` on stock Ubuntu nginx: CI_NGINX.
+- Rework 2 (symlinks): duplicate-host check is `grep -RlE`. The three SC2015 rewrites (`install.sh` x2, `server-local.sh`) keep the same logic (fail when either value is empty / either dir is missing; kill only if the pid file exists).
+- Manifest permission check (`c64f1c0`): counts `<uses-permission>` names only, so profileinstaller's receiver guard `DUMP` no longer trips it. Found here: it missed a `<uses-permission>` written over several lines (the merged manifest puts each attribute of a multi-attribute element on its own line), so an extra permission with `maxSdkVersion` would pass. Fixed in the check (join lines with `tr` first); shown on a sample manifest (old: INTERNET only; new: INTERNET + the multi-line one).
+- `scripts/check.sh`: format, analyze, 863 tests pass. shellcheck and nginx aren't installable in this container (no apt source), so both run only in CI: CI_RUN.
+
 > Verified 2026-11-16 in a fresh thread that did not write the code · Commit under test: `d392ebc` (plus `797b8a2`, a one-line README change) · Verdict: **rework** (two small deploy-script defects; AC-1..AC-5 pass)
 
 ## Rework

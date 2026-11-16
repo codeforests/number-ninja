@@ -133,7 +133,9 @@ jobs:
           grep -q 'android:minSdkVersion="24"' "$m"
           # Requested permissions only (<uses-permission>); a receiver's
           # android:permission="...DUMP" (androidx profileinstaller) is a guard, not a request.
-          perms=$(grep -oE '<uses-permission[^>]*android:name="android\.permission\.[A-Z_]+"' "$m" | grep -oE 'android\.permission\.[A-Z_]+' | sort -u)
+          # Joined to one line first: the merged manifest puts each attribute of a
+          # multi-attribute element on its own line.
+          perms=$(tr '\n' ' ' < "$m" | grep -oE '<uses-permission[^>]*android:name="android\.permission\.[A-Z_]+"' | grep -oE 'android\.permission\.[A-Z_]+' | sort -u)
           echo "Permissions: $perms"
           # FEAT-12: INTERNET (optional sync server) is the only permission.
           if [ "$perms" != "android.permission.INTERNET" ]; then
