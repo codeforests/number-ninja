@@ -65,4 +65,25 @@ void main() {
       'Mixed revision',
     );
   });
+
+  // Added in verify: answering every mistake right in a mixed revision round
+  // takes them off the list, and SCR-02 re-reads the history on return.
+  testWidgets('a revision round that fixes the mistakes removes home-revise', (
+    tester,
+  ) async {
+    await seedMistakes(h, numberTopic, 3);
+    h.tick(const Duration(hours: 1));
+    await h.pumpApp(tester);
+    await h.tap(tester, 'home-revise');
+    await tester.pumpAndSettle();
+    await h.tap(tester, 'revise-go');
+    await tester.pumpAndSettle();
+    await playRound(tester, wrong: 0);
+    expect(find.byType(ResultScreen), findsOneWidget);
+    expect(find.byKey(const Key('revise-topic')), findsNothing);
+    await h.tap(tester, 'home');
+    await tester.pumpAndSettle();
+    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.byKey(const Key('home-revise')), findsNothing);
+  });
 }

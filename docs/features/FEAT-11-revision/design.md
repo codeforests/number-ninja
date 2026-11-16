@@ -1,7 +1,7 @@
 # FEAT-11: Revision module
 
 > Implements: REV-01..06 (D12, ADR-06) · Screens: SCR-14 (new: revision start), SCR-04/SCR-05 (revision mode), SCR-02 (home entry), SCR-05 (topic entry), SCR-10 (weak types)
-> Status: built · Branch: `feat/FEAT-11-revision` · 2026-11-16
+> Status: verified (accepted) · Branch: `feat/FEAT-11-revision` · 2026-11-16
 
 ## Scope
 
