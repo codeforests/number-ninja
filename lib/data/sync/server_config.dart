@@ -23,6 +23,11 @@ class ServerConfig {
     return ServerConfig._(uri.replace(path: '', query: null, fragment: null));
   }
 
+  /// A PocketBase on this machine over plain http, for the live sync test
+  /// against the CI server (FEAT-14 AC-7). Loopback only, so NFR-12 holds.
+  factory ServerConfig.loopback(int port) =>
+      ServerConfig._(Uri(scheme: 'http', host: '127.0.0.1', port: port));
+
   /// From the `SERVER_URL` build define (empty in tests and local builds).
   factory ServerConfig.fromEnvironment() =>
       ServerConfig.parse(const String.fromEnvironment('SERVER_URL'));

@@ -25,6 +25,7 @@ class StatsData {
 }
 
 final statsDataProvider = FutureProvider.autoDispose<StatsData>((ref) async {
+  ref.watch(syncDataVersionProvider);
   final stats = await ref.watch(statsRepositoryProvider.future);
   final now = ref.watch(clockProvider)();
   return StatsData(now: now, all: await stats.records());

@@ -62,7 +62,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 6);
+    expect(version.data.values.single, db.schemaVersion);
 
     final rounds = await (db.select(
       db.rounds,
@@ -102,7 +102,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 6);
+    expect(version.data.values.single, db.schemaVersion);
     final settings = await db.getSettings();
     expect(settings.soundOn, isTrue);
     expect(settings.pinHash, 'h');
@@ -137,7 +137,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 6);
+    expect(version.data.values.single, db.schemaVersion);
     final settings = await db.getSettings();
     expect(settings.profilePending, isFalse);
     expect(settings.soundOn, isFalse);
@@ -190,7 +190,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 6);
+    expect(version.data.values.single, db.schemaVersion);
     expect(await db.select(db.topicUnlocks).get(), isEmpty);
     expect((await db.select(db.childProfiles).getSingle()).nickname, 'Mia');
     expect((await db.select(db.rounds).getSingle()).score, 8);
@@ -245,10 +245,134 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 6);
+    expect(version.data.values.single, db.schemaVersion);
     final round = await db.select(db.rounds).getSingle();
     expect(round.kind, 'normal');
     expect(round.score, 8);
     expect((await db.select(db.childProfiles).getSingle()).nickname, 'Mia');
   });
+
+  test('v6 -> v7 adds sync ids, dirty flags, per-device usage (FEAT-14 AC-1)', () async {
+    final executor = NativeDatabase.memory(
+      setup: (raw) {
+        for (final sql in _v1) {
+          raw.execute(sql);
+        }
+        raw.execute('ALTER TABLE rounds ADD COLUMN finished_at INTEGER NULL');
+        raw.execute(
+          'ALTER TABLE app_settings ADD COLUMN sound_on INTEGER NOT NULL '
+          'DEFAULT 1 CHECK ("sound_on" IN (0, 1))',
+        );
+        raw.execute(
+          'ALTER TABLE app_settings ADD COLUMN profile_pending INTEGER NOT NULL '
+          'DEFAULT 1 CHECK ("profile_pending" IN (0, 1))',
+        );
+        raw.execute(
+          'CREATE TABLE "child_profile" ("id" INTEGER NOT NULL DEFAULT 1, '
+          '"nickname" TEXT NOT NULL, "school_year" INTEGER NOT NULL, '
+          '"school_start_level" INTEGER NULL, '
+          '"olympiad_start_level" INTEGER NULL, '
+          '"updated_at" INTEGER NOT NULL, PRIMARY KEY ("id"))',
+        );
+        raw.execute(
+          'CREATE TABLE "topic_unlocks" ("topic_id" TEXT NOT NULL, '
+          '"opened_at" INTEGER NOT NULL, PRIMARY KEY ("topic_id"))',
+        );
+        raw.execute(
+          "ALTER TABLE rounds ADD COLUMN kind TEXT NOT NULL DEFAULT 'normal'",
+        );
+        raw.execute(
+          'INSERT INTO app_settings (id, pin_hash, profile_pending) '
+          'VALUES (1, ?, 0)',
+          ['h'],
+        );
+        raw.execute('INSERT INTO pin_lockout (id) VALUES (1)');
+        raw.execute(
+          'INSERT INTO child_profile (nickname, school_year, updated_at) '
+          "VALUES ('Mia', 2, 1000)",
+        );
+        raw.execute('INSERT INTO play_sessions (started_at) VALUES (1)');
+        for (final t in ['p1.place', 'p1.money']) {
+          raw.execute(
+            'INSERT INTO rounds (session_id, topic_id, started_at, score, '
+            "finished_at) VALUES (1, '$t', 1, 8, 2)",
+          );
+        }
+        for (final r in [1, 1, 2]) {
+          raw.execute(
+            'INSERT INTO attempts (round_id, question_id, answer_given, '
+            "correct, time_ms, answered_at) VALUES ($r, 'q', '1', 1, 5, 2)",
+          );
+        }
+        raw.execute(
+          'INSERT INTO daily_usage (day, seconds_used, extra_seconds_granted) '
+          "VALUES ('2027-01-05', 300, 60)",
+        );
+        raw.execute(
+          "INSERT INTO badges_earned (badge_id, earned_at) VALUES ('first', 2)",
+        );
+        raw.execute('PRAGMA user_version = 6');
+      },
+    );
+    final db = AppDatabase(executor);
+    addTearDown(db.close);
+
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.data.values.single, 7);
+    final hex32 = RegExp(r'^[0-9a-f]{32}$');
+    final device = await db.deviceId();
+    expect(device, matches(hex32));
+
+    final rounds = await db.select(db.rounds).get();
+    final attempts = await db.select(db.attempts).get();
+    final ids = [...rounds.map((r) => r.uuid), ...attempts.map((a) => a.uuid)];
+    expect(ids, everyElement(matches(hex32)));
+    expect(ids.toSet(), hasLength(5));
+    expect(attempts.map((a) => a.roundId), [1, 1, 2]);
+    expect(rounds.map((r) => r.topicId), ['p1.place', 'p1.money']);
+    expect([
+      ...rounds.map((r) => r.dirty),
+      ...attempts.map((a) => a.dirty),
+    ], everyElement(1));
+    expect(rounds.map((r) => r.remoteId), everyElement(isNull));
+
+    final usage = await db.select(db.dailyUsage).getSingle();
+    expect(
+      [usage.day, usage.deviceId, usage.secondsUsed, usage.extraSecondsGranted],
+      ['2027-01-05', device, 300, 60],
+    );
+    expect(usage.dirty, 1);
+    final badge = await db.select(db.badgesEarned).getSingle();
+    expect([badge.badgeId, badge.dirty, badge.remoteId], ['first', 1, null]);
+
+    final fields = {
+      for (final f in await db.select(db.syncFields).get()) f.field: f,
+    };
+    expect(fields.keys.toSet(), syncFieldNames.toSet());
+    for (final f in syncFieldNames) {
+      final secs = fields[f]!.changedAt.millisecondsSinceEpoch ~/ 1000;
+      expect(secs, profileSyncFields.contains(f) ? 1000 : 0, reason: f);
+    }
+    final state = await db.select(db.syncState).getSingle();
+    expect([state.accountId, state.resetEpoch, state.cursors], [null, 0, '{}']);
+    expect((await db.getSettings()).pinHash, 'h');
+    // The uuid index is unique.
+    await expectLater(
+      db.customStatement('UPDATE attempts SET uuid = ? WHERE id = 2', [
+        attempts.first.uuid,
+      ]),
+      throwsA(anything),
+    );
+  });
+
+  test(
+    'a fresh v7 install has a device id and sync rows (FEAT-14 AC-1)',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      expect(await db.deviceId(), matches(RegExp(r'^[0-9a-f]{32}$')));
+      expect(await db.select(db.syncFields).get(), hasLength(7));
+      expect(await db.select(db.syncState).get(), hasLength(1));
+    },
+  );
 }

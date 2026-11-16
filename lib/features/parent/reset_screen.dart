@@ -9,6 +9,9 @@ import '../../ui/pin_pad.dart';
 import '../../ui/screen_frame.dart';
 import '../../ui/theme.dart';
 
+/// Added to the reset warning while signed in (SYN-06).
+const otherTabletsNote = 'Her other tablets clear at their next sync.';
+
 /// SCR-11, Reset all progress (PAR-10): the PIN confirms it. A wrong PIN
 /// deletes nothing and counts towards the PAR-03 lockout.
 class ResetScreen extends ConsumerStatefulWidget {
@@ -32,6 +35,11 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
         final stats = await ref.read(statsRepositoryProvider.future);
         await stats.resetProgress();
         ref.read(roundRepositoryProvider).forgetSession();
+        if (ref.read(syncAccountProvider) != null) {
+          // The server and her other tablets clear at the next sync (SYN-06).
+          await ref.read(syncServiceProvider).markPendingReset();
+          ref.read(syncProvider.notifier).requestSync();
+        }
         if (!mounted) return;
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Progress reset')));
@@ -50,6 +58,7 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
+    final signedIn = ref.watch(syncAccountProvider) != null;
     return ScreenFrame(
       title: 'Reset all progress',
       message: _error ?? 'Enter the PIN to reset.',
@@ -68,7 +77,8 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
             constraints: const BoxConstraints(maxWidth: AppSizes.minTap * 8),
             child: Text(
               'This deletes every answer, round, star and badge. '
-              'The PIN, the daily limit and today’s screen time stay.',
+              'The PIN, the daily limit and today’s screen time stay.'
+              '${signedIn ? ' $otherTabletsNote' : ''}',
               key: const Key('reset-warning'),
               textAlign: TextAlign.center,
               style: theme.bodyLarge?.copyWith(color: AppColors.berry),

@@ -15,7 +15,9 @@ void main() {
     expect(s['backups']['cron'], '0 19 * * *');
     expect(s['backups']['cronMaxKeep'], 14);
     expect(s['rateLimits']['enabled'], isTrue);
-    expect(s['batch']['enabled'], isFalse);
+    // FEAT-14 turned the batch API on for sync (100 requests per batch).
+    expect(s['batch']['enabled'], isTrue);
+    expect(s['batch']['maxRequests'], 100);
   });
 
   test('a backup made through the API downloads as a zip', () async {

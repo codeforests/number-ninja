@@ -34,6 +34,44 @@ class AuthException implements Exception {
   String toString() => 'AuthException($error)';
 }
 
+/// Why a sync call failed (FEAT-14). SCR-13 maps each to a message.
+enum SyncError { offline, expired, server, rejected, unknown }
+
+/// Thrown by the record calls of [ServerClient].
+class SyncException implements Exception {
+  const SyncException(this.error, {this.status = 0, this.notUnique = false});
+  final SyncError error;
+  final int status;
+
+  /// A create broke a unique index (the record is already there).
+  final bool notUnique;
+
+  @override
+  String toString() => 'SyncException($error, $status)';
+}
+
+/// One record to send: a create when [id] is null, else an update.
+class PushOp {
+  const PushOp(this.collection, this.body, {this.id});
+  final String collection;
+  final Map<String, dynamic> body;
+  final String? id;
+}
+
+/// One page of a pull: records as JSON maps (with `id` and `updated`).
+class PullPage {
+  const PullPage(this.items, this.totalPages);
+  final List<Map<String, dynamic>> items;
+  final int totalPages;
+}
+
+/// What the reset route returns (SYN-06).
+class ResetResult {
+  const ResetResult(this.epoch, this.resetAt);
+  final int epoch;
+  final String resetAt;
+}
+
 /// The signed-in parent (FEAT-13).
 class Account {
   const Account({
@@ -97,6 +135,40 @@ abstract class ServerClient {
 
   /// Deletes the account on the server (cascades to her data), then signs out.
   Future<void> deleteAccount();
+
+  // Record calls (FEAT-14). They throw [SyncException].
+
+  /// The signed-in parent's `children` records, oldest first.
+  Future<List<Map<String, dynamic>>> listChildren();
+
+  /// Creates a child owned by the signed-in parent.
+  Future<Map<String, dynamic>> createChild(Map<String, dynamic> body);
+  Future<Map<String, dynamic>> updateChild(
+    String id,
+    Map<String, dynamic> body,
+  );
+  Future<ResetResult> resetChild(String id);
+
+  /// Sends [ops] in one batch (all or nothing) and returns each record.
+  Future<List<Map<String, dynamic>>> pushBatch(List<PushOp> ops);
+
+  /// The first record of [collection] matching [filter] (PocketBase syntax,
+  /// values bound from [params]), or null.
+  Future<Map<String, dynamic>?> findOne(
+    String collection,
+    String filter,
+    Map<String, dynamic> params,
+  );
+
+  /// Records of [childId] with `updated >= cursor` (all when [cursor] is
+  /// empty), oldest change first, [perPage] per page, page from 1.
+  Future<PullPage> pullPage(
+    String collection,
+    String childId,
+    String cursor,
+    int page, {
+    int perPage = 500,
+  });
 }
 
 /// [ServerClient] over the `pocketbase` package. The session is persisted
@@ -324,4 +396,159 @@ class PocketBaseServerClient implements ServerClient {
     await _users.delete(id);
     await _forget();
   });
+
+  // Record calls (FEAT-14).
+
+  Future<T> _sync<T>(Future<T> Function() body, {Duration? limit}) async {
+    if (!config.isConfigured) throw const SyncException(SyncError.offline);
+    try {
+      return await body().timeout(limit ?? timeout);
+    } on SyncException {
+      rethrow;
+    } on TimeoutException {
+      throw const SyncException(SyncError.offline);
+    } on ClientException catch (e) {
+      throw syncError(e);
+    } on Object {
+      throw const SyncException(SyncError.unknown);
+    }
+  }
+
+  /// Maps a PocketBase error to a [SyncException].
+  static SyncException syncError(ClientException e) {
+    final status = e.statusCode;
+    if (status == 0) return const SyncException(SyncError.offline);
+    if (status == 401) {
+      return const SyncException(SyncError.expired, status: 401);
+    }
+    if (status >= 500 || status == 429) {
+      return SyncException(SyncError.server, status: status);
+    }
+    if (status >= 400) {
+      return SyncException(
+        SyncError.rejected,
+        status: status,
+        notUnique: _hasNotUnique(e.response),
+      );
+    }
+    return SyncException(SyncError.unknown, status: status);
+  }
+
+  static bool _hasNotUnique(Object? json) => switch (json) {
+    {'code': 'validation_not_unique'} => true,
+    final Map<dynamic, dynamic> m => m.values.any(_hasNotUnique),
+    _ => false,
+  };
+
+  String get _ownerId {
+    final id = currentAccount?.id;
+    if (id == null) throw const SyncException(SyncError.expired);
+    return id;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> listChildren() => _sync(() async {
+    final list = await _pb
+        .collection('children')
+        .getFullList(
+          filter: _pb.filter('owner = {:o}', {'o': _ownerId}),
+          sort: 'created',
+        );
+    return [for (final r in list) r.toJson()];
+  });
+
+  @override
+  Future<Map<String, dynamic>> createChild(Map<String, dynamic> body) =>
+      _sync(() async {
+        final r = await _pb
+            .collection('children')
+            .create(body: {...body, 'owner': _ownerId});
+        return r.toJson();
+      });
+
+  @override
+  Future<Map<String, dynamic>> updateChild(
+    String id,
+    Map<String, dynamic> body,
+  ) => _sync(() async {
+    final r = await _pb.collection('children').update(id, body: body);
+    return r.toJson();
+  });
+
+  @override
+  Future<ResetResult> resetChild(String id) => _sync(() async {
+    final out = await _pb.send<Map<String, dynamic>>(
+      '/api/nn/children/$id/reset',
+      method: 'POST',
+    );
+    return ResetResult(
+      (out['reset_epoch'] as num).toInt(),
+      out['reset_at'] as String,
+    );
+  });
+
+  @override
+  Future<List<Map<String, dynamic>>> pushBatch(List<PushOp> ops) =>
+      _sync(() async {
+        if (ops.length == 1) {
+          final op = ops.single;
+          final c = _pb.collection(op.collection);
+          final r = op.id == null
+              ? await c.create(body: op.body)
+              : await c.update(op.id!, body: op.body);
+          return [r.toJson()];
+        }
+        final batch = _pb.createBatch();
+        for (final op in ops) {
+          final c = batch.collection(op.collection);
+          if (op.id == null) {
+            c.create(body: op.body);
+          } else {
+            c.update(op.id!, body: op.body);
+          }
+        }
+        final results = await batch.send();
+        return [
+          for (final r in results)
+            Map<String, dynamic>.from(r.body as Map<dynamic, dynamic>),
+        ];
+      }, limit: timeout * 3);
+
+  @override
+  Future<Map<String, dynamic>?> findOne(
+    String collection,
+    String filter,
+    Map<String, dynamic> params,
+  ) => _sync(() async {
+    final page = await _pb
+        .collection(collection)
+        .getList(perPage: 1, filter: _pb.filter(filter, params));
+    return page.items.isEmpty ? null : page.items.first.toJson();
+  });
+
+  @override
+  Future<PullPage> pullPage(
+    String collection,
+    String childId,
+    String cursor,
+    int page, {
+    int perPage = 500,
+  }) => _sync(() async {
+    final filter = cursor.isEmpty
+        ? _pb.filter('child = {:c}', {'c': childId})
+        : _pb.filter('child = {:c} && updated >= {:u}', {
+            'c': childId,
+            'u': cursor,
+          });
+    final list = await _pb
+        .collection(collection)
+        .getList(
+          page: page,
+          perPage: perPage,
+          filter: filter,
+          sort: 'updated,id',
+          skipTotal: false,
+        );
+    return PullPage([for (final r in list.items) r.toJson()], list.totalPages);
+  }, limit: timeout * 3);
 }

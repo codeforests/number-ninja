@@ -25,7 +25,18 @@ class ProfileRepository {
   Future<bool> pending() async => (await db.getSettings()).profilePending;
 
   /// Stores [p] (nickname trimmed) and clears the pending flag.
+  /// Stamps the fields that changed for sync (FEAT-14).
   Future<void> save(ChildProfile p) => db.transaction(() async {
+    final before = await load();
+    final now = clock();
+    await db.stampFields([
+      if (before?.nickname != p.nickname.trim()) syncFieldNickname,
+      if (before?.schoolYear != p.schoolYear) syncFieldSchoolYear,
+      if (before == null || before.schoolStartLevel != p.schoolStartLevel)
+        syncFieldStartSchool,
+      if (before == null || before.olympiadStartLevel != p.olympiadStartLevel)
+        syncFieldStartOlympiad,
+    ], now);
     await db
         .into(db.childProfiles)
         .insertOnConflictUpdate(
@@ -35,7 +46,7 @@ class ProfileRepository {
             schoolYear: p.schoolYear,
             schoolStartLevel: Value(p.schoolStartLevel),
             olympiadStartLevel: Value(p.olympiadStartLevel),
-            updatedAt: clock(),
+            updatedAt: now,
           ),
         );
     await (db.update(db.appSettings)..where((s) => s.id.equals(1))).write(

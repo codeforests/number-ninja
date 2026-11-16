@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -14,6 +16,8 @@ import 'data/sound_player.dart';
 import 'data/sync/account_repository.dart';
 import 'data/sync/server_client.dart';
 import 'data/sync/server_config.dart';
+import 'data/sync/sync_controller.dart';
+import 'data/sync/sync_service.dart';
 import 'data/stats_repository.dart';
 import 'data/topic_lock_repository.dart';
 import 'data/usage_repository.dart';
@@ -76,6 +80,43 @@ final accountProvider = NotifierProvider<AccountRepository, AccountState>(
   () => AccountRepository(serverClientProvider),
 );
 
+/// The account id to sync for: signed in with a server set, else null.
+final syncAccountProvider = Provider<String?>(
+  (ref) => ref.watch(serverConfigProvider).isConfigured
+      ? ref.watch(accountProvider.select((s) => s.account?.id))
+      : null,
+);
+
+final syncTimersProvider = Provider<SyncTimers>(
+  (ref) => const RealSyncTimers(),
+);
+
+final syncServiceProvider = Provider<SyncService>(
+  (ref) => SyncService(
+    db: ref.watch(databaseProvider),
+    client: ref.watch(serverClientProvider),
+    clock: ref.watch(clockProvider),
+    forgetSession: ref.watch(roundRepositoryProvider).forgetSession,
+  ),
+);
+
+/// Bumped when a sync changed local data; data providers below watch it.
+final syncDataVersionProvider = NotifierProvider<SyncDataVersion, int>(
+  SyncDataVersion.new,
+);
+
+/// Progress sync (FEAT-14, SYN-01..07). `app.dart` keeps it alive.
+final syncProvider = NotifierProvider<SyncController, SyncStatus>(
+  () => SyncController(
+    account: syncAccountProvider,
+    service: syncServiceProvider,
+    timers: syncTimersProvider,
+    dataVersion: syncDataVersionProvider,
+    onExpired: (ref) =>
+        unawaited(ref.read(accountProvider.notifier).sessionExpired()),
+  ),
+);
+
 final pinRepositoryProvider = Provider<PinRepository>(
   (ref) => PinRepository(
     ref.watch(databaseProvider),
@@ -94,12 +135,16 @@ final profileRepositoryProvider = Provider<ProfileRepository>(
 /// The saved child profile, or null before the parent sets one (PRO-01).
 /// Not a stream (pending drift timers in widget tests): SCR-12 invalidates
 /// it after a save.
-final childProfileProvider = FutureProvider.autoDispose<ChildProfile?>(
-  (ref) => ref.watch(profileRepositoryProvider).load(),
-);
+final childProfileProvider = FutureProvider.autoDispose<ChildProfile?>((ref) {
+  ref.watch(syncDataVersionProvider);
+  return ref.watch(profileRepositoryProvider).load();
+});
 
 final usageRepositoryProvider = Provider<UsageRepository>(
-  (ref) => UsageRepository(ref.watch(databaseProvider)),
+  (ref) => UsageRepository(
+    ref.watch(databaseProvider),
+    clock: ref.watch(clockProvider),
+  ),
 );
 
 /// One per app opening, so its play session is shared by every round.
@@ -136,16 +181,20 @@ final badgeRepositoryProvider = FutureProvider<BadgeRepository>(
 
 /// Earned badge ids with their dates. Auto-disposed, so SCR-02 and SCR-06
 /// re-read it after every round.
-final earnedBadgesProvider = FutureProvider.autoDispose<Map<String, DateTime>>(
-  (ref) async => (await ref.watch(badgeRepositoryProvider.future)).earned(),
-);
+final earnedBadgesProvider = FutureProvider.autoDispose<Map<String, DateTime>>((
+  ref,
+) async {
+  ref.watch(syncDataVersionProvider);
+  return (await ref.watch(badgeRepositoryProvider.future)).earned();
+});
 
 /// Best stars and level per topic played (PRC-07). Auto-disposed, so a
 /// screen that shows it again re-reads it after every round.
 final topicProgressProvider =
-    FutureProvider.autoDispose<Map<String, TopicProgress>>(
-      (ref) => ref.watch(roundRepositoryProvider).progress(),
-    );
+    FutureProvider.autoDispose<Map<String, TopicProgress>>((ref) {
+      ref.watch(syncDataVersionProvider);
+      return ref.watch(roundRepositoryProvider).progress();
+    });
 
 /// The revision rules (REV-06, ADR-06). Tests and a later AI planner
 /// override it.
@@ -163,9 +212,12 @@ final revisionRepositoryProvider = FutureProvider<RevisionRepository>(
 
 /// What the planner works from (REV-01, REV-02), read fresh by each screen
 /// that shows it; the quiz invalidates it after a round.
-final revisionHistoryProvider = FutureProvider.autoDispose<RevisionHistory>(
-  (ref) async => (await ref.watch(revisionRepositoryProvider.future)).history(),
-);
+final revisionHistoryProvider = FutureProvider.autoDispose<RevisionHistory>((
+  ref,
+) async {
+  ref.watch(syncDataVersionProvider);
+  return (await ref.watch(revisionRepositoryProvider.future)).history();
+});
 
 /// Whether to offer a revision round of a scope id (REV-03): a topic id
 /// on SCR-05, [mixedScopeId] on SCR-02. False until the history is read.
@@ -188,14 +240,17 @@ final topicLockRepositoryProvider = Provider<TopicLockRepository>(
 
 /// Lock state of every topic (PRC-12..14), worked out on each read.
 /// SCR-15 invalidates it after the parent opens or locks a topic.
-final topicLocksProvider = FutureProvider.autoDispose<Map<String, TopicLock>>(
-  (ref) async => topicLocks(
+final topicLocksProvider = FutureProvider.autoDispose<Map<String, TopicLock>>((
+  ref,
+) async {
+  ref.watch(syncDataVersionProvider);
+  return topicLocks(
     topics: topics,
     rounds: await ref.watch(roundRepositoryProvider).finishedRounds(),
     schoolYear: (await ref.watch(profileRepositoryProvider).load())?.schoolYear,
     opened: await ref.watch(topicLockRepositoryProvider).opened(),
-  ),
-);
+  );
+});
 
 /// Whether a PIN exists, and whether the parent area is unlocked.
 /// The router listens to it. Unlocking lasts 5 minutes, in memory only.

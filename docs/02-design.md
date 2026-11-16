@@ -60,15 +60,17 @@ The School track shows P1 and P2 topics; the Olympiad track shows `oly.*`.
 
 | Table | Columns | Notes |
 |---|---|---|
-| `app_settings` | id = 1, pin_hash, pin_salt, daily_limit_min (20), bank_version, sound_on (true), profile_pending (true) | One row, created on first open; `sound_on` schema v3 (FEAT-09); `profile_pending` schema v4, false on upgrade (FEAT-10, PRO-02) |
+| `app_settings` | id = 1, pin_hash, pin_salt, daily_limit_min (20), bank_version, sound_on (true), profile_pending (true), device_id | One row, created on first open; `sound_on` schema v3 (FEAT-09); `profile_pending` schema v4, false on upgrade (FEAT-10, PRO-02); `device_id` schema v7 (FEAT-14) |
 | `child_profile` | id = 1, nickname, school_year (1–6), school_start_level, olympiad_start_level (nullable), updated_at | Schema v4 (FEAT-10, PRO-01); kept by the PAR-10 reset |
 | `play_sessions` | id, started_at, ended_at | One per app opening |
-| `rounds` | id, session_id, topic_id, level, started_at, score, duration_ms, stars, finished_at, kind | `finished_at` is null until the last answer is saved (schema v2, FEAT-04); `kind` `normal` or `revision` (schema v6, FEAT-11), a mixed revision round has `topic_id = 'mixed'` |
-| `attempts` | id, round_id, question_id, answer_given, correct, time_ms, answered_at | Saved before the next question shows (NFR-05) |
-| `daily_usage` | day (yyyy-MM-dd), seconds_used, extra_seconds_granted | Screen time per day |
-| `badges_earned` | badge_id, earned_at | |
+| `rounds` | id, session_id, topic_id, level, started_at, score, duration_ms, stars, finished_at, kind, uuid, dirty, remote_id | `finished_at` is null until the last answer is saved (schema v2, FEAT-04); `kind` `normal` or `revision` (schema v6, FEAT-11), a mixed revision round has `topic_id = 'mixed'`; `uuid`/`dirty`/`remote_id` schema v7 (FEAT-14 sync) |
+| `attempts` | id, round_id, question_id, answer_given, correct, time_ms, answered_at, uuid, dirty | Saved before the next question shows (NFR-05); `uuid`, `dirty` schema v7 |
+| `daily_usage` | day (yyyy-MM-dd), device_id, seconds_used, extra_seconds_granted, dirty, remote_id | Screen time per day and device (key day + device_id, schema v7); a day's totals sum all devices (FEAT-14) |
+| `badges_earned` | badge_id, earned_at, dirty, remote_id | `dirty`, `remote_id` schema v7 |
 | `pin_lockout` | id = 1, failed_count, locked_until | PAR-03 |
 | `topic_unlocks` | topic_id (primary key), opened_at | Schema v5 (FEAT-17): topics the parent opened (PRC-14); kept by the PAR-10 reset |
+| `sync_fields` | field (primary key), changed_at, dirty | Schema v7 (FEAT-14): when each synced profile/settings field last changed here (last change wins) |
+| `sync_state` | id = 1, account_id, child_id, reset_epoch, pending_reset, cursors (json), last_sync_at, last_error | Schema v7 (FEAT-14) |
 
 Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored twice. Schema changes bump `schemaVersion` with a migration and a migration test.
 
@@ -99,7 +101,7 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 | SCR-10 | Topic detail | PAR-08 |
 | SCR-11 | Parent settings: daily limit, extra time, change PIN, export PDF, reset | TIM-04, PAR-04, PAR-09, PAR-10 |
 | SCR-12 | Phase 2: child profile; see [04-architecture.md](04-architecture.md) §3 | PRO |
-| SCR-13 | Account (`/parent/account`, from SCR-11's "Account" row): create, sign in (email or Google), verify/resend, forgot password, sign out, delete with PIN, privacy note (FEAT-13); FEAT-14 adds sync status | ACC-01..07, NFR-14, SYN |
+| SCR-13 | Account (`/parent/account`, from SCR-11's "Account" row): create, sign in (email or Google), verify/resend, forgot password, sign out, delete with PIN, privacy note (FEAT-13); FEAT-14 adds the sync section (last sync, "Syncing…", error line, Sync now) | ACC-01..07, NFR-14, SYN |
 | SCR-14 | Revision start (`/revise/<topic or mixed>`): mistakes count, tricky kinds, Go (FEAT-11) | REV-03, REV-04 |
 | SCR-15 | School topics: lock state of each P1/P2 topic, parent opens one (FEAT-17) | PRC-14 |
 
@@ -140,3 +142,4 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 | 2026-11-16 | FEAT-11: revision planner (§5) behind `RevisionPlanner`; `rounds.kind` (schema v6); `finishedRounds()` normal-only so revision never moves level, stars or lock; topic-map badges use normal rounds only; SCR-14 at `/revise/<scope>` (counts as screen time); entries on SCR-05 and SCR-02; weak types card on SCR-10, which became a non-lazy scroll view. |
 | 2026-11-16 | FEAT-12: server in `server/` (PocketBase 0.40.6 behind the droplet's nginx, certbot webroot certificate; migrations hold collections and API rules); app gets INTERNET + HTTPS-only network config, `SERVER_URL` build define (`ServerConfig`, `ServerClient`), and a "Server" row with a Check button on SCR-11. No schema change. |
 | 2026-11-16 | FEAT-13: parent account on SCR-13; session (token + record, never the password) in `flutter_secure_storage`; Google through PocketBase's browser OAuth2 flow in a Custom Tab (`url_launcher`); server email and Google settings applied from env by `pb_hooks/config.pb.js` on each start; email links open `pb_public/verify.html` / `reset.html`; `children` create needs a verified account. No schema change. |
+| 2026-11-16 | FEAT-14: progress sync (`lib/data/sync/sync_service.dart`, `sync_controller.dart`, merge rules in `lib/domain/sync_merge.dart`); schema v7 (ids, dirty counters, per-device `daily_usage`, `sync_fields`, `sync_state`); server reset route `POST /api/nn/children/{id}/reset` (`pb_hooks/reset.pb.js`), migration `1763251203_sync.js` (`children.reset_at`, batch API on, create limit 5000/5 s and batch 10/s for signed-in users, sign-ups still 20/5 s); SCR-13 sync section; SCR-11 reset note while signed in. |

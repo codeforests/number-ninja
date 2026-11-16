@@ -152,13 +152,13 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| SYN-01 | Every child feature shall work with no network; the database on the device stays what the app reads, and sync runs in the background without slowing or blocking practice. (D10) | M | FEAT-14 | |
-| SYN-02 | While signed in, the app shall sync rounds, attempts, badges, the child profile, settings (daily limit, sound) and daily screen time; the PIN and lockout never leave the device. | M | FEAT-14 | |
-| SYN-03 | On the first sign-in on a device, progress already on it shall be uploaded and merged with the account's, never lost or doubled. | M | FEAT-14 | |
-| SYN-04 | Merging shall follow the rules in [04-architecture.md](04-architecture.md) ADR-04: records only ever added are merged by id; a round's finish only moves forward; a badge keeps its earliest date; profile and settings take the latest change; screen time adds up across devices for the day. | M | FEAT-14 | |
-| SYN-05 | The app shall sync at launch, on resume, after each finished round, every 5 minutes while online, and on "Sync now" in the parent area; failures retry with growing delays. | M | FEAT-14 | |
-| SYN-06 | A PAR-10 reset on a signed-in device shall also clear the account's progress on the server and on her other devices at their next sync. | M | FEAT-14 | |
-| SYN-07 | The parent area shall show the signed-in email, the last successful sync time and any sync error in plain words. | S | FEAT-14 | |
+| SYN-01 | Every child feature shall work with no network; the database on the device stays what the app reads, and sync runs in the background without slowing or blocking practice. (D10) | M | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |
+| SYN-02 | While signed in, the app shall sync rounds, attempts, badges, the child profile, settings (daily limit, sound) and daily screen time; the PIN and lockout never leave the device. | M | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |
+| SYN-03 | On the first sign-in on a device, progress already on it shall be uploaded and merged with the account's, never lost or doubled. | M | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |
+| SYN-04 | Merging shall follow the rules in [04-architecture.md](04-architecture.md) ADR-04: records only ever added are merged by id; a round's finish only moves forward; a badge keeps its earliest date; profile and settings take the latest change; screen time adds up across devices for the day. | M | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |
+| SYN-05 | The app shall sync at launch, on resume, after each finished round, every 5 minutes while online, and on "Sync now" in the parent area; failures retry with growing delays. | M | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |
+| SYN-06 | A PAR-10 reset on a signed-in device shall also clear the account's progress on the server and on her other devices at their next sync. | M | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |
+| SYN-07 | The parent area shall show the signed-in email, the last successful sync time and any sync error in plain words. | S | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |
 
 ## 5. Non-functional requirements
 
@@ -179,4 +179,4 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | NFR-13 | The server shall let a signed-in parent read and write only their own child's records, and let nobody write banks except the publish step; automated tests in CI shall prove these rules. | M | FEAT-12 | FEAT-12 verify.md (2026-11-16) |
 | NFR-14 | Child data shall be kept to the minimum (nickname, school year, practice data); no ads, analytics or tracking SDKs; the parent area shall carry a short privacy note on what is stored and where. Data is handled in line with Singapore's PDPA. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16) |
 | NFR-15 | The server shall be set up from files in the repo (`server/`) with one deploy script, back up its data daily and keep 14 days of backups; a restore shall be tested once before v2.0. | M | FEAT-12 | FEAT-12 verify.md (2026-11-16; live backups and restore drill at AC-6) |
-| NFR-16 | Syncing a year of practice (about 20,000 attempts) for the first time shall finish within 60 seconds on home Wi-Fi, and later syncs shall send only what changed. | S | FEAT-14 | |
+| NFR-16 | Syncing a year of practice (about 20,000 attempts) for the first time shall finish within 60 seconds on home Wi-Fi, and later syncs shall send only what changed. | S | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |

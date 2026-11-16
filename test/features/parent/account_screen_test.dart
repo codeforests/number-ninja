@@ -319,7 +319,12 @@ void main() {
           );
           expect(tester.takeException(), isNull);
           if (signedIn) {
-            expectNoOverlap(tester, ['account-signout', 'account-delete']);
+            expectNoOverlap(tester, [
+              'account-last-sync',
+              'account-sync-now',
+              'account-signout',
+              'account-delete',
+            ]);
           } else {
             expectNoOverlap(tester, [
               'account-email',
