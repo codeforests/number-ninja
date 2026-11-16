@@ -31,10 +31,14 @@ done
 host="$SERVER_HOSTNAME"
 CERT_EMAIL="${CERT_EMAIL:-$PB_SUPERUSER_EMAIL}"
 [[ "$host" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ && "$host" == *.* ]] || { echo "Bad SERVER_HOSTNAME: '$host'" >&2; exit 2; }
-[ -n "$PB_SUPERUSER_EMAIL" ] && [ -n "$PB_SUPERUSER_PASSWORD" ] || { echo "PB_SUPERUSER_EMAIL and PB_SUPERUSER_PASSWORD are required" >&2; exit 2; }
+if [ -z "$PB_SUPERUSER_EMAIL" ] || [ -z "$PB_SUPERUSER_PASSWORD" ]; then
+  echo "PB_SUPERUSER_EMAIL and PB_SUPERUSER_PASSWORD are required" >&2; exit 2
+fi
 [ "$(id -u)" -eq 0 ] || { echo "Run as root" >&2; exit 2; }
 command -v nginx >/dev/null || { echo "nginx is not installed; this setup runs behind the droplet's nginx" >&2; exit 1; }
-[ -d /etc/nginx/sites-available ] && [ -d /etc/nginx/sites-enabled ] || { echo "Expected Debian/Ubuntu nginx layout (sites-available, sites-enabled)" >&2; exit 1; }
+if [ ! -d /etc/nginx/sites-available ] || [ ! -d /etc/nginx/sites-enabled ]; then
+  echo "Expected Debian/Ubuntu nginx layout (sites-available, sites-enabled)" >&2; exit 1
+fi
 
 step() { echo "==> $*"; }
 
@@ -107,7 +111,7 @@ apply_site() {
 render() { sed "s|\${SERVER_HOSTNAME}|$host|g" "$here/nginx/numberninja.conf.template"; }
 
 host_re="${host//./\\.}"
-others="$(grep -rlE "server_name[^;]*[[:space:]]${host_re}[[:space:];]" /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null | grep -v "numberninja.conf" || true)"
+others="$(grep -RlE "server_name[^;]*[[:space:]]${host_re}[[:space:];]" /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null | grep -v "numberninja.conf" || true)"
 if [ -n "$others" ]; then
   echo "Another nginx site already uses $host: $others. Remove it there first." >&2
   exit 1
