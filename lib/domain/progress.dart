@@ -24,6 +24,7 @@ class FinishedRound {
     required this.topicId,
     required this.level,
     required this.stars,
+    required this.score,
     required this.startedAt,
   });
 
@@ -31,6 +32,9 @@ class FinishedRound {
   final String topicId;
   final int level;
   final int stars;
+
+  /// Right answers, mix-in questions included (FEAT-17 pass mark).
+  final int score;
   final DateTime startedAt;
 }
 

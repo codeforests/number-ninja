@@ -12,6 +12,7 @@ FinishedRound round(
   topicId: topic,
   level: level,
   stars: stars,
+  score: 0,
   startedAt: DateTime(2026, 11, 15, 9, minute),
 );
 
