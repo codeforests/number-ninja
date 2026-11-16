@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:number_ninja/data/database.dart';
 import 'package:number_ninja/data/round_repository.dart';
+import 'package:number_ninja/data/topic_lock_repository.dart';
 import 'package:number_ninja/domain/question.dart';
 import 'package:number_ninja/domain/quiz.dart';
 import 'package:number_ninja/features/quiz/quiz_controller.dart';
@@ -76,6 +77,8 @@ void main() {
   }
 
   Future<List<Question>> start(String topic) async {
+    // Past the FEAT-17 lock: the parent opens the topic.
+    await TopicLockRepository(db, clock: () => now).open(topic);
     final sub = container.listen(quizControllerProvider, (_, _) {});
     addTearDown(sub.close);
     await container.read(quizControllerProvider.notifier).start(topic);
