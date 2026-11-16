@@ -1,0 +1,56 @@
+# FEAT-12: Server foundation
+
+> Implements: NFR-11, NFR-12, NFR-13, NFR-15 (D14, ADR-01, ADR-02, ADR-07, ADR-08) · Screens: SCR-11 (server status row)
+> Status: designed · Branch: `feat/FEAT-12-server` · 2026-11-16
+
+## Scope
+
+PocketBase behind Caddy on Ken's DigitalOcean droplet, set up only from `server/` in the repo (NFR-15): pinned binary, collections and API rules as migrations, Caddy and systemd files, one deploy script and a manual deploy workflow, daily backups (14 kept) and a restore drill. CI starts a real PocketBase and proves the API rules (NFR-13) and a backup restore. The app gets the internet permission and an HTTPS-only network config (NFR-11, NFR-12), a build-time server URL, a `ServerClient` with one call (health), and a "Server" row on SCR-11 that checks it.
+
+Not in scope: sign-up/sign-in screens, email service, Google OAuth, reset and delete-account hooks (FEAT-13); any record sync (FEAT-14); bank publishing (FEAT-15). Collections for all of them are created now so the rules are tested once, in one place.
+
+## Design decisions (this feature)
+
+- **Hostname is configuration, never code.** One repo variable `SERVER_HOSTNAME` feeds both Caddy (deploy) and the app build (`--dart-define=SERVER_URL=https://$SERVER_HOSTNAME`). Short term (Ken, 2026-11-16): a subdomain of his existing domain, `api.brainbubblz.audiodenoiser.com` (spelling to confirm with Ken). Later `api.brainbubblz.com`: change the variable, redeploy, rebuild the APK (ADR-02: the URL is baked into the app). Let's Encrypt certifies a nested subdomain like any other; only an A record is needed.
+- **PocketBase version** pinned in `server/VERSION` (`PB_VERSION=0.x.y`, `PB_SHA256=…` of `pocketbase_<v>_linux_amd64.zip`): the latest stable at build time. CI and `deploy.sh` both download that zip from the GitHub release and check the sha256. Migrations are JS (`server/pb_migrations/*.js`), applied by `pocketbase serve` at start (automigrate) and by `pocketbase migrate up` in CI.
+- **Collections and rules** exactly as `04-architecture.md` §2. Rules (`""` = anyone, `null` = superuser only):
+  - `users`: PocketBase default auth collection; list/view/update/delete `id = @request.auth.id`; create `""` (sign-up, used in FEAT-13). Email/password on, OAuth2 configured later in FEAT-13.
+  - `children`: list/view/update/delete `owner = @request.auth.id`; create `@request.auth.id != "" && @request.body.owner = @request.auth.id`. `owner` relation required, cascade delete with the user (ACC-07).
+  - `rounds`, `badges`, `daily_usage`: list/view/update `child.owner = @request.auth.id`; create `@request.auth.id != "" && @request.body.child.owner = @request.auth.id`; update also requires `@request.body.child:isset = false || @request.body.child = child` (a record can't be moved to another child); delete `null`. `child` relation required, cascade delete.
+  - `attempts`: list/view `child.owner = @request.auth.id`; create as above; update and delete `null` (append-only, ADR-04).
+  - `banks`: list/view `""`; create/update/delete `null`. `file` is a file field (max 20 MB, `application/json`).
+  - Unique indexes: `rounds.uuid`, `attempts.uuid`, `badges (child, badge_id)`, `daily_usage (child, day, device_id)`, `banks.version`. Field types: text for ids/uuids/day (`YYYY-MM-DD`), number for scores and times, date for timestamps, json for `unlocked_topics` and `field_times`, bool for `sound_on`, select `normal`/`revision` for `rounds.kind`.
+- **Settings migration** sets: app name and URL from env (`SERVER_HOSTNAME`, read with `$os.getenv`), backups cron `0 19 * * *` (UTC = 03:00 SGT) with `cronMaxKeep: 14` (NFR-15, ADR-08), built-in rate limits on, batch API off, superuser-only logs kept 7 days. SMTP stays off until FEAT-13.
+- **Superuser** is created by `deploy.sh` with `pocketbase superuser upsert "$PB_SUPERUSER_EMAIL" "$PB_SUPERUSER_PASSWORD"` from repo secrets, so it is reproducible and the password is never in the repo.
+- **Admin UI not public.** Caddy answers 404 for `/_/*`; Ken opens the admin UI through an SSH tunnel (`ssh -L 8090:127.0.0.1:8090 <user>@<droplet>`, then `http://localhost:8090/_/`). PocketBase listens on `127.0.0.1:8090` only.
+- **Droplet layout:** `/opt/numberninja/{pocketbase,pb_migrations,pb_hooks,pb_data}`, system user `numberninja` owns it; units `numberninja-pb.service` (restart always) and Caddy from the distro package with `/etc/caddy/Caddyfile` containing one site block `{$SERVER_HOSTNAME} { … reverse_proxy 127.0.0.1:8090 }` (hostname from `/etc/default/caddy`). If port 80/443 is already taken by another web server on the droplet, see "Pending for Ken" in the handoff before deploying.
+- **Deploy** (`server/deploy.sh`, ADR-08): needs `DEPLOY_HOST`, `DEPLOY_USER` (sudo without a password), `SSH_KEY` file, `SERVER_HOSTNAME`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`. Over SSH it: installs Caddy if missing (official apt repo), creates the user and dirs, downloads and checks the pinned binary, rsyncs migrations and hooks, writes the Caddyfile and units, `pocketbase migrate up`, superuser upsert, restarts both services, then curls `https://$SERVER_HOSTNAME/api/health` until 200 (60 s). Idempotent; re-running is the upgrade path. `.github/workflows/deploy-server.yml`: `workflow_dispatch` only, uses those secrets and `known_hosts` from secret `DEPLOY_KNOWN_HOSTS`.
+- **Restore** (`server/restore.sh <backup.zip>` on the droplet): stops PocketBase, moves `pb_data` to `pb_data.before-restore-<time>`, unzips the backup into `pb_data`, starts it, checks health. The CI test proves the backup zip restores; the live drill on the droplet is done once with Ken after the first deploy and recorded in `verify.md` (NFR-15 "tested once before v2.0").
+- **App config.** `lib/data/sync/server_config.dart`: `ServerConfig.fromEnvironment()` reads `String.fromEnvironment('SERVER_URL')`; empty → `ServerConfig.none` (the app works as v1; the row says "Not set up"); a URL that isn't `https://` is rejected as none, so plain HTTP can't be built in (NFR-12). CI sets `SERVER_URL` from the variable for the release APK; tests and local builds leave it empty.
+- **ServerClient** (`lib/data/sync/server_client.dart`): abstract `ServerClient { Future<ServerHealth> health(); }`; `PocketBaseServerClient` wraps the `pocketbase` package (`pb.health.check()`, 5 s timeout); `ServerHealth` = `ok`, `unreachable`, `notConfigured`. `serverClientProvider` in `providers.dart`; tests override it with `FakeServerClient`. Nothing calls the network at start-up or on child screens (NFR-11).
+- **SCR-11 "Server" row**: label "Server", subtitle the hostname or "Not set up", a "Check" button (`server-check`) that shows "Connected" or "Can't reach the server. Practice still works offline." (`server-status`). Uses theme sizes; no colour beyond the theme's success/error.
+- **Android**: `INTERNET` in `android/app/src/main/AndroidManifest.xml`; `android:usesCleartextTraffic="false"` and `android:networkSecurityConfig="@xml/network_security_config"` with `<base-config cleartextTrafficPermitted="false">` (NFR-12). The CI manifest check flips: INTERNET must be present, cleartext must be false, and the permission list must be exactly what it was plus INTERNET.
+
+## Acceptance criteria
+
+- **AC-1** (NFR-15): `server/` holds `VERSION`, `pb_migrations/`, `pb_hooks/` (empty with `.gitkeep`), `Caddyfile`, `numberninja-pb.service`, `deploy.sh`, `restore.sh`, `README.md` (Ken's setup steps, deploy, tunnel, restore). `shellcheck server/*.sh` passes. A fresh `pocketbase migrate up` on an empty dir creates the seven collections with the fields, indexes and settings above.
+- **AC-2** (NFR-13): `server/test/` (pure Dart package with `pocketbase` and `test`) runs against a live PocketBase in CI: parent A and B, A's child with a round, attempt, badge and usage row. B and anonymous can't list, view, update or create any of A's child records (list returns empty, view/update 404, create 400/403); A can; A can't update or delete an attempt; nobody but a superuser deletes rounds/badges/usage; A can't move a round to B's child; A can't create a child owned by B; duplicate `attempts.uuid` is rejected; anyone can list `banks`, only the superuser can create one.
+- **AC-3** (NFR-15): in the same CI job, a backup made through `POST /api/backups` restored into a second, fresh PocketBase (via `restore.sh` logic on a local dir) contains A's records; settings read back `cron = "0 19 * * *"` and `cronMaxKeep = 14`.
+- **AC-4** (NFR-11, NFR-12): CI's release manifest check: INTERNET present, no other new permission, `usesCleartextTraffic="false"`, network security config packaged. `test/data/server_config_test.dart`: empty → none, `http://` → none, `https://host` → configured.
+- **AC-5** (SCR-11): widget tests with a fake client: not configured shows "Not set up" and no network call; `server-check` with `ok` shows "Connected", with `unreachable` the offline text; the row passes the six FEAT-04 sizes at text scale 1.3 (`layout_checks.dart`). Existing tests pass unchanged.
+- **AC-6** (deploy, after Ken's setup): `deploy-server` run is green, `https://<SERVER_HOSTNAME>/api/health` returns 200 with a valid certificate, `/_/` returns 404, and the release APK built with `SERVER_URL` shows "Connected" on the tablet. One restore drill on the droplet is done and noted in `verify.md`.
+
+## Tasks
+
+- [ ] T1 — `server/VERSION`, migrations (collections, rules, indexes, settings), `pb_hooks/.gitkeep`, `Caddyfile`, unit file, `scripts/server-local.sh` (download pinned PB to `~/.cache`, `migrate up`, `serve` on 127.0.0.1:8090 for tests).
+      Done when: AC-1's migrate-up check passes locally (the cloud env can download the PocketBase release zip).
+- [ ] T2 — `server/test/` API rule tests and the backup/restore test; CI job `server` in `ci.yml` (setup Dart via the Flutter action, start PB, run tests).
+      Done when: AC-2 and AC-3 pass locally against `scripts/server-local.sh`.
+- [ ] T3 — `deploy.sh`, `restore.sh`, `server/README.md` (Ken's steps), `.github/workflows/deploy-server.yml`; shellcheck.
+      Done when: shellcheck clean; `restore.sh` logic is the one AC-3 uses.
+- [ ] T4 — Android manifest and network security config, CI manifest check, `SERVER_URL` dart-define in the CI APK build from `vars.SERVER_HOSTNAME`; `pocketbase` dependency, `ServerConfig`, `ServerClient`, `FakeServerClient`, `serverClientProvider`.
+      Done when: AC-4's unit tests pass: `scripts/check.sh 'flutter test test/data'`.
+- [ ] T5 — SCR-11 "Server" row and its tests.
+      Done when: AC-5 passes: `flutter test test/features/parent`.
+- [ ] T6 — NFR-11/12/13/15 Feature cells; `02-design.md` §9 row; ADR-02 note on the short-term hostname; code-map lines (`server/`, `lib/data/sync/`); full `scripts/check.sh`; draft PR (CI proves the APK manifest and the `server` job).
+      Done when: `scripts/check.sh` all PASS and CI is green on the draft PR. AC-6 is done after merge-ready, with Ken (handoff).
