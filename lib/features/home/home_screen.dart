@@ -7,6 +7,7 @@ import '../../app.dart';
 import '../../ui/badge_icons.dart';
 import '../badges/badge_shelf_screen.dart';
 import '../../domain/progress.dart';
+import '../../domain/revision.dart' show mixedScopeId;
 import '../../domain/topics.dart';
 import '../../providers.dart';
 import '../../ui/theme.dart';
@@ -40,6 +41,8 @@ class HomeScreen extends ConsumerWidget {
     final theme = Theme.of(context).textTheme;
     final progress = ref.watch(topicProgressProvider).value ?? const {};
     final nickname = ref.watch(childProfileProvider).value?.nickname;
+    final revise =
+        ref.watch(revisionOffersProvider(mixedScopeId)).value ?? false;
     final size = MediaQuery.sizeOf(context);
     final portrait = size.width < size.height;
     final cards = [
@@ -118,6 +121,7 @@ class HomeScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      if (revise) ...[gap, const _ReviseCard()],
                     ],
                   ),
                 ),
@@ -128,6 +132,48 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// SCR-02's way into a mixed revision round (REV-03), shown only when the
+/// planner offers one.
+class _ReviseCard extends StatelessWidget {
+  const _ReviseCard();
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: AppColors.revisionLight,
+    borderRadius: BorderRadius.circular(AppRadii.card),
+    child: InkWell(
+      key: const Key('home-revise'),
+      borderRadius: BorderRadius.circular(AppRadii.card),
+      onTap: () => context.go(Routes.revise(mixedScopeId)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: AppSizes.minTap),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.gap * 2,
+            vertical: AppSizes.gap,
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.replay, size: 36, color: AppColors.revision),
+              const SizedBox(width: AppSizes.gap),
+              Expanded(
+                child: Text(
+                  'Revision: practise your tricky ones',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.revision,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.revision),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 /// "N min left" today (TIM-06), from [screenTimeProvider].

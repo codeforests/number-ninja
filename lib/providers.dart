@@ -124,6 +124,17 @@ final revisionHistoryProvider = FutureProvider.autoDispose<RevisionHistory>(
   (ref) async => (await ref.watch(revisionRepositoryProvider.future)).history(),
 );
 
+/// Whether to offer a revision round of a scope id (REV-03): a topic id
+/// on SCR-05, [mixedScopeId] on SCR-02. False until the history is read.
+final revisionOffersProvider = FutureProvider.autoDispose.family<bool, String>(
+  (ref, scopeId) async => ref
+      .watch(revisionPlannerProvider)
+      .offers(
+        await ref.watch(revisionHistoryProvider.future),
+        RevisionScope.fromId(scopeId),
+      ),
+);
+
 /// Topics the parent opened by hand (PRC-14).
 final topicLockRepositoryProvider = Provider<TopicLockRepository>(
   (ref) => TopicLockRepository(
