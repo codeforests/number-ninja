@@ -22,7 +22,7 @@ migrate((app) => {
     rules.push({ label: r.label, audience: r.audience, duration: r.duration, maxRequests: r.maxRequests });
   }
   rules.push({ label: "users:create", audience: "", duration: 5, maxRequests: 20 });
-  rules.push({ label: "*:create", audience: "@auth", duration: 5, maxRequests: 2000 });
+  rules.push({ label: "*:create", audience: "@auth", duration: 5, maxRequests: 5000 });
   rules.push({ label: "*:create", audience: "@guest", duration: 5, maxRequests: 20 });
   rules.push({ label: "/api/batch", audience: "@auth", duration: 1, maxRequests: 10 });
   settings.rateLimits.rules = rules;

@@ -35,6 +35,7 @@ class SyncService {
     required this.client,
     required this.clock,
     required this.forgetSession,
+    this.busyWait = const Duration(seconds: 1),
   });
 
   final AppDatabase db;
@@ -43,6 +44,9 @@ class SyncService {
 
   /// Called after a reset deleted local rounds (FEAT-06 gotcha).
   final void Function() forgetSession;
+
+  /// Wait before sending a batch again after "too many requests" (429).
+  final Duration busyWait;
 
   /// One run. Throws [SyncException] when it has to stop (offline, server
   /// error, expired session); the controller retries.
@@ -553,9 +557,11 @@ class SyncService {
     for (var i = 0; i < rows.length; i += _batchSize) {
       final chunk = rows.sublist(i, (i + _batchSize).clamp(0, rows.length));
       try {
-        final results = await client.pushBatch([
-          for (final r in chunk) PushOp(collection, r.body, id: r.remoteId),
-        ]);
+        final results = await _retryBusy(
+          () => client.pushBatch([
+            for (final r in chunk) PushOp(collection, r.body, id: r.remoteId),
+          ]),
+        );
         await db.transaction(() async {
           for (var j = 0; j < chunk.length; j++) {
             await sent(chunk[j], results[j]['id'] as String?);
@@ -567,6 +573,19 @@ class SyncService {
         for (final r in chunk) {
           await _pushOne(collection, r, sent, out);
         }
+      }
+    }
+  }
+
+  /// Runs [call] again after [busyWait] while the server says it's busy
+  /// (rate limit, 429), up to 20 times.
+  Future<T> _retryBusy<T>(Future<T> Function() call) async {
+    for (var i = 0; ; i++) {
+      try {
+        return await call();
+      } on SyncException catch (e) {
+        if (e.status != 429 || i >= 20) rethrow;
+        await Future<void>.delayed(busyWait);
       }
     }
   }
