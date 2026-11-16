@@ -37,6 +37,7 @@ class ParentScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSizes.gap),
         children: [
           const _ProfileTile(),
+          const _TopicLocksTile(),
           const Divider(height: AppSizes.gap * 2),
           ListTile(
             key: const Key('open-dashboard'),
@@ -239,4 +240,20 @@ class _ProfileTile extends ConsumerWidget {
       onTap: () => context.go(Routes.profile),
     );
   }
+}
+
+/// Opens SCR-15, where the parent can open a locked School topic (PRC-14).
+class _TopicLocksTile extends StatelessWidget {
+  const _TopicLocksTile();
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    key: const Key('open-topic-locks'),
+    minTileHeight: AppSizes.minTap,
+    leading: const Icon(Icons.lock_open),
+    title: const Text('School topics'),
+    subtitle: const Text('See which topics are locked and open any of them'),
+    trailing: const Icon(Icons.chevron_right),
+    onTap: () => context.go(Routes.topicLocks),
+  );
 }

@@ -79,6 +79,24 @@ void main() {
         });
       }
 
+      testWidgets('SCR-03 school with padlocks (FEAT-17 AC-5)', (tester) async {
+        h.lockTopics = true;
+        await seed();
+        await pump(tester, dp, scale, Routes.play(TrackSlug.school));
+        for (final t in topics.where((t) => t.track != Track.olympiad)) {
+          await tester.scrollUntilVisible(
+            find.byKey(Key('topic-${t.id}')),
+            100,
+            scrollable: find.descendant(
+              of: find.byKey(const Key('topic-map')),
+              matching: find.byType(Scrollable),
+            ),
+          );
+          expectNoOverlap(tester, ['back', 'topic-${t.id}']);
+        }
+        expect(find.byKey(const Key('topic-p2.graphs-lock')), findsOneWidget);
+      });
+
       testWidgets('SCR-05 result with level up', (tester) async {
         await pump(tester, dp, scale, Routes.home);
         h
@@ -128,6 +146,16 @@ void main() {
           semantics.dispose();
         });
       }
+
+      testWidgets('SCR-03 school with padlocks at $name', (tester) async {
+        final semantics = tester.ensureSemantics();
+        h.lockTopics = true;
+        await seed();
+        await pump(tester, dp, scale, Routes.play(TrackSlug.school));
+        expect(find.byKey(const Key('topic-p1.bonds-lock')), findsOneWidget);
+        await expectChildSizes(tester);
+        semantics.dispose();
+      });
 
       testWidgets('SCR-05 at $name', (tester) async {
         final semantics = tester.ensureSemantics();

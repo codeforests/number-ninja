@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:number_ninja/app.dart';
+import 'package:number_ninja/data/topic_lock_repository.dart';
+import 'package:number_ninja/features/parent/topic_locks_screen.dart';
 import 'package:number_ninja/domain/stats.dart';
 import 'package:number_ninja/features/parent/dashboard_screen.dart';
 import 'package:number_ninja/features/parent/reset_screen.dart';
@@ -81,6 +83,15 @@ void main() {
         await h.tapKey(tester, 'export-report');
         expect(find.byKey(const Key('export-sheet')), findsOneWidget);
         expectNoOverlap(tester, ['period-30', 'export-share']);
+        await scrollAll(tester);
+      });
+
+      testWidgets('SCR-15 school topics (FEAT-17 AC-5)', (tester) async {
+        h.lockTopics = true;
+        await TopicLockRepository(h.db, clock: h.clock).open('p1.money');
+        await open(tester, Routes.topicLocks);
+        expect(find.byType(TopicLocksScreen), findsOneWidget);
+        expectNoOverlap(tester, ['lock-row-p1.place', 'lock-row-p1.bonds']);
         await scrollAll(tester);
       });
 
