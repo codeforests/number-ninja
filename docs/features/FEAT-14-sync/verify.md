@@ -1,5 +1,16 @@
 # FEAT-14: Verify
 
+## Re-verify (2026-11-16, since `f47a334`)
+
+> Fresh thread, did not write the fix · Fix under test: `f185da2` · Verdict: **accepted**
+
+- **Rework item (SYN-06 reset before first sync): fixed.** `SyncService._child` checks `pendingReset` before `childId == null` and sets `childId` with the new epoch; `_linkAccount` keeps `pendingReset` on a first link, clears it only on an account switch. `markPendingReset` is still called only when signed in (`reset_screen.dart`).
+- **Tests the fix touched:** the two new `reset` cases in `sync_service_test.dart` (fail at `listChildren`, fail at `refresh`) both fail with `f47a334`'s `sync_service.dart` and pass at `f185da2`; whole file 14 pass.
+- **AC-3:** pass (the reset case in Rework now leaves A, B and the server with 0 old rounds, epoch 1).
+- **Checks:** `scripts/check.sh` all PASS (format, analyze, test); `server/test/run.sh` PASS (35 + 1 + 2), so AC-6/AC-7 still hold.
+- **AC-8 / CI:** see STATE "Last CI run" (run on the re-verify head).
+- AC-1, 2, 4, 5, 6, 7 not redone (passed at `f47a334`, code untouched). AC-9 waits for the M6 APK on Ken's tablets.
+
 > Verified 2026-11-16 in a fresh thread that did not write the code · Commit under test: `f47a334` · Verdict: **rework** (one SYN-06 bug, below; AC-1..AC-7 otherwise pass)
 
 ## Rework
