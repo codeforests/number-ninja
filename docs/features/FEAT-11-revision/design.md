@@ -1,7 +1,7 @@
 # FEAT-11: Revision module
 
 > Implements: REV-01..06 (D12, ADR-06) · Screens: SCR-14 (new: revision start), SCR-04/SCR-05 (revision mode), SCR-02 (home entry), SCR-05 (topic entry), SCR-10 (weak types)
-> Status: designed · Branch: `feat/FEAT-11-revision` · 2026-11-16
+> Status: built · Branch: `feat/FEAT-11-revision` · 2026-11-16
 
 ## Scope
 
@@ -50,15 +50,15 @@ Not in scope: syncing `rounds.kind` (FEAT-14 maps it to the server's `kind` fiel
 
 ## Tasks
 
-- [ ] T1 — `lib/domain/revision.dart` (`RevisionPlanner`, `RuleRevisionPlanner`, scope, plan, weak types, mistakes).
+- [x] T1 — `lib/domain/revision.dart` (`RevisionPlanner`, `RuleRevisionPlanner`, scope, plan, weak types, mistakes).
       Done when: AC-1 passes: `scripts/check.sh 'flutter test test/domain'`.
-- [ ] T2 — Schema v6 `rounds.kind`, `startRound(kind)`, `finishedRounds` normal only, `BadgeRound.kind` and the two topic badge rules, `RevisionRepository`, providers, `topicLocksProvider` comment.
+- [x] T2 — Schema v6 `rounds.kind`, `startRound(kind)`, `finishedRounds` normal only, `BadgeRound.kind` and the two topic badge rules, `RevisionRepository`, providers, `topicLocksProvider` comment.
       Done when: AC-2 passes: `flutter test test/data test/domain`.
-- [ ] T3 — Routes, SCR-14, `QuizController.startRevision`, revision mode on SCR-04/SCR-05.
+- [x] T3 — Routes, SCR-14, `QuizController.startRevision`, revision mode on SCR-04/SCR-05.
       Done when: AC-3 passes: `flutter test test/features/revision test/features/quiz`.
-- [ ] T4 — Entries on SCR-05 (`revise-topic`) and SCR-02 (`home-revise`).
+- [x] T4 — Entries on SCR-05 (`revise-topic`) and SCR-02 (`home-revise`).
       Done when: AC-4 passes: `flutter test test/features/home test/features/quiz test/features/revision`.
-- [ ] T5 — SCR-10 weak types card.
+- [x] T5 — SCR-10 weak types card.
       Done when: AC-5 passes: `flutter test test/features/parent`.
-- [ ] T6 — AC-6 layout checks; REV-01..06 Feature cells; design §4 (`rounds.kind`), §5 (revision rule), §6 (SCR-14 row), §9 rows; code-map lines; full `scripts/check.sh`; draft PR.
+- [x] T6 — AC-6 layout checks; REV-01..06 Feature cells; design §4 (`rounds.kind`), §5 (revision rule), §6 (SCR-14 row), §9 rows; code-map lines; full `scripts/check.sh`; draft PR.
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR.
