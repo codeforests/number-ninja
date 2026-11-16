@@ -1,19 +1,19 @@
 # Handoff: FEAT-12 — Server foundation
-Branch: feat/FEAT-12-server · PR: none · Updated: 2026-11-16 by design (nginx revision)
-Stage done: design
-Next: build — kickoff: "Build FEAT-12 (from T1) on branch feat/FEAT-12-server. Read docs/STATE.md and the feature's handoff.md, then do the Build stage in AGENTS.md."
+Branch: feat/FEAT-12-server · PR: see STATE / draft PR · Updated: 2026-11-16 by build
+Stage done: build (T1–T6 of 6)
+Next: verify — kickoff: "Verify FEAT-12 on branch feat/FEAT-12-server. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
 ## What the next stage needs
-- Ken's droplet already runs nginx for audiodenoiser.com on 80/443: no Caddy. Deploy adds one nginx site + certbot certificate and must never touch other nginx files (design, "nginx, not Caddy").
-- Hostname confirmed `api.brainbubblz.audiodenoiser.com`; Ken added the A record 2026-11-16.
-- Hostname is only ever `SERVER_HOSTNAME` (repo variable) / `SERVER_URL` (dart-define); no hostname in code or tests. Short term `api.brainbubblz.audiodenoiser.com`, later `api.brainbubblz.com`.
-- The cloud env can download the PocketBase release zip from github.com (checked 2026-11-16); pub.dev `pocketbase` Dart package is 0.26.0. Pick the latest stable PocketBase and pin it with its sha256 in `server/VERSION`.
-- PocketBase ≥0.23 API: superusers are the `_superusers` collection, `pocketbase superuser upsert`, rules use `@request.body` (not `@request.data`). Check the migration JS API against the pinned version's docs, not memory.
-- The live deploy (AC-6) needs Ken's setup (below); build everything else and leave AC-6 for verify/after merge.
+- No Caddy: the droplet's nginx (serves audiodenoiser.com). `server/install.sh` writes only `/etc/nginx/sites-available/numberninja.conf` + link, `nginx -t` before reload, undoes its change on failure. Certificate via `certbot certonly --webroot` (design "Build notes"), so certbot edits no nginx file.
+- PocketBase 0.40.6 pinned (`server/VERSION`). Server tests: `server/test/run.sh` (starts PB via `scripts/server-local.sh`, 25 rule tests + backup, restores with `restore.sh` into a 2nd PB on 8091, checks it). Install shellcheck with `pip install shellcheck-py` (apt has none).
+- PB rate limit (2 sign-ins / 3 s per IP) is on: tests sign in via `signIn()` retry. `trustedProxy.headers = ["X-Real-IP"]` so limits are per client behind nginx.
+- CI manifest check now requires the permission list to be exactly `android.permission.INTERNET`; if CI shows another plugin permission that was there before FEAT-12, the check (not the app) needs the baseline added.
+- Release APK gets `SERVER_URL=https://$SERVER_HOSTNAME` only when the repo variable is set; tests and local builds are offline (`ServerConfig.none`).
+- `install.sh`/`deploy.sh` are shellchecked only: no nginx/systemd in the cloud env. AC-6 is their real test.
 
 ## Left to CI or later
-- APK manifest check and the `server` job run only in CI (no Android SDK here).
-- AC-6 deploy and the droplet restore drill: after Ken's setup.
+- APK build + manifest check and the `server` job run in CI only.
+- AC-6 (deploy, health 200 with valid cert, `/_/` 404, tablet "Connected") and the droplet restore drill: after Ken's setup.
 
 ## Pending for Ken
-- Setup still to do: deploy SSH key and user, firewall 80/443, repo secrets and the `SERVER_HOSTNAME` variable (steps in `server/README.md` once T3 lands; summary sent to Ken 2026-11-16).
+- Setup in `server/README.md` "One-time setup": deploy user + key, `ssh-keyscan` line, repo secrets, variable `SERVER_HOSTNAME=api.brainbubblz.audiodenoiser.com`. Then run "Deploy server".

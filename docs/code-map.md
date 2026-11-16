@@ -7,6 +7,11 @@
 - `lib/main.dart` → `lib/app.dart`: `NumberNinjaApp`, `routerProvider` (go_router). Routes: `/setup`, `/setup/profile` (SCR-12 first run, while `AppSession.profilePending`), `/play/:track`, `/quiz/:topicId`, `/locked`, parent area under `/parent`: `pin`, `change-pin`, `dashboard`, `topic/:topicId`, `reset`, `profile`, `topics` (SCR-15). `/revise/:scopeId` (SCR-14) and `/revise/:scopeId/quiz` (revision round).
 - `lib/providers.dart`: `databaseProvider`, `bankProvider`, `clockProvider`, the repository providers, `topicProgressProvider`. Tests override these.
 
+## Server (`server/`, FEAT-12)
+
+- `server/README.md` is the guide (Ken's setup, deploy, tunnel, restore). `VERSION` pins PocketBase; `pb_migrations/*.js` are the only schema and rule source; `nginx/numberninja.conf.template` + `install.sh` (runs on the droplet, called by `deploy.sh`, workflow `deploy-server.yml`); `restore.sh`.
+- Tests: `server/test/run.sh` (CI job `server`): `scripts/server-local.sh` starts the pinned PocketBase; `test/api_rules_test.dart` (NFR-13), `backup_test.dart` + `restore_check_test.dart` (NFR-15). Helpers in `server/test/lib/fixtures.dart`.
+
 ## Domain (`lib/domain`, pure Dart)
 
 - `question.dart` (`Question`, `QuestionBank`, `QuestionFormat`, `DragSpec`), `topics.dart` (`Track`, `Topic`), `answers.dart`, `expr.dart` (answer expressions).
@@ -18,6 +23,7 @@
 
 - `database.dart`: Drift tables `AppSettings`, `PlaySessions`, `Rounds`, `Attempts`, `DailyUsage`, `BadgesEarned`, `PinLockout`, `ChildProfiles` (`child_profile`, row class `ProfileRow`), `TopicUnlocks`; `schemaVersion` and migrations at the bottom. After a table change: `dart run build_runner build`, bump `schemaVersion`, add a case to `test/data/migration_test.dart`.
 - `sound_player.dart`: `SoundEffect`, `SoundPlayer` (`AudioSoundPlayer`, `audioplayers`), `SoundEffects` (checks `UsageRepository.soundOn`); `soundEffectsProvider` in `providers.dart`. Tests use `RecordingSoundPlayer` from the quiz harness.
+- `sync/server_config.dart` (`ServerConfig`, from `--dart-define=SERVER_URL`, https only), `sync/server_client.dart` (`ServerClient`, `PocketBaseServerClient`, `ServerHealth`); `serverConfigProvider`, `serverClientProvider` in `providers.dart`. Tests use `test/data/fake_server_client.dart`.
 - `revision_repository.dart` (`RevisionRepository.history()`); `revisionPlannerProvider`, `revisionHistoryProvider`, `revisionOffersProvider(scopeId)` in `providers.dart`. `round_repository.dart` has `roundKindNormal`/`roundKindRevision`; `finishedRounds()` is normal-only.
 - Repositories: `topic_lock_repository.dart` (`topicLocksProvider` in `providers.dart`), `profile_repository.dart` (`childProfileProvider` is a FutureProvider; invalidate after a save), `pin_repository.dart`, `round_repository.dart`, `stats_repository.dart`, `usage_repository.dart`; `question_bank_loader.dart` (`loadBank`).
 
@@ -57,3 +63,5 @@
 - SCR-11 is a lazy `ListView`: a far-down tile may not be built; `ParentHarness.tapKey` scrolls to it (FEAT-10).
 - Reading an autoDispose `FutureProvider`'s `.future` with `ref.read` inside a notifier fails ("Ref used after disposed"): `ref.listen` it and `await sub.read()` (FEAT-17).
 - A mixed revision round has `topic_id = 'mixed'`: code that looks up `topicsById[round.topicId]` must tolerate a miss (FEAT-11).
+- PocketBase's built-in rate limit allows 2 sign-ins per 3 s per IP: server tests sign in through `signIn()` (retries on 429), and behind nginx the client IP comes from `X-Real-IP` (`trustedProxy` in the settings migration), or every user would share one limit (FEAT-12).
+- `flutter analyze` excludes `server/**`; the server test package is analyzed by its own `dart analyze` in the CI `server` job (FEAT-12).

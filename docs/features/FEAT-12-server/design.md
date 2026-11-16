@@ -1,7 +1,7 @@
 # FEAT-12: Server foundation
 
 > Implements: NFR-11, NFR-12, NFR-13, NFR-15 (D14, ADR-01, ADR-02, ADR-07, ADR-08) · Screens: SCR-11 (server status row)
-> Status: designed · Branch: `feat/FEAT-12-server` · 2026-11-16
+> Status: built (T1–T6) · Branch: `feat/FEAT-12-server` · 2026-11-16
 
 ## Scope
 
@@ -32,6 +32,8 @@ Not in scope: sign-up/sign-in screens, email service, Google OAuth, reset and de
 - **SCR-11 "Server" row**: label "Server", subtitle the hostname or "Not set up", a "Check" button (`server-check`) that shows "Connected" or "Can't reach the server. Practice still works offline." (`server-status`). Uses theme sizes; no colour beyond the theme's success/error.
 - **Android**: `INTERNET` in `android/app/src/main/AndroidManifest.xml`; `android:usesCleartextTraffic="false"` and `android:networkSecurityConfig="@xml/network_security_config"` with `<base-config cleartextTrafficPermitted="false">` (NFR-12). The CI manifest check flips: INTERNET must be present, cleartext must be false, and the permission list must be exactly what it was plus INTERNET.
 
+**Build notes (2026-11-16).** The certificate is fetched with `certbot certonly --webroot` into `/var/www/numberninja-acme` (port-80 block written first), not `certbot --nginx`, so certbot never edits any nginx file; renewals run `systemctl reload nginx`. The droplet-side steps are in `server/install.sh`, which `deploy.sh` copies over with `server/` and runs as root (secrets on stdin). Settings also set `trustedProxy.headers = ["X-Real-IP"]` so rate limits are per client behind nginx. PocketBase pinned at 0.40.6.
+
 ## Acceptance criteria
 
 - **AC-1** (NFR-15): `server/` holds `VERSION`, `pb_migrations/`, `pb_hooks/` (empty with `.gitkeep`), `nginx/numberninja.conf.template`, `numberninja-pb.service`, `deploy.sh`, `restore.sh`, `README.md` (Ken's setup steps, deploy, tunnel, restore). `shellcheck server/*.sh` passes. A fresh `pocketbase migrate up` on an empty dir creates the seven collections with the fields, indexes and settings above.
@@ -43,15 +45,15 @@ Not in scope: sign-up/sign-in screens, email service, Google OAuth, reset and de
 
 ## Tasks
 
-- [ ] T1 — `server/VERSION`, migrations (collections, rules, indexes, settings), `pb_hooks/.gitkeep`, nginx site template, unit file, `scripts/server-local.sh` (download pinned PB to `~/.cache`, `migrate up`, `serve` on 127.0.0.1:8090 for tests).
+- [x] T1 — `server/VERSION`, migrations (collections, rules, indexes, settings), `pb_hooks/.gitkeep`, nginx site template, unit file, `scripts/server-local.sh` (download pinned PB to `~/.cache`, `migrate up`, `serve` on 127.0.0.1:8090 for tests).
       Done when: AC-1's migrate-up check passes locally (the cloud env can download the PocketBase release zip).
-- [ ] T2 — `server/test/` API rule tests and the backup/restore test; CI job `server` in `ci.yml` (setup Dart via the Flutter action, start PB, run tests).
+- [x] T2 — `server/test/` API rule tests and the backup/restore test; CI job `server` in `ci.yml` (setup Dart via the Flutter action, start PB, run tests).
       Done when: AC-2 and AC-3 pass locally against `scripts/server-local.sh`.
-- [ ] T3 — `deploy.sh`, `restore.sh`, `server/README.md` (Ken's steps), `.github/workflows/deploy-server.yml`; shellcheck.
+- [x] T3 — `deploy.sh`, `restore.sh`, `server/README.md` (Ken's steps), `.github/workflows/deploy-server.yml`; shellcheck.
       Done when: shellcheck clean; `restore.sh` logic is the one AC-3 uses.
-- [ ] T4 — Android manifest and network security config, CI manifest check, `SERVER_URL` dart-define in the CI APK build from `vars.SERVER_HOSTNAME`; `pocketbase` dependency, `ServerConfig`, `ServerClient`, `FakeServerClient`, `serverClientProvider`.
+- [x] T4 — Android manifest and network security config, CI manifest check, `SERVER_URL` dart-define in the CI APK build from `vars.SERVER_HOSTNAME`; `pocketbase` dependency, `ServerConfig`, `ServerClient`, `FakeServerClient`, `serverClientProvider`.
       Done when: AC-4's unit tests pass: `scripts/check.sh 'flutter test test/data'`.
-- [ ] T5 — SCR-11 "Server" row and its tests.
+- [x] T5 — SCR-11 "Server" row and its tests.
       Done when: AC-5 passes: `flutter test test/features/parent`.
-- [ ] T6 — NFR-11/12/13/15 Feature cells; `02-design.md` §9 row; ADR-02 note on the short-term hostname; code-map lines (`server/`, `lib/data/sync/`); full `scripts/check.sh`; draft PR (CI proves the APK manifest and the `server` job).
+- [x] T6 — NFR-11/12/13/15 Feature cells; `02-design.md` §9 row; ADR-02 note on the short-term hostname; code-map lines (`server/`, `lib/data/sync/`); full `scripts/check.sh`; draft PR (CI proves the APK manifest and the `server` job).
       Done when: `scripts/check.sh` all PASS and CI is green on the draft PR. AC-6 is done after merge-ready, with Ken (handoff).
