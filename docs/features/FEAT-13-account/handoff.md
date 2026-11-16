@@ -11,7 +11,7 @@ Next: verify — kickoff: "Verify FEAT-13 on branch feat/FEAT-13-account. Read d
 - Gotchas added to `code-map.md` (JWT-shaped test tokens; verified test parents).
 
 ## Left to CI or later
-- APK build with both plugins and the manifest check (CI on the final push). shellcheck ran locally (pip shellcheck-py), clean.
+- CI green on 470a402 (server job + APK build with both plugins). The APK build needed CI on JDK 21 (Android lint crash on JDK 17, see code-map Gotchas). shellcheck clean.
 - AC-6 live flows wait for Ken's Brevo + Google setup (`server/README.md`) and the M6 test APK.
 
 ## Pending for Ken
