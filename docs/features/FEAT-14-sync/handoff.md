@@ -1,5 +1,5 @@
 # Handoff: FEAT-14 — Progress sync
-Branch: feat/FEAT-14-sync · PR: see STATE (draft) · Updated: 2026-11-16 by build
+Branch: feat/FEAT-14-sync · PR: https://github.com/codeforests/number-ninja/pull/19 (draft) · Updated: 2026-11-16 by build
 Stage done: build (T1–T6 of 6)
 Next: verify — kickoff: "Verify FEAT-14 on branch feat/FEAT-14-sync. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
