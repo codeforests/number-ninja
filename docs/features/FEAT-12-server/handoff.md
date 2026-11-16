@@ -1,18 +1,16 @@
 # Handoff: FEAT-12 — Server foundation
-Branch: feat/FEAT-12-server · PR: #17 (draft) · Updated: 2026-11-16 by rework fix
-Stage done: rework fix (`a48c727`), verified commit `d392ebc`
-Next: re-verify — kickoff: "Re-verify FEAT-12 on branch feat/FEAT-12-server since d392ebc. Read docs/STATE.md and the handoff.md, then do the Re-verify stage in AGENTS.md."
+Branch: feat/FEAT-12-server · PR: #17 (ready) · Updated: 2026-11-16 by re-verify
+Stage done: verify (accepted after rework; CI green on `91d8f5e`)
+Next: AC-6 live deploy, then Ken's merge of PR #17; then FEAT-13 design — kickoff: "Design FEAT-13 on branch feat/FEAT-13-account (create it from main). Read docs/STATE.md, then do the Design stage in AGENTS.md."
 
 ## What the next stage needs
-- Rework 1: template now `listen 443 ssl http2;` / `listen [::]:443 ssl http2;`; header comment says install.sh's `sed`, not envsubst.
-- Rework 2: `install.sh` duplicate-hostname check uses `grep -RlE`.
-- New CI step "nginx -t on the rendered site file" in the `server` job (apt nginx, self-signed cert at `/etc/letsencrypt/live/api.example.test/`, same sed as install.sh, symlink into sites-enabled, `sudo nginx -t`).
-- Also: shellcheck 0.9.0 (ubuntu-24.04) flagged SC2015 on two `install.sh` lines and one `scripts/server-local.sh` line; rewritten as `if` with the same logic.
-- Checked here on nginx 1.24.0 (Ubuntu): new template `nginx -t` ok, old one "unknown directive http2"; `-R` finds a symlinked duplicate, `-r` doesn't; shellcheck clean. The container has no IPv6, so the `[::]` lines were dropped for the local run only.
-- Commits are `[skip ci]`; re-verify runs CI once.
+- Rework items 1 and 2 fixed and checked in CI (`nginx -t` on stock Ubuntu nginx, `grep -RlE`). See the top of verify.md.
+- Re-verify tightened the CI manifest permission check: it joins the manifest's lines before matching `<uses-permission>`, because multi-attribute elements span lines and were missed.
+- AC-6 (live deploy and restore drill on the droplet) is not verified yet: it needs the "Deploy server" workflow run, a production change that waits on Ken's go.
 
 ## Left to CI or later
-- `nginx -t` with the `[::]` listens (CI runner); AC-6 live deploy and restore drill after Ken's setup.
+- AC-6 live deploy and restore drill after "Deploy server" runs.
 
 ## Pending for Ken
-- Setup in `server/README.md` "One-time setup"; run "Deploy server" only after re-verify passes.
+- Setup done 2026-11-16 (still confirming PB_SUPERUSER_EMAIL/PASSWORD and SERVER_HOSTNAME); next is running "Deploy server" for AC-6 now that re-verify passed.
+- Merge PR #17.
