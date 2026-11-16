@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../app.dart';
+import '../../data/sync/server_client.dart';
 import '../../domain/screen_time.dart';
 import '../../providers.dart';
 import '../../ui/theme.dart';
@@ -61,6 +62,8 @@ class ParentScreen extends ConsumerWidget {
           const _ScreenTimeSection(),
           const Divider(height: AppSizes.gap * 2),
           const _SoundSection(),
+          const Divider(height: AppSizes.gap * 2),
+          const _ServerSection(),
           const Divider(height: AppSizes.gap * 2),
           ListTile(
             key: const Key('change-pin'),
@@ -256,4 +259,75 @@ class _TopicLocksTile extends StatelessWidget {
     trailing: const Icon(Icons.chevron_right),
     onTap: () => context.go(Routes.topicLocks),
   );
+}
+
+/// FEAT-12: the sync server's hostname and a check the parent starts. No
+/// network call until "Check" is tapped (NFR-11).
+class _ServerSection extends ConsumerStatefulWidget {
+  const _ServerSection();
+
+  @override
+  ConsumerState<_ServerSection> createState() => _ServerSectionState();
+}
+
+class _ServerSectionState extends ConsumerState<_ServerSection> {
+  ServerHealth? _health;
+  bool _checking = false;
+
+  Future<void> _check() async {
+    setState(() => _checking = true);
+    final health = await ref.read(serverClientProvider).health();
+    if (mounted) {
+      setState(() {
+        _health = health;
+        _checking = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final config = ref.watch(serverClientProvider).config;
+    final scheme = Theme.of(context).colorScheme;
+    final status = switch (_health) {
+      ServerHealth.ok => ('Connected', AppColors.leaf),
+      ServerHealth.unreachable => (
+        "Can't reach the server. Practice still works offline.",
+        scheme.error,
+      ),
+      ServerHealth.notConfigured || null => null,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          key: const Key('server-row'),
+          minTileHeight: AppSizes.minTap,
+          leading: const Icon(Icons.cloud_outlined),
+          title: const Text('Server'),
+          subtitle: Text(
+            config.host ?? 'Not set up',
+            key: const Key('server-host'),
+          ),
+          trailing: config.isConfigured
+              ? OutlinedButton(
+                  key: const Key('server-check'),
+                  onPressed: _checking ? null : _check,
+                  child: Text(_checking ? 'Checking…' : 'Check'),
+                )
+              : null,
+        ),
+        if (status != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.gap),
+            child: Text(
+              status.$1,
+              key: const Key('server-status'),
+              style: Theme.of(context).textTheme.bodyLarge
+                  ?.copyWith(color: status.$2),
+            ),
+          ),
+      ],
+    );
+  }
 }
