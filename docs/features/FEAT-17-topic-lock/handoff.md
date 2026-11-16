@@ -1,5 +1,5 @@
 # Handoff: FEAT-17 — School topic lock
-Branch: feat/FEAT-17-topic-lock · PR: see STATE.md · Updated: 2026-11-16 by build
+Branch: feat/FEAT-17-topic-lock · PR: https://github.com/codeforests/number-ninja/pull/15 · Updated: 2026-11-16 by build
 Stage done: build (T1–T5 of 5; designed and built in one thread, small feature)
 Next: verify — kickoff: "Verify FEAT-17 on branch feat/FEAT-17-topic-lock. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
