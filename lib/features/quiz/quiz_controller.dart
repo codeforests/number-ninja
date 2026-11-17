@@ -125,6 +125,8 @@ class QuizController extends Notifier<RoundState> {
         if (ref.mounted) state = RoundState(topicId: topicId, locked: true);
         return;
       }
+      // A downloaded bank takes over only here, between rounds (BNK-09).
+      ref.read(bankPendingProvider.notifier).apply();
       final bank = await ref.read(bankProvider.future);
       final repo = ref.read(roundRepositoryProvider);
       final profile = await ref.read(profileRepositoryProvider).load();
@@ -172,6 +174,8 @@ class QuizController extends Notifier<RoundState> {
     try {
       final sub = ref.listen(revisionHistoryProvider.future, (_, _) {});
       final history = await sub.read().whenComplete(sub.close);
+      // A downloaded bank takes over only here, between rounds (BNK-09).
+      ref.read(bankPendingProvider.notifier).apply();
       final bank = await ref.read(bankProvider.future);
       final scope = RevisionScope.fromId(scopeId);
       final plan = ref

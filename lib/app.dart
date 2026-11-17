@@ -217,7 +217,14 @@ class _NumberNinjaAppState extends ConsumerState<NumberNinjaApp> {
     // Sync runs while signed in (FEAT-14): keep it alive, and sync on resume.
     ref.listenManual(syncProvider, (_, _) {});
     _lifecycle = AppLifecycleListener(
-      onResume: () => ref.read(syncProvider.notifier).requestSync(),
+      onResume: () {
+        ref.read(syncProvider.notifier).requestSync();
+        ref.read(bankCheckProvider)();
+      },
+    );
+    // FEAT-15 (BNK-08): look for a newer bank at launch, at most daily.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => ref.read(bankCheckProvider)(),
     );
     _warnings = ref.read(screenTimeProvider).warnings.listen((_) {
       _messenger.currentState?.showSnackBar(

@@ -1,13 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:number_ninja/app.dart';
+import 'package:number_ninja/data/bank_store.dart';
 import 'package:number_ninja/data/database.dart';
 import 'package:number_ninja/data/round_repository.dart';
 import 'package:number_ninja/data/sound_player.dart';
@@ -142,6 +146,10 @@ class QuizHarness {
   late final AppDatabase db;
   late final CountingRepository repo;
   DateTime now = DateTime(2027, 1, 5, 9);
+
+  /// Where downloaded banks go (FEAT-15); a test that downloads sets a temp
+  /// dir.
+  Directory banksDir = Directory('${Directory.systemTemp.path}/nn-no-banks');
   DateTime clock() => now;
 
   void tick(Duration d) => now = now.add(d);
@@ -162,13 +170,21 @@ class QuizHarness {
   /// without seeding passes. True: the real FEAT-17 lock rules.
   bool lockTopics = false;
 
+  /// True: [bankProvider] comes from the bank store (bundled = [bank]),
+  /// as in the app, so a download can replace it (FEAT-15).
+  bool useBankStore = false;
+
   /// More overrides for one test, added after the defaults.
   List<Override> more = [];
 
   List<Override> get overrides => [
     databaseProvider.overrideWithValue(db),
     clockProvider.overrideWithValue(clock),
-    bankProvider.overrideWith((ref) => bank),
+    if (!useBankStore) bankProvider.overrideWith((ref) => bank),
+    // FEAT-15: the bundled bank is [bank]; no downloads (no file IO).
+    bankStoreProvider.overrideWithValue(
+      BankStore(db, bundle: MemoryBankBundle(bank), dir: () async => banksDir),
+    ),
     roundRepositoryProvider.overrideWithValue(repo),
     quizRandomProvider.overrideWith((ref) => Random(42)),
     elapsedProvider.overrideWithValue(() => elapsed),
@@ -255,4 +271,17 @@ class QuizHarness {
     await tester.tap(find.byKey(const Key('next')));
     await tester.pumpAndSettle();
   }
+}
+
+/// An asset bundle that serves [bank] as the bundled bank (FEAT-15).
+class MemoryBankBundle extends CachingAssetBundle {
+  MemoryBankBundle(QuestionBank bank) : text = jsonEncode(bank.toJson());
+  final String text;
+
+  @override
+  Future<String> loadString(String key, {bool cache = true}) async => text;
+
+  @override
+  Future<ByteData> load(String key) async =>
+      ByteData.sublistView(Uint8List.fromList(utf8.encode(text)));
 }

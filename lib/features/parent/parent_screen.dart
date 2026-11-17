@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../app.dart';
+import '../../data/bank_store.dart';
 import '../../data/sync/server_client.dart';
 import '../../domain/screen_time.dart';
 import '../../providers.dart';
@@ -65,6 +67,7 @@ class ParentScreen extends ConsumerWidget {
           const Divider(height: AppSizes.gap * 2),
           const _AccountTile(),
           const _ServerSection(),
+          const _BankTile(),
           const Divider(height: AppSizes.gap * 2),
           ListTile(
             key: const Key('change-pin'),
@@ -352,6 +355,80 @@ class _ServerSectionState extends ConsumerState<_ServerSection> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// "Version 2 (downloaded) · checked today, 9:12 am · up to date" (BNK-12).
+String bankStatusText(ActiveBank active, BankCheckState check, DateTime now) {
+  final source = active.source == BankSource.bundled
+      ? 'built in'
+      : 'downloaded';
+  final parts = ['Version ${active.bank.version} ($source)'];
+  final at = check.checkedAt;
+  if (at == null) {
+    parts.add('not checked yet');
+  } else {
+    final today = DateTime(now.year, now.month, now.day);
+    final when = switch (today
+        .difference(DateTime(at.year, at.month, at.day))
+        .inDays) {
+      0 => 'today',
+      1 => 'yesterday',
+      _ => DateFormat('d MMM').format(at),
+    };
+    parts.add(
+      'checked $when, ${DateFormat('h:mm a').format(at).toLowerCase()}',
+    );
+  }
+  final note = check.note;
+  if (note != null && note.isNotEmpty) parts.add(note);
+  return parts.join(' · ');
+}
+
+/// FEAT-15 (BNK-12): the bank in use, the last check and "Check now".
+class _BankTile extends ConsumerStatefulWidget {
+  const _BankTile();
+
+  @override
+  ConsumerState<_BankTile> createState() => _BankTileState();
+}
+
+class _BankTileState extends ConsumerState<_BankTile> {
+  bool _checking = false;
+
+  Future<void> _check() async {
+    setState(() => _checking = true);
+    await ref.read(bankCheckProvider)(force: true, now: true);
+    if (mounted) setState(() => _checking = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final configured = ref.watch(serverClientProvider).config.isConfigured;
+    final status = ref.watch(bankStatusProvider);
+    final text = switch (status) {
+      AsyncData(value: (final active, final check)) => bankStatusText(
+        active,
+        check,
+        ref.watch(clockProvider)(),
+      ),
+      AsyncError() => "Can't read the question bank",
+      _ => '…',
+    };
+    return ListTile(
+      key: const Key('bank-tile'),
+      minTileHeight: AppSizes.minTap,
+      leading: const Icon(Icons.library_books_outlined),
+      title: const Text('Question bank'),
+      subtitle: Text(text, key: const Key('bank-status')),
+      trailing: configured
+          ? OutlinedButton(
+              key: const Key('bank-check-now'),
+              onPressed: _checking ? null : _check,
+              child: Text(_checking ? 'Checking…' : 'Check now'),
+            )
+          : null,
     );
   }
 }
