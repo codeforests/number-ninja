@@ -30,6 +30,13 @@ jobs:
           flutter-version: 3.50.0
           cache: true
 
+      - name: TEMP bank probe against the live server
+        env:
+          SERVER_HOSTNAME: ${{ vars.SERVER_HOSTNAME }}
+        run: |
+          flutter pub get
+          PROBE_URL="https://$SERVER_HOSTNAME" flutter test test/live/bank_probe_test.dart || true
+
       - name: Shellcheck
         run: shellcheck server/*.sh server/test/run.sh scripts/server-local.sh
 
