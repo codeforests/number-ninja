@@ -11,7 +11,7 @@
 #   PB_SUPERUSER_PASSWORD
 #   CERT_EMAIL             Let's Encrypt notices (default PB_SUPERUSER_EMAIL)
 # Optional (FEAT-13; unset leaves the feature off):
-#   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS
+#   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS RESEND_API_KEY
 #   GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
 # Remote paths expand locally on purpose (stage is a path we created).
 # shellcheck disable=SC2029
@@ -41,6 +41,7 @@ printf '%s\n' \
   "SMTP_USERNAME=${SMTP_USERNAME:-}" \
   "SMTP_PASSWORD=${SMTP_PASSWORD:-}" \
   "MAIL_SENDER_ADDRESS=${MAIL_SENDER_ADDRESS:-}" \
+  "RESEND_API_KEY=${RESEND_API_KEY:-}" \
   "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}" \
   "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}" |
   ssh "${ssh_opts[@]}" "$target" "sudo bash '$stage/install.sh'" || status=$?

@@ -11,7 +11,7 @@
 
 - `server/README.md` is the guide (Ken's setup, deploy, tunnel, restore). `VERSION` pins PocketBase; `pb_migrations/*.js` are the only schema and rule source; `nginx/numberninja.conf.template` + `install.sh` (runs on the droplet, called by `deploy.sh`, workflow `deploy-server.yml`); `restore.sh`.
 - FEAT-14: `pb_hooks/reset.pb.js` (`POST /api/nn/children/{id}/reset`), `pb_migrations/1763251203_sync.js` (`children.reset_at`, batch API, rate limits); `test/sync_test.dart`. `run.sh` also runs the app's live sync test `test/live/sync_live_test.dart` (AC-7, `SYNC_LIVE_URL`).
-- FEAT-13: `pb_hooks/config.pb.js` (SMTP, Google OAuth2 and appURL from env on every start), `pb_migrations/1763251202_auth.js` (users auth settings, email templates, verified-only child create), `pb_public/verify.html` + `reset.html` (email link pages). Tests: `test/auth_test.dart` with `lib/mail_sink.dart` (in-test SMTP sink on `PB_SMTP_PORT`).
+- FEAT-13: `pb_hooks/config.pb.js` (SMTP, Google OAuth2 and appURL from env on every start), `pb_hooks/mail.pb.js` (with `RESEND_API_KEY`, every mail goes through Resend's HTTPS API instead of SMTP: DigitalOcean blocks SMTP ports; test `test/resend_test.dart` on a third PocketBase in `run.sh`), `pb_migrations/1763251202_auth.js` (users auth settings, email templates, verified-only child create), `pb_public/verify.html` + `reset.html` (email link pages). Tests: `test/auth_test.dart` with `lib/mail_sink.dart` (in-test SMTP sink on `PB_SMTP_PORT`).
 - Tests: `server/test/run.sh` (CI job `server`): `scripts/server-local.sh` starts the pinned PocketBase; `test/api_rules_test.dart` (NFR-13), `backup_test.dart` + `restore_check_test.dart` (NFR-15). Helpers in `server/test/lib/fixtures.dart`.
 
 ## Domain (`lib/domain`, pure Dart)
