@@ -85,28 +85,50 @@ class _NumberAnswerState extends State<NumberAnswer> {
       '.' => 'dot',
       _ => k,
     };
+    final face = isBack ? AppColors.keyDelete : AppColors.keyFace;
+    final edge = isBack ? AppColors.keyDeleteEdge : AppColors.keyEdge;
+    final ink = switch (k) {
+      '<' => AppColors.keyDeleteInk,
+      '.' => AppColors.muted,
+      _ => AppColors.ninja,
+    };
+    final radius = BorderRadius.circular(AppRadii.button);
     return Padding(
       padding: const EdgeInsets.all(6),
-      child: SizedBox(
-        width: size + 4,
-        height: size,
-        child: FilledButton.tonal(
-          key: Key('key-$name'),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(size, size),
-            padding: EdgeInsets.zero,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadii.button),
+      // A white "candy" key with a coloured bottom edge, so it looks
+      // pressable on the light backgrounds (FEAT-16).
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          boxShadow: [
+            BoxShadow(color: edge, offset: const Offset(0, AppSizes.keyEdge)),
+          ],
+        ),
+        child: SizedBox(
+          width: size + 4,
+          height: size,
+          child: FilledButton.tonal(
+            key: Key('key-$name'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(size, size),
+              padding: EdgeInsets.zero,
+              backgroundColor: face,
+              foregroundColor: ink,
+              textStyle: const TextStyle(
+                fontSize: AppText.heading,
+                fontWeight: FontWeight.w700,
+              ),
+              shape: RoundedRectangleBorder(borderRadius: radius),
             ),
+            onPressed: isBack ? _back : () => _type(k),
+            child: isBack
+                ? const Icon(
+                    Icons.backspace_outlined,
+                    size: AppText.heading,
+                    semanticLabel: 'Delete',
+                  )
+                : Text(k),
           ),
-          onPressed: isBack ? _back : () => _type(k),
-          child: isBack
-              ? const Icon(
-                  Icons.backspace_outlined,
-                  size: AppText.heading,
-                  semanticLabel: 'Delete',
-                )
-              : Text(k, style: const TextStyle(fontSize: AppText.heading)),
         ),
       ),
     );

@@ -22,6 +22,7 @@ Not in scope: Play Store listing, buying `brainbubblz.com` (the server stays on 
 - **AC-3** (icon): `test/tool/icon_test.dart`: generator reproduces `assets/icon` with no diff; mipmap corners are indigo; adaptive icon present.
 - **AC-4** (version): `pubspec.yaml` is `2.0.0+3`.
 - **AC-5** (server): the new migration sets `meta.appName` to "BrainBubblz"; server tests pass in CI; the return page title and button say BrainBubblz.
+- **AC-7** (keypad and progress, Ken's tablet feedback 2026-11-17, option A "Candy keys"): number keys are white with indigo digits and a `keyEdge` bottom edge, delete is orange; the progress dots become 10 steps that share the row width (green/red done, taller orange current) plus `progress-count` "n/10"; at 360×720 and 1280×800 the row ends inside the screen (`test/features/quiz/progress_bar_test.dart`); colours and sizes in `theme.dart`.
 - **AC-6** (regression): full `scripts/check.sh` passes and CI builds the APK; `regression.md` lists the tablet checks for Ken.
 
 ## Tasks
@@ -32,3 +33,5 @@ Not in scope: Play Store listing, buying `brainbubblz.com` (the server stays on 
       Done when: AC-3.
 - [x] T3 — Server: rename migration, return page text; README, CI release names, docs (D16, STATE, code-map), `regression.md`; full check; draft PR.
       Done when: AC-1, AC-5, AC-6.
+- [x] T4 — Candy keypad and progress steps (option A, mockups in project files `designs/keypad-progress-options.png`).
+      Done when: AC-7: `flutter test test/features/quiz`.

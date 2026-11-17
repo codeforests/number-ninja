@@ -46,6 +46,15 @@ abstract final class AppColors {
   static const bgOlyBottom = Color(0xFFFFE4F2); // pink
   static const bgShape = Color(0x66FFFFFF); // faint white shapes
 
+  // Quiz keypad and progress bar (FEAT-16, Ken's tablet feedback).
+  static const keyFace = card; // digit keys: white, indigo digits
+  static const keyEdge = Color(0xFFB9BCE6); // the key's pressable bottom edge
+  static const keyDelete = Color(0xFFFFE7CC);
+  static const keyDeleteInk = Color(0xFF9A4A00);
+  static const keyDeleteEdge = Color(0xFFF0B877);
+  static const stepTodo = Color(0xCCFFFFFF);
+  static const stepBorder = Color(0xFFC9CBE8);
+
   /// Confetti on SCR-05 (NFR-10).
   static const confetti = [red, blue, yellow, green, orange, trackOly, sun];
 }
@@ -60,6 +69,11 @@ abstract final class AppSizes {
   /// Minimum tap target on child screens (NFR-03).
   static const minTap = 64.0;
   static const pinKey = 72.0;
+
+  /// Depth of a quiz key's bottom edge, and the progress bar's step heights.
+  static const keyEdge = 5.0;
+  static const step = 16.0;
+  static const stepCurrent = 22.0;
   static const gap = 16.0;
 
   /// Trend chart plot height and dot radius on parent screens.
