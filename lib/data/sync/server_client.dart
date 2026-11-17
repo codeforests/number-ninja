@@ -101,8 +101,16 @@ class AuthMethods {
   final bool google;
 }
 
-/// Opens Google's sign-in page in a browser tab.
-typedef UrlLauncher = Future<void> Function(Uri url);
+/// Opens Google's sign-in page in a browser tab and completes with the link
+/// the server sends back into the app when Google is done
+/// (`numberninja://signin/google?state=…&code=…`).
+typedef SignInLauncher = Future<Uri> Function(Uri url);
+
+/// Where Google returns to: an nginx page that hands the result back to the
+/// app (server/nginx). Not PocketBase's /api/oauth2-redirect, which needs a
+/// realtime connection held open while the parent is in the browser, and
+/// some networks cut quiet connections after about a minute.
+const googleReturnPath = '/signin/google';
 
 /// The app's view of the sync server. Nothing calls it at start-up or on
 /// child screens (NFR-11): only the parent area does. Account calls throw
@@ -125,7 +133,7 @@ abstract class ServerClient {
   /// Signs in; an unverified account throws [AuthError.notVerified] and
   /// nothing is kept.
   Future<Account> signIn(String email, String password);
-  Future<Account> signInWithGoogle(UrlLauncher launch);
+  Future<Account> signInWithGoogle(SignInLauncher launch);
   Future<void> requestVerification(String email);
   Future<void> requestPasswordReset(String email);
 
@@ -350,11 +358,32 @@ class PocketBaseServerClient implements ServerClient {
   }, passwordAuth: true);
 
   @override
-  Future<Account> signInWithGoogle(UrlLauncher launch) => _call(
+  Future<Account> signInWithGoogle(SignInLauncher launch) => _call(
     () async {
-      final auth = await _users.authWithOAuth2('google', (url) {
-        unawaited(launch(url));
-      });
+      final methods = await _users.listAuthMethods();
+      final google = methods.oauth2.providers
+          .where((p) => p.name == 'google')
+          .firstOrNull;
+      if (google == null) throw const AuthException(AuthError.notConfigured);
+      final redirect = _pb.buildURL(googleReturnPath).toString();
+      // The provider's authURL ends with "redirect_uri=" (as the SDK uses it).
+      final url = Uri.parse(google.authURL + redirect);
+      final back = await launch(
+        url.replace(queryParameters: Map.of(url.queryParameters)),
+      );
+      final q = back.queryParameters;
+      final code = q['code'] ?? '';
+      if (q['state'] != google.state ||
+          (q['error'] ?? '').isNotEmpty ||
+          code.isEmpty) {
+        throw const AuthException(AuthError.cancelled);
+      }
+      final auth = await _users.authWithOAuth2Code(
+        'google',
+        code,
+        google.codeVerifier,
+        redirect,
+      );
       await _persist(auth, google: true);
       return currentAccount!;
     },

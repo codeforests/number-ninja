@@ -56,7 +56,7 @@
 
 ## Gotchas
 
-- PocketBase's `/api/oauth2-redirect` sends the browser to `/_/#/auth/oauth2-redirect-success|failure`; nginx answers exactly `/_/` with a small result page (admin files under `/_/` stay 404). On Android the Custom Tab doesn't close itself: the parent closes it.
+- Google sign-in doesn't use PocketBase's realtime `authWithOAuth2` (some networks cut the quiet SSE connection after ~1 min, so the result never arrived). The app opens the provider's `authURL` with redirect `https://<host>/signin/google`; that nginx page opens `numberninja://signin/google?state&code`, `SignInReturnActivity` (Android) passes it on the `number_ninja/sign_in` channel to `SignInBrowser.open`, and `ServerClient` checks state and calls `authWithOAuth2Code`. nginx also answers `/_/` with a result page for the old flow (admin files under `/_/` stay 404).
 - The Ahem test font is wider than Roboto: `QuizHarness.tap` calls `ensureVisible` first.
 - The router refreshes only on the session and `ScreenTimeController.lockedListenable` (FEAT-05); don't make it watch other providers.
 - Call `forgetSession()` after a reset (FEAT-06).

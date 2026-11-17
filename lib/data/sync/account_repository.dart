@@ -115,7 +115,7 @@ class AccountRepository extends Notifier<AccountState> {
     await _client.signIn(email.trim(), password);
   });
 
-  Future<void> signInWithGoogle(UrlLauncher launch) =>
+  Future<void> signInWithGoogle(SignInLauncher launch) =>
       _run(() => _client.signInWithGoogle(launch));
 
   Future<void> resendVerification(String email) => _run(() async {

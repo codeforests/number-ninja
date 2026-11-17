@@ -58,7 +58,10 @@ for _ in $(seq 1 30); do
     if ! curl -fsS "https://$SERVER_HOSTNAME/_/" | grep -q 'Close this tab'; then
       echo "/_/ is not the sign-in result page" >&2; exit 1
     fi
-    echo "Deployed: https://$SERVER_HOSTNAME/api/health is 200, /_/ is the sign-in page, /_/images/ is 404"
+    if ! curl -fsS "https://$SERVER_HOSTNAME/signin/google" | grep -q 'numberninja://signin/google'; then
+      echo "/signin/google is not the Google return page" >&2; exit 1
+    fi
+    echo "Deployed: https://$SERVER_HOSTNAME/api/health is 200, /_/ is the sign-in page, /signin/google hands back to the app, /_/images/ is 404"
     exit 0
   fi
   sleep 2
