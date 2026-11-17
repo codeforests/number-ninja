@@ -110,7 +110,11 @@ void main() {
   }
 
   group('retired ids (FEAT-15 AC-1)', () {
-    final all = buildBank(allTemplates, handwritten: allHandwritten);
+    final all = buildBank(
+      allTemplates,
+      handwritten: allHandwritten,
+      version: bankVersion,
+    );
     final id = all.questions[5].id;
 
     test('are kept and marked retired', () {

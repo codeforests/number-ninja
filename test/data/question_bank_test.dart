@@ -22,8 +22,8 @@ void main() {
     bank = await loadBank(rootBundle);
   });
 
-  test('is bundled, version 1, and loadBank returns every question (AC-1)', () {
-    expect(bank.version, 1);
+  test('is bundled at bankVersion; loadBank returns every question (AC-1)', () {
+    expect(bank.version, bankVersion);
     final lines = text.split('\n').where((l) => l.startsWith('{"id"'));
     expect(bank.questions.length, lines.length);
     expect(bank.questions.length, greaterThan(23 * 40));
