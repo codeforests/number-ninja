@@ -28,7 +28,7 @@ Not in scope: Play Store listing, buying `brainbubblz.com` (the server stays on 
 
 - [x] T1 — App strings, badge name, manifest label, version; tests that name them.
       Done when: AC-1 (app part), AC-2, AC-4: `flutter test test/domain test/features/home test/features/profile test/tool`.
-- [ ] T2 — Bubble icon in `tool/icon/draw.dart`, regenerate `assets/icon` and mipmaps.
+- [x] T2 — Bubble icon in `tool/icon/draw.dart`, regenerate `assets/icon` and mipmaps.
       Done when: AC-3.
 - [ ] T3 — Server: rename migration, return page text; README, CI release names, docs (D16, STATE, code-map), `regression.md`; full check; draft PR.
       Done when: AC-1, AC-5, AC-6.

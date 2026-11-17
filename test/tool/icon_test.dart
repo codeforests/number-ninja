@@ -17,7 +17,7 @@ void main() {
     }
   });
 
-  test('Android mipmaps are the ninja icon, with an adaptive icon', () {
+  test('Android mipmaps are the bubble icon, with an adaptive icon', () {
     const res = 'android/app/src/main/res';
     for (final d in ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']) {
       final png = img.decodePng(
