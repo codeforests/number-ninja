@@ -330,7 +330,8 @@ class _ServerSectionState extends ConsumerState<_ServerSection> {
           leading: const Icon(Icons.cloud_outlined),
           title: const Text('Server'),
           subtitle: Text(
-            config.host ?? 'Not set up',
+            // The address stays out of sight (Ken, 2026-11-17).
+            config.isConfigured ? 'Set up' : 'Not set up',
             key: const Key('server-host'),
           ),
           trailing: config.isConfigured

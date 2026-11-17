@@ -73,8 +73,12 @@ mail ports, so this uses Brevo's port 2525.
    own Google account as a test user while it's in testing).
 3. APIs & Services → Credentials → Create credentials → OAuth client ID →
    **Web application** (not Android). Authorized redirect URI:
-   `https://api.brainbubblz.audiodenoiser.com/api/oauth2-redirect` (use the
-   `SERVER_HOSTNAME` value; add the new one if the hostname changes).
+   `https://api.brainbubblz.audiodenoiser.com/signin/google` (use the
+   `SERVER_HOSTNAME` value; add the new one if the hostname changes). That nginx
+   page hands the result back to the app. PocketBase's own
+   `/api/oauth2-redirect` isn't used: it needs the app's realtime connection to
+   stay open while the parent is in the browser, and some networks cut quiet
+   connections after about a minute.
 4. Repo secrets: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 
 The deploy log prints `Email: on|off, Google sign-in: on|off`. The secrets end up
