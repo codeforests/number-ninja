@@ -56,12 +56,12 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | BNK-04 | A generator script in the repo shall produce the bank reproducibly (same seed, same file) and fail if any question has a wrong answer, a duplicate, or an MCQ option list without exactly one correct option. | M | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
 | BNK-05 | Every question shall have a stable id that never changes between bank versions, so old results stay readable. | M | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
 | BNK-06 | Every question shall carry a short explanation of the answer shown after she answers. | S | FEAT-02 | FEAT-02 verify.md (2026-11-14) |
-| BNK-07 | A publish step in the repo shall upload a new bank version to the server only after the generator's validator passes, and shall refuse a version that is not higher than the latest published one. (D11) | M | FEAT-15 | |
-| BNK-08 | When online, the app shall check for a newer published bank at launch and at most once a day, download it, verify its checksum and run the same checks as the bundled bank before keeping it. A failed download or check keeps the current bank. (D11) | M | FEAT-15 | |
-| BNK-09 | The app shall switch to a newly downloaded bank only between rounds, never during one, and shall fall back to the bundled bank if the downloaded file is missing or damaged. | M | FEAT-15 | |
-| BNK-10 | A newer bank shall keep every question id of the previous one (BNK-05); a question that should no longer be served is marked retired, so old results stay readable. | M | FEAT-15 | |
-| BNK-11 | The app shall ignore a published bank whose format needs a newer app version. | S | FEAT-15 | |
-| BNK-12 | The parent area shall show the bank version in use and when the app last checked for a new one. | C | FEAT-15 | |
+| BNK-07 | A publish step in the repo shall upload a new bank version to the server only after the generator's validator passes, and shall refuse a version that is not higher than the latest published one. (D11) | M | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
+| BNK-08 | When online, the app shall check for a newer published bank at launch and at most once a day, download it, verify its checksum and run the same checks as the bundled bank before keeping it. A failed download or check keeps the current bank. (D11) | M | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
+| BNK-09 | The app shall switch to a newly downloaded bank only between rounds, never during one, and shall fall back to the bundled bank if the downloaded file is missing or damaged. | M | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
+| BNK-10 | A newer bank shall keep every question id of the previous one (BNK-05); a question that should no longer be served is marked retired, so old results stay readable. | M | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
+| BNK-11 | The app shall ignore a published bank whose format needs a newer app version. | S | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
+| BNK-12 | The parent area shall show the bank version in use and when the app last checked for a new one. | C | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
 
 ### Practice (PRC)
 
