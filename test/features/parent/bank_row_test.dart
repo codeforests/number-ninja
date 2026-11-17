@@ -54,7 +54,7 @@ void main() {
     await open(tester, ServerConfig.none);
     expect(
       textOf(tester, 'bank-status'),
-      'Version 1 (built in) · not checked yet',
+      'Version ${real.version} (built in) · not checked yet',
     );
     expect(find.byKey(const Key('bank-check-now')), findsNothing);
     expect(client.bankLog, isEmpty);
@@ -65,9 +65,11 @@ void main() {
     // The launch check found nothing newer.
     expect(
       textOf(tester, 'bank-status'),
-      'Version 1 (built in) · checked today, 9:00 am · up to date',
+      'Version ${real.version} (built in) · checked today, 9:00 am · up to date',
     );
-    client.publishBank(QuestionBank(version: 2, questions: real.questions));
+    client.publishBank(
+      QuestionBank(version: real.version + 1, questions: real.questions),
+    );
     await tester.tap(find.byKey(const Key('bank-check-now')));
     for (var i = 0; i < 100; i++) {
       await tester.runAsync(
@@ -78,12 +80,13 @@ void main() {
     }
     expect(
       textOf(tester, 'bank-status'),
-      'Version 2 (downloaded) · checked today, 9:00 am · downloaded version 2',
+      'Version ${real.version + 1} (downloaded) · checked today, 9:00 am · '
+      'downloaded version ${real.version + 1}',
     );
     expect(client.bankLog, [
       'latestBank:$bankFormatSupported',
       'latestBank:$bankFormatSupported',
-      'downloadBank:2',
+      'downloadBank:${real.version + 1}',
     ]);
   });
 

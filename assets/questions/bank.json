@@ -1,4 +1,4 @@
-{"version":1,"format":1,"questions":[
+{"version":2,"format":1,"questions":[
 {"id":"oly.counting.digits.001","topic":"oly.counting","level":1,"format":"number","prompt":"A book has 19 pages, numbered 1 to 19. How many digits are printed to number all the pages?","answer":"29","check":"9+(19-9)*2","explanation":"Pages 1 to 9 use 9 digits. Pages 10 to 19 are 10 pages with 2 digits each: 20. 9 + 20 = 29."},
 {"id":"oly.counting.digits.002","topic":"oly.counting","level":2,"format":"number","prompt":"A book has 71 pages, numbered 1 to 71. How many digits are printed to number all the pages?","answer":"133","check":"9+(71-9)*2","explanation":"Pages 1 to 9 use 9 digits. Pages 10 to 71 are 62 pages with 2 digits each: 124. 9 + 124 = 133."},
 {"id":"oly.counting.digits.003","topic":"oly.counting","level":3,"format":"number","prompt":"A book has 107 pages, numbered 1 to 107. How many digits are printed to number all the pages?","answer":"213","check":"9+90*2+(107-99)*3","explanation":"Pages 1 to 9 use 9 digits, pages 10 to 99 use 90 × 2 = 180, and pages 100 to 107 use 8 × 3 = 24. Total: 213."},

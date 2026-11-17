@@ -41,8 +41,10 @@ void main() {
       final committed = jsonDecode(
         File('assets/questions/bank.json').readAsStringSync(),
       ) as Map<String, dynamic>;
-      final file = File('${tmp.path}/bank_v2.json')
-        ..writeAsStringSync(jsonEncode({...committed, 'version': 2}));
+      // One above the bundled bank, so the app takes it.
+      final next = (committed['version'] as int) + 1;
+      final file = File('${tmp.path}/bank_v$next.json')
+        ..writeAsStringSync(jsonEncode({...committed, 'version': next}));
       final pub = await Process.run(
         'dart',
         [
@@ -80,7 +82,7 @@ void main() {
       expect(await updater.check(), BankCheck.downloaded);
       final active = await store.loadActive();
       expect(active.source, BankSource.downloaded);
-      expect(active.bank.version, 2);
+      expect(active.bank.version, next);
       expect(
         active.bank.questions.length,
         (committed['questions'] as List).length,

@@ -9,7 +9,7 @@ import 'retired.dart';
 
 /// The bank version the generator writes (FEAT-15 D2). Bump it to publish
 /// a new bank; "Publish bank" refuses a version that isn't higher.
-const bankVersion = 1;
+const bankVersion = 2;
 
 /// Every template, in no meaningful order: each one has its own seed.
 final allTemplates = <Template>[
