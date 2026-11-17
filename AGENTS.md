@@ -4,7 +4,7 @@ Guidance for coding agents and people working in this repo. `CLAUDE.md` only poi
 
 ## What this is
 
-Number Ninja: an offline Flutter app for an Android tablet that helps one child practise P1/P2 and Olympiad maths, with timed answers, a PIN-protected parent dashboard and a daily screen-time limit. Requirements, design and plan are in `docs/`; `docs/STATE.md` says where the build is.
+BrainBubblz (formerly Number Ninja): an offline Flutter app for an Android tablet that helps one child practise P1/P2 and Olympiad maths, with timed answers, a PIN-protected parent dashboard and a daily screen-time limit. Requirements, design and plan are in `docs/`; `docs/STATE.md` says where the build is.
 
 ## Commands
 

@@ -1,4 +1,4 @@
-# Number Ninja: Plan
+# BrainBubblz: Plan
 
 > Version 2.0 · 2026-11-15 (1.0 signed off by Ken 2026-11-14; 1.1 adds Ken's M1 feedback, D9; 2.0 adds phase 2, signed off by Ken 2026-11-15) · From [01-requirements.md](01-requirements.md), [02-design.md](02-design.md) and [04-architecture.md](04-architecture.md)
 

@@ -4,7 +4,7 @@
 migrate((app) => {
   const settings = app.settings();
   const host = $os.getenv("SERVER_HOSTNAME");
-  settings.meta.appName = "Number Ninja";
+  settings.meta.appName = "Number Ninja"; // renamed by 1763251205_rename.js
   settings.meta.appURL = host ? "https://" + host : "http://127.0.0.1:8090";
   settings.backups.cron = "0 19 * * *"; // 19:00 UTC = 03:00 SGT
   settings.backups.cronMaxKeep = 14;

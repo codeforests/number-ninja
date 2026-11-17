@@ -58,6 +58,7 @@
 
 ## Gotchas
 
+- FEAT-16 renamed the app to BrainBubblz for people only. Keep the old name in the application id `com.codeforests.number_ninja`, the Dart package `number_ninja`, the `numberninja://signin` scheme (manifest, nginx return page, `deploy.sh` check), the server unit and nginx file names, the keystore alias and badge id `ninja-master`: changing any of them breaks in-place updates, sign-in or synced badges.
 - FEAT-15 bank tests take versions relative to `bankVersion` (the bundled bank), never literal 1/2, so a `bankVersion` bump keeps them green.
 
 - Google sign-in doesn't use PocketBase's realtime `authWithOAuth2` (some networks cut the quiet SSE connection after ~1 min, so the result never arrived). The app opens the provider's `authURL` with redirect `https://<host>/signin/google`; that nginx page opens `numberninja://signin/google?state&code`, `SignInReturnActivity` (Android) passes it on the `number_ninja/sign_in` channel to `SignInBrowser.open` and brings back the existing MainActivity (NEW_TASK|CLEAR_TOP|SINGLE_TOP; MainActivity must keep the default task affinity, or a second copy opens signed out), and `ServerClient` checks state and calls `authWithOAuth2Code`. nginx also answers `/_/` with a result page for the old flow (admin files under `/_/` stay 404).

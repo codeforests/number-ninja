@@ -1,4 +1,4 @@
-# Number Ninja: Design
+# BrainBubblz: Design
 
 > Version 1.0 (signed off by Ken 2026-11-14) · 2026-11-14 · Implements [01-requirements.md](01-requirements.md)
 > Changes after sign-off: add a row to §9 and edit in place; a decision that reverses another gets a new D-number in the requirements.
