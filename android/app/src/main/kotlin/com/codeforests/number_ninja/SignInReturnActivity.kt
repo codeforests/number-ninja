@@ -16,9 +16,14 @@ class SignInReturnActivity : Activity() {
         if (link != null && link.scheme == "numberninja" && link.host == "signin") {
             MainActivity.signInChannel?.invokeMethod("returned", link.toString())
         }
+        // Back to the app's own task and its existing MainActivity (CLEAR_TOP also
+        // closes the Custom Tab above it); never a second MainActivity.
         startActivity(
-            Intent(this, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            Intent(this, MainActivity::class.java).addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP,
+            ),
         )
         finish()
     }
