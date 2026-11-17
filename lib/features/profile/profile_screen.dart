@@ -124,7 +124,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSizes.gap),
                     child: Text(
-                      'Tell Number Ninja a little about your child, so each '
+                      'Tell BrainBubblz a little about your child, so each '
                       'topic starts at the right level. You can change this '
                       'later in the parent area.',
                       style: theme.bodyLarge,

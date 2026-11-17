@@ -41,7 +41,7 @@ Future<Uint8List> buildReportPdf(ReportData data, {bool compress = true}) {
   final doc = pw.Document(
     compress: compress,
     title: data.title,
-    creator: 'Number Ninja',
+    creator: 'BrainBubblz',
   );
   doc.addPage(
     pw.MultiPage(
@@ -50,7 +50,7 @@ Future<Uint8List> buildReportPdf(ReportData data, {bool compress = true}) {
       footer: (ctx) => pw.Align(
         alignment: pw.Alignment.centerRight,
         child: pw.Text(
-          'Number Ninja - page ${ctx.pageNumber} of ${ctx.pagesCount}',
+          'BrainBubblz - page ${ctx.pageNumber} of ${ctx.pagesCount}',
           style: _small,
         ),
       ),

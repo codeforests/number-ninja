@@ -23,7 +23,7 @@ const badgeIcons = <String, (IconData, Color)>{
   'counting-star': (Icons.star, AppColors.trackOly),
   'bar-model-builder': (Icons.view_week, AppColors.trackOly),
   'school-explorer': (Icons.explore, AppColors.trackP1),
-  'ninja-master': (Icons.sports_martial_arts, AppColors.ninja),
+  'ninja-master': (Icons.bubble_chart, AppColors.ninja),
 };
 
 /// A badge's icon in a circle: coloured when [earned], else a grey

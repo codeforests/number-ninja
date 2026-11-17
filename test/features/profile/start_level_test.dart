@@ -82,7 +82,7 @@ void main() {
 
   testWidgets('home greets her by nickname (PRO-04)', (tester) async {
     await h.pumpApp(tester);
-    expect(text('greeting'), 'Number Ninja');
+    expect(text('greeting'), 'BrainBubblz');
     await profile(const ChildProfile(nickname: 'Mia', schoolYear: 2));
     h.container(tester).invalidate(childProfileProvider);
     await tester.pumpAndSettle();

@@ -69,7 +69,7 @@ const badges = <Badge>[
     'School Explorer',
     'Finish a round in every School topic',
   ),
-  Badge('ninja-master', 'Ninja Master', 'Get 3 stars in every topic'),
+  Badge('ninja-master', 'Bubble Master', 'Get 3 stars in every topic'),
 ];
 
 final badgesById = {for (final b in badges) b.id: b};

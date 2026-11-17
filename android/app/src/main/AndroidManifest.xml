@@ -2,7 +2,7 @@
     <!-- FEAT-12 (NFR-11): only for the optional sync server, HTTPS only. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:label="Number Ninja"
+        android:label="BrainBubblz"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="false"

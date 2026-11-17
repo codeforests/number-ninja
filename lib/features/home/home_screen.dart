@@ -83,7 +83,7 @@ class HomeScreen extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               nickname == null
-                                  ? 'Number Ninja'
+                                  ? 'BrainBubblz'
                                   : 'Hi, $nickname!',
                               key: const Key('greeting'),
                               maxLines: 1,

@@ -167,7 +167,7 @@ void main() {
       expect(all.periodLine, 'All time: up to 15 Nov 2026');
       expect(all.from, isNull);
       expect(all.createdLine, 'Created 15 Nov 2026 14:05');
-      expect(all.title, 'Number Ninja progress report');
+      expect(all.title, 'BrainBubblz progress report');
       // The 100-day answer counts in all time only.
       final money = all.topics.firstWhere((r) => r.topicId == 'p1.money');
       expect(money.answers, '1');

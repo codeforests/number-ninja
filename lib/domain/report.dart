@@ -138,7 +138,7 @@ class ReportData {
   /// No answers in the period.
   final bool isEmpty;
 
-  String get title => 'Number Ninja progress report';
+  String get title => 'BrainBubblz progress report';
 
   String get periodLine => from == null
       ? 'All time: up to ${reportDate(now)}'
