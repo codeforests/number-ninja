@@ -56,6 +56,7 @@
 
 ## Gotchas
 
+- PocketBase's `/api/oauth2-redirect` sends the browser to `/_/#/auth/oauth2-redirect-success|failure`; nginx answers exactly `/_/` with a small result page (admin files under `/_/` stay 404). On Android the Custom Tab doesn't close itself: the parent closes it.
 - The Ahem test font is wider than Roboto: `QuizHarness.tap` calls `ensureVisible` first.
 - The router refreshes only on the session and `ScreenTimeController.lockedListenable` (FEAT-05); don't make it watch other providers.
 - Call `forgetSession()` after a reset (FEAT-06).
