@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show Variable;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -318,7 +320,7 @@ void main() {
     addTearDown(db.close);
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 7);
+    expect(version.data.values.single, db.schemaVersion);
     final hex32 = RegExp(r'^[0-9a-f]{32}$');
     final device = await db.deviceId();
     expect(device, matches(hex32));
@@ -373,6 +375,41 @@ void main() {
       expect(await db.deviceId(), matches(RegExp(r'^[0-9a-f]{32}$')));
       expect(await db.select(db.syncFields).get(), hasLength(7));
       expect(await db.select(db.syncState).get(), hasLength(1));
+    },
+  );
+
+  test(
+    'v7 -> v8 adds bank_files and the bank check fields (FEAT-15 AC-7)',
+    () async {
+      final tmp = Directory.systemTemp.createTempSync('mig8');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final file = File('${tmp.path}/db.sqlite');
+      final fresh = AppDatabase(NativeDatabase(file));
+      await fresh.select(fresh.appSettings).get();
+      await fresh.close();
+
+      // Take the v8 additions away again: a v7 database.
+      final db = AppDatabase(
+        NativeDatabase(
+          file,
+          setup: (raw) {
+            if (raw.userVersion != 8) return;
+            raw.execute('DROP TABLE bank_files');
+            raw.execute('ALTER TABLE app_settings DROP COLUMN bank_checked_at');
+            raw.execute('ALTER TABLE app_settings DROP COLUMN bank_check_note');
+            raw.execute("UPDATE app_settings SET pin_hash = 'h'");
+            raw.userVersion = 7;
+          },
+        ),
+      );
+      addTearDown(db.close);
+      final settings = await db.select(db.appSettings).getSingle();
+      expect(settings.pinHash, 'h');
+      expect(settings.bankCheckedAt, isNull);
+      expect(settings.bankCheckNote, isNull);
+      expect(await db.select(db.bankFiles).get(), isEmpty);
+      final version = await db.customSelect('PRAGMA user_version').getSingle();
+      expect(version.data.values.single, 8);
     },
   );
 }

@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart' as crypto;
+import 'package:number_ninja/domain/question.dart';
+
 import 'package:number_ninja/data/sync/server_client.dart';
 import 'package:number_ninja/data/sync/server_config.dart';
 
@@ -237,11 +240,59 @@ class FakeServerClient implements ServerClient {
     ];
     return PullPage(items, (all.length / perPage).ceil());
   }
+
+  // Question bank (FEAT-15).
+
+  /// Published banks "on the server": info and file bytes.
+  final banks = <(BankInfo, List<int>)>[];
+
+  /// Bank calls, e.g. `latestBank:1`, `downloadBank:2`.
+  final bankLog = <String>[];
+
+  /// Next bank call throws this, then it's cleared.
+  SyncException? bankFail;
+
+  void _bankCall(String name) {
+    bankLog.add(name);
+    final e = bankFail;
+    if (e != null) {
+      bankFail = null;
+      throw e;
+    }
+  }
+
+  /// Publishes [bank] as [text] (default: its JSON); [sha256] overrides the
+  /// checksum (a damaged upload).
+  void publishBank(QuestionBank bank, {String? text, String? sha256}) {
+    final bytes = utf8.encode(text ?? jsonEncode(bank.toJson()));
+    banks.add((
+      BankInfo(
+        version: bank.version,
+        format: bank.format,
+        sha256: sha256 ?? crypto.sha256.convert(bytes).toString(),
+        fileUrl: Uri.parse('https://fake/banks/${bank.version}.json'),
+      ),
+      bytes,
+    ));
+  }
+
+  @override
+  Future<BankInfo?> latestBank({required int maxFormat}) async {
+    _bankCall('latestBank:$maxFormat');
+    final ok = [
+      for (final (i, _) in banks)
+        if (i.format <= maxFormat) i,
+    ]..sort((a, b) => b.version.compareTo(a.version));
+    return ok.isEmpty ? null : ok.first;
+  }
+
+  @override
+  Future<List<int>> downloadBank(BankInfo info) async {
+    _bankCall('downloadBank:${info.version}');
+    return banks.firstWhere((b) => b.$1.version == info.version).$2;
+  }
 }
 
-/// In-memory PocketBase stand-in: records per collection with real
-/// `updated` times ([time], 1 ms apart), the unique indexes of FEAT-12 and the
-/// all-or-nothing batch (FEAT-14).
 class FakeSyncServer {
   final _records = <String, List<Map<String, dynamic>>>{};
   var _ids = 0;

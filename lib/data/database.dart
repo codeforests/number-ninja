@@ -30,8 +30,30 @@ class AppSettings extends Table {
   /// This install's id (schema v7, FEAT-14): keys its own `daily_usage` rows.
   TextColumn get deviceId => text().clientDefault(_newId)();
 
+  /// Last successful bank check (schema v8, FEAT-15 D7); null = never.
+  DateTimeColumn get bankCheckedAt => dateTime().nullable()();
+
+  /// Outcome of the last bank check attempt, shown on SCR-11 (BNK-12).
+  TextColumn get bankCheckNote => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
+}
+
+/// Downloaded question banks (schema v8, FEAT-15 D7); the newest good one
+/// is kept, its file under app support `banks/`.
+@DataClassName('BankFileRow')
+class BankFiles extends Table {
+  IntColumn get version => integer()();
+  IntColumn get format => integer()();
+  TextColumn get sha256 => text()();
+
+  /// File name under the banks directory.
+  TextColumn get path => text()();
+  DateTimeColumn get downloadedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {version};
 }
 
 /// One row per app opening.
@@ -206,6 +228,7 @@ const syncFieldNames = [
     TopicUnlocks,
     SyncFields,
     SyncState,
+    BankFiles,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -213,7 +236,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'number_ninja'));
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -234,6 +257,13 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 5) await m.createTable(topicUnlocks);
       if (from < 6) await m.addColumn(rounds, rounds.kind);
+      // v8 columns first: _from6To7 rebuilds app_settings with every
+      // column of the current schema, so they must exist by then.
+      if (from < 8) {
+        await m.addColumn(appSettings, appSettings.bankCheckedAt);
+        await m.addColumn(appSettings, appSettings.bankCheckNote);
+        await m.createTable(bankFiles);
+      }
       if (from < 7) await _from6To7(m);
     },
     beforeOpen: (details) async {
