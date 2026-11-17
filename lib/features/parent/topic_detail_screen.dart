@@ -56,9 +56,8 @@ class TopicDetailScreen extends ConsumerWidget {
   Widget _body(StatsData data, QuestionBank bank, Topic? topic) {
     final rs = data.inPeriod(period, topicId: topicId);
     final tally = overall(rs);
-    final byId = <String, Question>{
-      for (final q in bank.byTopic[topicId] ?? const <Question>[]) q.id: q,
-    };
+    // Retired questions too, so her history still shows them (BNK-10).
+    final byId = bank.byId;
     final track = topic?.track ?? Track.p1;
     // Not a lazy ListView: the cards are few, and tests find rows far down.
     return SingleChildScrollView(

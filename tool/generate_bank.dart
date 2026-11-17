@@ -1,4 +1,4 @@
-// Writes assets/questions/bank_v1.json from the templates in tool/bank/
+// Writes assets/questions/bank.json from the templates in tool/bank/
 // (FEAT-02). Validates first and writes nothing if there is a problem.
 //
 //   dart run tool/generate_bank.dart            all topics, write the file
@@ -12,7 +12,7 @@ import 'package:number_ninja/domain/topics.dart';
 import 'bank/bank.dart';
 import 'bank/generator.dart';
 
-const outPath = 'assets/questions/bank_v1.json';
+const outPath = 'assets/questions/bank.json';
 
 void main(List<String> args) {
   final prefix = args.isEmpty ? '' : args.first;

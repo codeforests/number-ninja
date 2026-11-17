@@ -75,7 +75,7 @@ flutter:
 
   # The question bank (BNK-01), written by tool/generate_bank.dart.
   assets:
-    - assets/questions/bank_v1.json
+    - assets/questions/bank.json
     # Sound effects (PRC-11), written by tool/generate_sounds.dart.
     - assets/sounds/
 

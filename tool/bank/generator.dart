@@ -207,9 +207,18 @@ QuestionBank buildBank(
   List<Template> templates, {
   List<Handwritten> handwritten = const [],
   int version = 1,
+  Set<String> retired = const {},
 }) {
   final qs = [for (final t in templates) ...runTemplate(t)];
   qs.addAll(runHandwritten(handwritten));
+  final ids = {for (final q in qs) q.id};
+  final unknown = retired.difference(ids);
+  if (unknown.isNotEmpty) {
+    throw StateError('retired ids not in the bank: ${unknown.join(', ')}');
+  }
+  for (var i = 0; i < qs.length; i++) {
+    if (retired.contains(qs[i].id)) qs[i] = qs[i].asRetired();
+  }
   qs.sort((a, b) => a.id.compareTo(b.id));
   return QuestionBank(version: version, questions: qs);
 }
@@ -217,6 +226,6 @@ QuestionBank buildBank(
 /// One question per line, so a diff of the bank shows whole questions.
 String encodeBank(QuestionBank bank) {
   final lines = [for (final q in bank.questions) jsonEncode(q.toJson())];
-  return '{"version":${bank.version},"questions":[\n'
+  return '{"version":${bank.version},"format":${bank.format},"questions":[\n'
       '${lines.join(',\n')}\n]}\n';
 }

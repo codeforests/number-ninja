@@ -108,6 +108,37 @@ void main() {
       }
     });
   }
+
+  group('retired ids (FEAT-15 AC-1)', () {
+    final all = buildBank(allTemplates, handwritten: allHandwritten);
+    final id = all.questions[5].id;
+
+    test('are kept and marked retired', () {
+      final b = buildBank(
+        allTemplates,
+        handwritten: allHandwritten,
+        retired: {id},
+      );
+      expect(b.questions.length, all.questions.length);
+      expect(b.byId[id]!.retired, isTrue);
+      expect(b.byTopic[b.byId[id]!.topic]!.any((q) => q.id == id), isFalse);
+      expect(encodeBank(b), contains('"retired":true'));
+    });
+
+    test('an unknown retired id fails loudly', () {
+      expect(
+        () => buildBank(allTemplates, retired: {'p1.place.nope.001'}),
+        throwsStateError,
+      );
+    });
+
+    test('the file header carries version and format', () {
+      expect(
+        encodeBank(all),
+        startsWith('{"version":$bankVersion,"format":1,"questions":['),
+      );
+    });
+  });
 }
 
 /// Whether a single-operation check `a+b` or `a-b` needs regrouping.

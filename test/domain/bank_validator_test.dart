@@ -118,4 +118,45 @@ void main() {
     final p = _validate([...good, d]);
     expect(p.single, contains('"18" not in items'));
   });
+
+  group('retired questions (FEAT-15 AC-1)', () {
+    test('a retired duplicate is allowed and checked otherwise', () {
+      final p = _validate([
+        ...good,
+        _q(40, prompt: good.first.prompt, check: '6*7').asRetired(),
+        // Still checked: its check doesn't match its answer.
+        _q(41, check: '1*1').asRetired(),
+      ]);
+      expect(p.single, contains('check 1*1'));
+    });
+
+    test('retired questions do not count toward the minimum', () {
+      final qs = [...good.take(39), good.last.asRetired()];
+      expect(_validate(qs).single, 'p2.times: 39 questions, needs 40');
+    });
+
+    test('missingIds lists ids the newer bank dropped (BNK-10)', () {
+      final prev = QuestionBank(version: 1, questions: good);
+      final next = QuestionBank(
+        version: 2,
+        questions: [for (final q in good.skip(2)) q, good[1].asRetired()],
+      );
+      expect(missingIds(prev, next), [good.first.id]);
+      expect(missingIds(prev, prev), isEmpty);
+    });
+  });
+
+  test('byTopic serves active questions, byId keeps retired ones', () {
+    final bank = QuestionBank(
+      version: 3,
+      questions: [good[0].asRetired(), good[1]],
+    );
+    expect(bank.byTopic['p2.times']!.map((q) => q.id), [good[1].id]);
+    expect(bank.byId[good[0].id]!.retired, isTrue);
+    final back = QuestionBank.fromJson(bank.toJson());
+    expect(back.format, bankFormatSupported);
+    expect(back.byId[good[0].id]!.retired, isTrue);
+    expect(back.byId[good[1].id]!.retired, isFalse);
+    expect(good[1].toJson().containsKey('retired'), isFalse);
+  });
 }
