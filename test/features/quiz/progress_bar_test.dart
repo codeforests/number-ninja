@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:number_ninja/app.dart';
+import 'package:number_ninja/ui/theme.dart';
 
 import '../../ui/layout_checks.dart';
 import 'quiz_harness.dart';
@@ -27,4 +28,24 @@ void main() {
       expect(tester.widget<Text>(count).data, '2/10');
     });
   }
+
+  testWidgets('keypad: white digit keys, orange delete key (AC-7)', (
+    tester,
+  ) async {
+    final h = QuizHarness();
+    addTearDown(h.db.close);
+    await h.pumpApp(
+      tester,
+      location: Routes.quiz(numberTopic),
+      size: physical(const Size(360, 720)),
+    );
+    ButtonStyle style(String k) =>
+        tester.widget<FilledButton>(find.byKey(Key('key-$k'))).style!;
+    for (final k in ['1', '5', '0']) {
+      expect(style(k).backgroundColor!.resolve({}), AppColors.keyFace);
+      expect(style(k).foregroundColor!.resolve({}), AppColors.ninja);
+    }
+    expect(style('back').backgroundColor!.resolve({}), AppColors.keyDelete);
+    expect(style('back').foregroundColor!.resolve({}), AppColors.keyDeleteInk);
+  });
 }
