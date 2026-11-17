@@ -35,8 +35,29 @@ server {
     location /_/ {
         return 404;
     }
+    # Google sign-in: PocketBase's /api/oauth2-redirect sends the browser to
+    # /_/#/auth/oauth2-redirect-success (or -failure). Answer that one page
+    # here so the parent sees a result, not a 404; the admin UI's own files
+    # under /_/ stay 404. No dollar signs in the body (nginx variables).
+    location = /_/ {
+        default_type text/html;
+        add_header Cache-Control "no-store" always;
+        return 200 '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Number Ninja</title></head><body style="font-family:sans-serif;text-align:center;padding:48px 16px"><h1 id="t">Signed in</h1><p id="m">Close this tab to go back to Number Ninja.</p><script>if (location.hash.indexOf("failure") >= 0) { document.getElementById("t").textContent = "Sign-in did not finish"; document.getElementById("m").textContent = "Close this tab and try again in Number Ninja."; }</script></body></html>';
+    }
     location = /_ {
         return 404;
+    }
+
+    # Google sign-in returns here (the app's redirect URL, FEAT-13). The page
+    # hands state and code back to the app through numberninja://signin/google,
+    # which closes the tab; the app finishes with auth-with-oauth2. A button
+    # covers a browser that won't open the app without a tap. No dollar signs
+    # in the body (nginx variables).
+    location = /signin/google {
+        default_type text/html;
+        add_header Cache-Control "no-store" always;
+        add_header Referrer-Policy "no-referrer" always;
+        return 200 '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Number Ninja</title></head><body style="font-family:sans-serif;text-align:center;padding:48px 16px"><h1>Back to Number Ninja</h1><p><a id="go" style="display:inline-block;padding:16px 32px;font-size:20px;background:#2f6fde;color:#fff;border-radius:12px;text-decoration:none" href="numberninja://signin/google">Open Number Ninja</a></p><script>var link = "numberninja://signin/google" + location.search; document.getElementById("go").href = link; location.replace(link);</script></body></html>';
     }
 
     location / {

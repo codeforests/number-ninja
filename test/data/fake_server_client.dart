@@ -87,7 +87,7 @@ class FakeServerClient implements ServerClient {
   }
 
   @override
-  Future<Account> signInWithGoogle(UrlLauncher launch) async {
+  Future<Account> signInWithGoogle(SignInLauncher launch) async {
     await _step('google');
     await launch(Uri.parse('https://accounts.google.com/o/oauth2/auth'));
     return stored = const Account(

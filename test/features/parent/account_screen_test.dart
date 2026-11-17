@@ -16,7 +16,10 @@ class FakeBrowser extends SignInBrowser {
   int closed = 0;
 
   @override
-  Future<void> open(Uri url) async => opened.add(url);
+  Future<Uri> open(Uri url) async {
+    opened.add(url);
+    return Uri.parse('numberninja://signin/google?state=s&code=c');
+  }
 
   @override
   Future<void> close() async => closed++;

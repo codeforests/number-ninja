@@ -53,8 +53,21 @@ Both are optional: without these secrets the server deploys and works, but
 sign-up emails aren't sent and the app hides "Sign in with Google". Add them,
 then run "Deploy server" again; nothing else changes.
 
-**Email (Brevo, free plan, 300 emails/day).** DigitalOcean blocks the usual
-mail ports, so this uses Brevo's port 2525.
+**Email (Resend over HTTPS, the one in use).** DigitalOcean blocks the usual
+mail ports (25, 465 and 587; Gmail SMTP can't work), so the server sends
+through Resend's web API on port 443 (`pb_hooks/mail.pb.js`). It wins over the
+SMTP settings below when both are set.
+
+1. Sign up at resend.com and create an API key (sending access).
+2. Domains → add `audiodenoiser.com` (or the domain you send from) and add the
+   DNS records it shows. Until a domain is verified, Resend only sends from
+   `onboarding@resend.dev` and only to your own account's email.
+3. Repo secrets: `RESEND_API_KEY` = the key, `MAIL_SENDER_ADDRESS` = an address
+   on the verified domain (e.g. `noreply@audiodenoiser.com`). Run "Deploy server";
+   the log says `Email: on-resend`.
+
+**Email (Brevo SMTP, the alternative, free plan, 300 emails/day).** This uses
+Brevo's port 2525, which DigitalOcean doesn't block.
 
 1. Sign up at brevo.com. Under Senders, domains & dedicated IPs → Senders, add the
    address the emails come from (e.g. your Gmail or `noreply@audiodenoiser.com`) and
@@ -73,8 +86,12 @@ mail ports, so this uses Brevo's port 2525.
    own Google account as a test user while it's in testing).
 3. APIs & Services → Credentials → Create credentials → OAuth client ID →
    **Web application** (not Android). Authorized redirect URI:
-   `https://api.brainbubblz.audiodenoiser.com/api/oauth2-redirect` (use the
-   `SERVER_HOSTNAME` value; add the new one if the hostname changes).
+   `https://api.brainbubblz.audiodenoiser.com/signin/google` (use the
+   `SERVER_HOSTNAME` value; add the new one if the hostname changes). That nginx
+   page hands the result back to the app. PocketBase's own
+   `/api/oauth2-redirect` isn't used: it needs the app's realtime connection to
+   stay open while the parent is in the browser, and some networks cut quiet
+   connections after about a minute.
 4. Repo secrets: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 
 The deploy log prints `Email: on|off, Google sign-in: on|off`. The secrets end up
@@ -92,7 +109,7 @@ GitHub → Actions → "Deploy server" → Run workflow. It:
 - on the first run, gets a Let's Encrypt certificate (webroot, renewed by certbot's timer,
   which reloads nginx);
 - applies the migrations, sets the superuser, restarts PocketBase, and checks that
-  `https://$SERVER_HOSTNAME/api/health` is 200 and `/_/` is 404.
+  `https://$SERVER_HOSTNAME/api/health` is 200, `/_/` is the Google sign-in result page and the admin UI's files under `/_/` are 404.
 
 ## Publishing a bank (FEAT-15)
 

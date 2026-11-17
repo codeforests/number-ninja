@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -212,6 +213,124 @@ void main() {
         ),
       );
       expect(server.requests, isEmpty);
+    });
+  });
+
+  group('Google sign-in returns through the app link', () {
+    late MemoryTokenStore store;
+    late MockServer server;
+    const authUrl =
+        'https://accounts.google.com/o/oauth2/auth?client_id=cid'
+        '&response_type=code&scope=openid&state=st1&redirect_uri=';
+
+    http.Response handler(http.Request r) {
+      if (r.url.path.endsWith('/auth-methods')) {
+        return json(200, {
+          'password': {'enabled': true},
+          'oauth2': {
+            'enabled': true,
+            'providers': [
+              {
+                'name': 'google',
+                'displayName': 'Google',
+                'state': 'st1',
+                'authURL': authUrl,
+                'codeVerifier': 'cv1',
+                'codeChallenge': 'cc1',
+                'codeChallengeMethod': 'S256',
+              },
+            ],
+          },
+        });
+      }
+      if (r.url.path.endsWith('/auth-with-oauth2')) return authOk(r);
+      return json(404, {});
+    }
+
+    PocketBaseServerClient client() => PocketBaseServerClient(
+      config,
+      store: store,
+      httpClientFactory: server.client,
+    );
+
+    setUp(() {
+      store = MemoryTokenStore();
+      server = MockServer(handler);
+    });
+
+    test('opens Google with the app return page, then signs in with the '
+        'code (no realtime connection)', () async {
+      Uri? opened;
+      final account = await client().signInWithGoogle((url) async {
+        opened = url;
+        return Uri.parse('numberninja://signin/google?state=st1&code=4%2F0Ab');
+      });
+      expect(account.viaGoogle, isTrue);
+      expect(opened!.host, 'accounts.google.com');
+      expect(
+        opened!.queryParameters['redirect_uri'],
+        'https://api.example.test/signin/google',
+      );
+      expect(opened!.queryParameters['state'], 'st1');
+      expect(
+        server.requests.where((r) => r.url.path.contains('realtime')),
+        isEmpty,
+      );
+      final body = jsonDecode(
+        server.requests
+            .lastWhere((r) => r.url.path.endsWith('/auth-with-oauth2'))
+            .body,
+      ) as Map<String, dynamic>;
+      expect(body['provider'], 'google');
+      expect(body['code'], '4/0Ab');
+      expect(body['codeVerifier'], 'cv1');
+      expect(body['redirectURL'], 'https://api.example.test/signin/google');
+      expect(store.value, contains(token));
+    });
+
+    for (final (name, link) in [
+      ('another state', 'numberninja://signin/google?state=other&code=x'),
+      ('an error', 'numberninja://signin/google?state=st1&error=access_denied'),
+      ('no code', 'numberninja://signin/google?state=st1'),
+    ]) {
+      test('$name: cancelled, nothing kept', () async {
+        await expectLater(
+          client().signInWithGoogle((_) async => Uri.parse(link)),
+          throwsA(
+            isA<AuthException>().having(
+              (e) => e.error,
+              'error',
+              AuthError.cancelled,
+            ),
+          ),
+        );
+        expect(
+          server.requests.where(
+            (r) => r.url.path.endsWith('/auth-with-oauth2'),
+          ),
+          isEmpty,
+        );
+        expect(store.value, isNull);
+      });
+    }
+
+    test('the parent never comes back: cancelled after the time limit', () {
+      final c = PocketBaseServerClient(
+        config,
+        store: store,
+        httpClientFactory: server.client,
+        googleTimeout: const Duration(milliseconds: 50),
+      );
+      return expectLater(
+        c.signInWithGoogle((_) => Completer<Uri>().future),
+        throwsA(
+          isA<AuthException>().having(
+            (e) => e.error,
+            'error',
+            AuthError.cancelled,
+          ),
+        ),
+      );
     });
   });
 

@@ -11,7 +11,7 @@
 #   PB_SUPERUSER_PASSWORD
 #   CERT_EMAIL             Let's Encrypt notices (default PB_SUPERUSER_EMAIL)
 # Optional (FEAT-13; unset leaves the feature off):
-#   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS
+#   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS RESEND_API_KEY
 #   GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
 # Remote paths expand locally on purpose (stage is a path we created).
 # shellcheck disable=SC2029
@@ -41,6 +41,7 @@ printf '%s\n' \
   "SMTP_USERNAME=${SMTP_USERNAME:-}" \
   "SMTP_PASSWORD=${SMTP_PASSWORD:-}" \
   "MAIL_SENDER_ADDRESS=${MAIL_SENDER_ADDRESS:-}" \
+  "RESEND_API_KEY=${RESEND_API_KEY:-}" \
   "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}" \
   "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}" |
   ssh "${ssh_opts[@]}" "$target" "sudo bash '$stage/install.sh'" || status=$?
@@ -50,11 +51,18 @@ ssh "${ssh_opts[@]}" "$target" "rm -rf '$stage'" || true
 echo "==> Checking https://$SERVER_HOSTNAME"
 for _ in $(seq 1 30); do
   if curl -fsS "https://$SERVER_HOSTNAME/api/health" >/dev/null 2>&1; then
-    admin="$(curl -s -o /dev/null -w '%{http_code}' "https://$SERVER_HOSTNAME/_/")"
+    admin="$(curl -s -o /dev/null -w '%{http_code}' "https://$SERVER_HOSTNAME/_/images/")"
     if [ "$admin" != 404 ]; then
       echo "Admin UI answered $admin, expected 404" >&2; exit 1
     fi
-    echo "Deployed: https://$SERVER_HOSTNAME/api/health is 200, /_/ is 404"
+    # /_/ itself is the Google sign-in result page, not the admin UI.
+    if ! curl -fsS "https://$SERVER_HOSTNAME/_/" | grep -q 'Close this tab'; then
+      echo "/_/ is not the sign-in result page" >&2; exit 1
+    fi
+    if ! curl -fsS "https://$SERVER_HOSTNAME/signin/google" | grep -q 'numberninja://signin/google'; then
+      echo "/signin/google is not the Google return page" >&2; exit 1
+    fi
+    echo "Deployed: https://$SERVER_HOSTNAME/api/health is 200, /_/ is the sign-in page, /signin/google hands back to the app, /_/images/ is 404"
     exit 0
   fi
   sleep 2

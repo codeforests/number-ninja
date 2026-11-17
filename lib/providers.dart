@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show MethodChannel, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:path_provider/path_provider.dart';
@@ -138,8 +138,23 @@ final serverClientProvider = Provider<ServerClient>(
 class SignInBrowser {
   const SignInBrowser();
 
-  Future<void> open(Uri url) async {
+  /// Android hands the `numberninja://signin/...` link to this channel
+  /// (`SignInReturnActivity`).
+  static const _channel = MethodChannel('number_ninja/sign_in');
+
+  /// Opens [url] in a Custom Tab and completes with the link Google's sign-in
+  /// sends back into the app. The caller's timeout ends a sign-in the parent
+  /// abandons.
+  Future<Uri> open(Uri url) async {
+    final back = Completer<Uri>();
+    _channel.setMethodCallHandler((call) async {
+      final link = call.arguments;
+      if (call.method == 'returned' && link is String && !back.isCompleted) {
+        back.complete(Uri.parse(link));
+      }
+    });
     await launchUrl(url, mode: LaunchMode.inAppBrowserView);
+    return back.future;
   }
 
   Future<void> close() async {

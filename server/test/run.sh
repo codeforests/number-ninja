@@ -13,6 +13,7 @@ rm -rf "$work" && mkdir -p "$work"
 cleanup() {
   "$root/scripts/server-local.sh" stop "$work/main"
   "$root/scripts/server-local.sh" stop "$work/restored"
+  "$root/scripts/server-local.sh" stop "$work/resend"
 }
 trap cleanup EXIT
 
@@ -30,6 +31,16 @@ SERVER_HOSTNAME=$PB_TEST_HOST SMTP_HOST=127.0.0.1 SMTP_PORT=$PB_SMTP_PORT \
   PB_PORT=8090 "$root/scripts/server-local.sh" start "$work/main"
 PB_URL=http://127.0.0.1:8090 PB_BACKUP_OUT="$work/backup.zip" \
   dart test --concurrency=1 test/api_rules_test.dart test/auth_test.dart test/sync_test.dart test/bank_publish_test.dart test/backup_test.dart
+
+# Email through Resend's HTTPS API (mail.pb.js): a second PocketBase with
+# RESEND_API_KEY and the API URL on resend_test.dart's sink. The SMTP host
+# points at a closed port, so a mail sent over SMTP would fail the test.
+export PB_RESEND_PORT=2527
+SERVER_HOSTNAME=$PB_TEST_HOST SMTP_HOST=127.0.0.1 SMTP_PORT=1 \
+  MAIL_SENDER_ADDRESS=noreply@example.test \
+  RESEND_API_KEY=test-key RESEND_API_URL=http://127.0.0.1:$PB_RESEND_PORT/emails \
+  PB_PORT=8092 "$root/scripts/server-local.sh" start "$work/resend"
+PB_URL=http://127.0.0.1:8092 dart test test/resend_test.dart
 
 # FEAT-14 AC-7 (NFR-16): the app's sync against this server; FEAT-15 AC-6:
 # a published bank reaches the app.
