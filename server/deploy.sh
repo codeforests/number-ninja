@@ -50,11 +50,15 @@ ssh "${ssh_opts[@]}" "$target" "rm -rf '$stage'" || true
 echo "==> Checking https://$SERVER_HOSTNAME"
 for _ in $(seq 1 30); do
   if curl -fsS "https://$SERVER_HOSTNAME/api/health" >/dev/null 2>&1; then
-    admin="$(curl -s -o /dev/null -w '%{http_code}' "https://$SERVER_HOSTNAME/_/")"
+    admin="$(curl -s -o /dev/null -w '%{http_code}' "https://$SERVER_HOSTNAME/_/images/")"
     if [ "$admin" != 404 ]; then
       echo "Admin UI answered $admin, expected 404" >&2; exit 1
     fi
-    echo "Deployed: https://$SERVER_HOSTNAME/api/health is 200, /_/ is 404"
+    # /_/ itself is the Google sign-in result page, not the admin UI.
+    if ! curl -fsS "https://$SERVER_HOSTNAME/_/" | grep -q 'Close this tab'; then
+      echo "/_/ is not the sign-in result page" >&2; exit 1
+    fi
+    echo "Deployed: https://$SERVER_HOSTNAME/api/health is 200, /_/ is the sign-in page, /_/images/ is 404"
     exit 0
   fi
   sleep 2

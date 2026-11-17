@@ -92,7 +92,7 @@ GitHub → Actions → "Deploy server" → Run workflow. It:
 - on the first run, gets a Let's Encrypt certificate (webroot, renewed by certbot's timer,
   which reloads nginx);
 - applies the migrations, sets the superuser, restarts PocketBase, and checks that
-  `https://$SERVER_HOSTNAME/api/health` is 200 and `/_/` is 404.
+  `https://$SERVER_HOSTNAME/api/health` is 200, `/_/` is the Google sign-in result page and the admin UI's files under `/_/` are 404.
 
 ## Admin UI (through an SSH tunnel only)
 
