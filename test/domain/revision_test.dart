@@ -275,5 +275,24 @@ void main() {
       );
       expect(p.isEmpty, isTrue);
     });
+
+    test('retired questions are never served (FEAT-15 AC-1)', () {
+      final base = bankOf({'p1.add.m': 'p1.add', 'p1.sub.m': 'p1.sub'});
+      final bank = QuestionBank(
+        version: 2,
+        questions: [
+          for (final q in base.questions)
+            q.topic == 'p1.add' ? q.asRetired() : q,
+        ],
+      );
+      final h = hist([
+        one('p1.add.m.000', correct: false),
+        one('p1.sub.m.000', correct: false, topic: 'p1.sub'),
+      ]);
+      for (final scope in [const TopicScope('p1.add'), const MixedScope()]) {
+        final p = planner.plan(h, bank, scope, Random(5));
+        expect(p.questions.any((q) => q.retired), isFalse);
+      }
+    });
   });
 }

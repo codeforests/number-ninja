@@ -1,15 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/services.dart' show MethodChannel, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'data/badge_repository.dart';
+import 'data/bank_store.dart';
+import 'data/bank_updater.dart';
 import 'data/database.dart';
 import 'data/pin_repository.dart';
 import 'data/profile_repository.dart';
-import 'data/question_bank_loader.dart';
 import 'data/revision_repository.dart';
 import 'data/round_repository.dart';
 import 'data/sound_player.dart';
@@ -34,10 +37,89 @@ final databaseProvider = Provider<AppDatabase>(
   (ref) => throw UnimplementedError('databaseProvider must be overridden'),
 );
 
-/// The bundled question bank (BNK-01), loaded once.
-final bankProvider = FutureProvider<QuestionBank>(
-  (ref) => loadBank(rootBundle),
+/// Downloaded banks and the bundled fallback (FEAT-15 D8); tests override.
+final bankStoreProvider = Provider<BankStore>(
+  (ref) => BankStore(
+    ref.watch(databaseProvider),
+    bundle: rootBundle,
+    dir: () async =>
+        Directory('${(await getApplicationSupportDirectory()).path}/banks'),
+  ),
 );
+
+/// The bank in use: the newest good download, else the bundled one
+/// (BNK-09). Re-read only at launch and when [BankPending.apply] or
+/// "Check now" invalidates it, never during a round.
+final activeBankProvider = FutureProvider<ActiveBank>(
+  (ref) => ref.watch(bankStoreProvider).loadActive(),
+);
+
+/// The question bank rounds are built from (BNK-01, FEAT-15).
+final bankProvider = FutureProvider<QuestionBank>(
+  (ref) async => (await ref.watch(activeBankProvider.future)).bank,
+);
+
+/// Checks the server for a newer bank (FEAT-15 D9).
+final bankUpdaterProvider = Provider<BankUpdater>(
+  (ref) => BankUpdater(
+    client: ref.watch(serverClientProvider),
+    store: ref.watch(bankStoreProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// True while a downloaded bank waits for the next round (BNK-09).
+class BankPending extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set() => state = true;
+
+  /// Switches to the downloaded bank if one waits; called before a round
+  /// is built, so a round never changes bank halfway.
+  void apply() {
+    if (!state) return;
+    state = false;
+    ref.invalidate(activeBankProvider);
+  }
+}
+
+final bankPendingProvider = NotifierProvider<BankPending, bool>(
+  BankPending.new,
+);
+
+/// Version, source and last check for SCR-11 (BNK-12).
+final bankStatusProvider = FutureProvider<(ActiveBank, BankCheckState)>(
+  (ref) async => (
+    await ref.watch(activeBankProvider.future),
+    await ref.watch(bankStoreProvider).checkState(),
+  ),
+);
+
+/// Runs a bank check (launch, resume, "Check now"). A download waits for
+/// the next round, unless [now] (the parent area, where no round runs).
+Future<BankCheck> checkBank(Ref ref, {bool force = false, bool now = false}) {
+  return ref.read(bankUpdaterProvider).check(force: force).then((r) {
+    if (r == BankCheck.skipped) return r;
+    if (r == BankCheck.downloaded) {
+      if (now) {
+        ref.invalidate(activeBankProvider);
+      } else {
+        ref.read(bankPendingProvider.notifier).set();
+      }
+    }
+    ref.invalidate(bankStatusProvider);
+    return r;
+  });
+}
+
+/// Starts [checkBank] from a widget.
+final bankCheckProvider =
+    Provider<Future<BankCheck> Function({bool force, bool now})>(
+      (ref) =>
+          ({bool force = false, bool now = false}) =>
+              checkBank(ref, force: force, now: now),
+    );
 
 final clockProvider = Provider<Clock>((ref) => systemClock);
 

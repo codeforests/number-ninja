@@ -51,9 +51,10 @@ The School track shows P1 and P2 topics; the Olympiad track shows `oly.*`.
 
 ## 3. Question bank (BNK-01..06)
 
-- `tool/generate_bank.dart` holds 3–6 templates per topic plus a hand-written list for `oly.logic` and `oly.counting`. It writes `assets/questions/bank_v<N>.json` with a fixed seed and runs its validator before writing (BNK-04).
+- `tool/generate_bank.dart` holds 3–6 templates per topic plus a hand-written list for `oly.logic` and `oly.counting`. It writes `assets/questions/bank.json` (FEAT-15; `bank_v1.json` before) with a fixed seed and runs its validator before writing (BNK-04).
 - Question JSON: `id` (e.g. `p2.fractions.cmp.017`), `topic`, `level` (1–3), `format` (`mcq` | `number` | `drag`), `prompt`, `visual` (optional typed object, e.g. `{"kind":"clock","h":3,"m":15}`), `options` (mcq), `answer`, `drag` (items and target slots, for drag), `explanation`.
 - Ids are made from topic, template and a per-template counter that only grows, so v2 keeps v1's ids (BNK-05).
+- FEAT-15: the file is `assets/questions/bank.json`; top level `version` (`bankVersion` in `tool/bank/bank.dart`) and `format`; a question may be `"retired":true` (`tool/bank/retired.dart`), kept for old results and never served (BNK-10). Newer versions are published to the server by the "Publish bank" workflow (BNK-07).
 - Format mix target: about 45% mcq, 40% number, 15% drag.
 
 ## 4. Data model (Drift, `lib/data/database.dart`)
@@ -99,7 +100,7 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 | SCR-08 | PIN entry | PAR-02, PAR-03 |
 | SCR-09 | Parent dashboard | PAR-05..07 |
 | SCR-10 | Topic detail | PAR-08 |
-| SCR-11 | Parent settings: daily limit, extra time, change PIN, export PDF, reset | TIM-04, PAR-04, PAR-09, PAR-10 |
+| SCR-11 | Parent settings: daily limit, extra time, change PIN, export PDF, reset; FEAT-15 adds the "Question bank" row (version in use, built in or downloaded, last check, Check now) | TIM-04, PAR-04, PAR-09, PAR-10, BNK-12 |
 | SCR-12 | Phase 2: child profile; see [04-architecture.md](04-architecture.md) §3 | PRO |
 | SCR-13 | Account (`/parent/account`, from SCR-11's "Account" row): create, sign in (email or Google), verify/resend, forgot password, sign out, delete with PIN, privacy note (FEAT-13); FEAT-14 adds the sync section (last sync, "Syncing…", error line, Sync now) | ACC-01..07, NFR-14, SYN |
 | SCR-14 | Revision start (`/revise/<topic or mixed>`): mistakes count, tricky kinds, Go (FEAT-11) | REV-03, REV-04 |
@@ -143,3 +144,4 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 | 2026-11-16 | FEAT-12: server in `server/` (PocketBase 0.40.6 behind the droplet's nginx, certbot webroot certificate; migrations hold collections and API rules); app gets INTERNET + HTTPS-only network config, `SERVER_URL` build define (`ServerConfig`, `ServerClient`), and a "Server" row with a Check button on SCR-11. No schema change. |
 | 2026-11-16 | FEAT-13: parent account on SCR-13; session (token + record, never the password) in `flutter_secure_storage`; Google through PocketBase's browser OAuth2 flow in a Custom Tab (`url_launcher`); server email and Google settings applied from env by `pb_hooks/config.pb.js` on each start; email links open `pb_public/verify.html` / `reset.html`; `children` create needs a verified account. No schema change. |
 | 2026-11-16 | FEAT-14: progress sync (`lib/data/sync/sync_service.dart`, `sync_controller.dart`, merge rules in `lib/domain/sync_merge.dart`); schema v7 (ids, dirty counters, per-device `daily_usage`, `sync_fields`, `sync_state`); server reset route `POST /api/nn/children/{id}/reset` (`pb_hooks/reset.pb.js`), migration `1763251203_sync.js` (`children.reset_at`, batch API on, create limit 5000/5 s and batch 10/s for signed-in users, sign-ups still 20/5 s); SCR-13 sync section; SCR-11 reset note while signed in. |
+| 2026-11-17 | FEAT-15: server question bank. Bank file renamed `bank.json` with `format` and `retired`; "Publish bank" workflow (`tool/publish_bank.dart`); `banks.version` a number (migration `1763251204_banks.js`); schema v8 (`bank_files`, `app_settings.bank_checked_at`/`bank_check_note`); `BankStore` + `BankUpdater` check at launch and resume at most daily, a new bank applies at launch or before the next round; SCR-11 "Question bank" row. |

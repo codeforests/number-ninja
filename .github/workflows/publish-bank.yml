@@ -1,0 +1,53 @@
+name: Publish bank
+
+# FEAT-15 (D6, BNK-07, BNK-10): uploads assets/questions/bank.json as bank
+# version `bankVersion` (tool/bank/bank.dart) after the generator and
+# validator pass, refusing a version that isn't higher than the latest
+# published one or a bank that drops a question id. Manual, main only.
+# Secrets: PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD (same as Deploy server).
+# Variable: SERVER_HOSTNAME. Steps: server/README.md, "Publishing a bank".
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Check only, upload nothing'
+        type: boolean
+        default: false
+
+concurrency:
+  group: publish-bank
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # release tags: the newest release's bank is a baseline
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.50.0
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Publish
+        env:
+          SERVER_HOSTNAME: ${{ vars.SERVER_HOSTNAME }}
+          PB_SUPERUSER_EMAIL: ${{ secrets.PB_SUPERUSER_EMAIL }}
+          PB_SUPERUSER_PASSWORD: ${{ secrets.PB_SUPERUSER_PASSWORD }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SERVER_HOSTNAME" ]; then
+            echo "Set the SERVER_HOSTNAME repository variable first." >&2
+            exit 1
+          fi
+          args=(--server "https://$SERVER_HOSTNAME")
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          dart run tool/publish_bank.dart "${args[@]}"

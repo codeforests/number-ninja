@@ -19,6 +19,8 @@ trap cleanup EXIT
 
 cd "$here"
 dart pub get >/dev/null
+# FEAT-15: bank_publish_test.dart runs tool/publish_bank.dart from the root.
+(cd "$root" && flutter pub get >/dev/null)
 
 # FEAT-13: mail goes to the sink that auth_test.dart opens on PB_SMTP_PORT;
 # Google secrets are dummies (auth-methods only lists the provider).
@@ -28,7 +30,7 @@ SERVER_HOSTNAME=$PB_TEST_HOST SMTP_HOST=127.0.0.1 SMTP_PORT=$PB_SMTP_PORT \
   GOOGLE_CLIENT_ID=dummy-id GOOGLE_CLIENT_SECRET=dummy-secret \
   PB_PORT=8090 "$root/scripts/server-local.sh" start "$work/main"
 PB_URL=http://127.0.0.1:8090 PB_BACKUP_OUT="$work/backup.zip" \
-  dart test --concurrency=1 test/api_rules_test.dart test/auth_test.dart test/sync_test.dart test/backup_test.dart
+  dart test --concurrency=1 test/api_rules_test.dart test/auth_test.dart test/sync_test.dart test/bank_publish_test.dart test/backup_test.dart
 
 # Email through Resend's HTTPS API (mail.pb.js): a second PocketBase with
 # RESEND_API_KEY and the API URL on resend_test.dart's sink. The SMTP host
@@ -40,9 +42,10 @@ SERVER_HOSTNAME=$PB_TEST_HOST SMTP_HOST=127.0.0.1 SMTP_PORT=1 \
   PB_PORT=8092 "$root/scripts/server-local.sh" start "$work/resend"
 PB_URL=http://127.0.0.1:8092 dart test test/resend_test.dart
 
-# FEAT-14 AC-7 (NFR-16): the app's sync against this server.
+# FEAT-14 AC-7 (NFR-16): the app's sync against this server; FEAT-15 AC-6:
+# a published bank reaches the app.
 (cd "$root" && flutter pub get >/dev/null &&
-  SYNC_LIVE_URL=http://127.0.0.1:8090 flutter test test/live/sync_live_test.dart)
+  SYNC_LIVE_URL=http://127.0.0.1:8090 flutter test test/live/sync_live_test.dart test/live/bank_live_test.dart)
 
 PB_HOME="$work/restored" PB_SERVICE='' PB_OWNER='' \
   "$root/server/restore.sh" "$work/backup.zip"

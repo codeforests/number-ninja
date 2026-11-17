@@ -5,7 +5,8 @@ import 'question.dart';
 import 'topics.dart';
 
 /// Checks the bank against the rules in FEAT-02's design (BNK-02..06).
-/// Returns one line per problem; empty means valid.
+/// Returns one line per problem; empty means valid. Retired questions are
+/// checked too but don't count for minimums or duplicates (FEAT-15).
 List<String> validateBank(
   QuestionBank bank, {
   List<Topic> topicList = topics,
@@ -33,7 +34,9 @@ List<String> validateBank(
     if (q.explanation.trim().isEmpty) bad('empty explanation');
 
     final key = '${q.topic}|${q.prompt}|${jsonEncode(q.visual)}';
-    if (!seen.add(key)) bad('duplicate prompt and visual in ${q.topic}');
+    if (!q.retired && !seen.add(key)) {
+      bad('duplicate prompt and visual in ${q.topic}');
+    }
 
     switch (q.format) {
       case QuestionFormat.mcq:
@@ -89,3 +92,10 @@ List<String> validateBank(
   }
   return problems;
 }
+
+/// Ids of [previous] that [next] no longer has (BNK-10): a newer bank keeps
+/// every id and marks unwanted questions retired instead.
+List<String> missingIds(QuestionBank previous, QuestionBank next) => [
+  for (final q in previous.questions)
+    if (!next.byId.containsKey(q.id)) q.id,
+];

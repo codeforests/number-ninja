@@ -51,6 +51,20 @@ class SyncException implements Exception {
 }
 
 /// One record to send: a create when [id] is null, else an update.
+/// A published question bank (FEAT-15 D10).
+class BankInfo {
+  const BankInfo({
+    required this.version,
+    required this.format,
+    required this.sha256,
+    required this.fileUrl,
+  });
+  final int version;
+  final int format;
+  final String sha256;
+  final Uri fileUrl;
+}
+
 class PushOp {
   const PushOp(this.collection, this.body, {this.id});
   final String collection;
@@ -177,6 +191,13 @@ abstract class ServerClient {
     int page, {
     int perPage = 500,
   });
+
+  /// The highest published bank with `format <= maxFormat`, or null
+  /// (FEAT-15 D10). Needs no account. Throws [SyncException].
+  Future<BankInfo?> latestBank({required int maxFormat});
+
+  /// The bank file of [info]. Throws [SyncException].
+  Future<List<int>> downloadBank(BankInfo info);
 }
 
 /// [ServerClient] over the `pocketbase` package. The session is persisted
@@ -580,4 +601,39 @@ class PocketBaseServerClient implements ServerClient {
         );
     return PullPage([for (final r in list.items) r.toJson()], list.totalPages);
   }, limit: timeout * 3);
+
+  // Question bank (FEAT-15).
+
+  @override
+  Future<BankInfo?> latestBank({required int maxFormat}) => _sync(() async {
+    final page = await _pb
+        .collection('banks')
+        .getList(
+          perPage: 1,
+          sort: '-version',
+          filter: _pb.filter('format <= {:f}', {'f': maxFormat}),
+        );
+    if (page.items.isEmpty) return null;
+    final r = page.items.first;
+    return BankInfo(
+      version: r.getIntValue('version'),
+      format: r.getIntValue('format'),
+      sha256: r.getStringValue('sha256'),
+      fileUrl: _pb.files.getURL(r, r.getStringValue('file')),
+    );
+  });
+
+  @override
+  Future<List<int>> downloadBank(BankInfo info) => _sync(() async {
+    final client = httpClientFactory?.call() ?? http.Client();
+    try {
+      final r = await client.get(info.fileUrl);
+      if (r.statusCode != 200) {
+        throw SyncException(SyncError.server, status: r.statusCode);
+      }
+      return r.bodyBytes;
+    } finally {
+      client.close();
+    }
+  }, limit: const Duration(seconds: 30));
 }

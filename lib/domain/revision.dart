@@ -248,7 +248,12 @@ class RuleRevisionPlanner implements RevisionPlanner {
     };
     final weak = weakTypes(h, topicId: topicId);
     final mistakeIds = mistakes(h, topicId: topicId);
-    final pool = topicId == null ? bank.questions : bank.byTopic[topicId] ?? [];
+    final pool = topicId == null
+        ? [
+            for (final q in bank.questions)
+              if (!q.retired) q,
+          ]
+        : bank.byTopic[topicId] ?? const <Question>[];
     final byId = {for (final q in pool) q.id: q};
     final byType = <String, List<Question>>{};
     for (final q in pool) {

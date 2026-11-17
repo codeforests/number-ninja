@@ -11,6 +11,7 @@
 
 - `server/README.md` is the guide (Ken's setup, deploy, tunnel, restore). `VERSION` pins PocketBase; `pb_migrations/*.js` are the only schema and rule source; `nginx/numberninja.conf.template` + `install.sh` (runs on the droplet, called by `deploy.sh`, workflow `deploy-server.yml`); `restore.sh`.
 - FEAT-14: `pb_hooks/reset.pb.js` (`POST /api/nn/children/{id}/reset`), `pb_migrations/1763251203_sync.js` (`children.reset_at`, batch API, rate limits); `test/sync_test.dart`. `run.sh` also runs the app's live sync test `test/live/sync_live_test.dart` (AC-7, `SYNC_LIVE_URL`).
+- FEAT-15: `pb_migrations/1763251204_banks.js` (`banks.version` number); `test/bank_publish_test.dart` runs `tool/publish_bank.dart --bank-file`; `run.sh` also runs `test/live/bank_live_test.dart` (AC-6).
 - FEAT-13: `pb_hooks/config.pb.js` (SMTP, Google OAuth2 and appURL from env on every start), `pb_hooks/mail.pb.js` (with `RESEND_API_KEY`, every mail goes through Resend's HTTPS API instead of SMTP: DigitalOcean blocks SMTP ports; test `test/resend_test.dart` on a third PocketBase in `run.sh`), `pb_migrations/1763251202_auth.js` (users auth settings, email templates, verified-only child create), `pb_public/verify.html` + `reset.html` (email link pages). Tests: `test/auth_test.dart` with `lib/mail_sink.dart` (in-test SMTP sink on `PB_SMTP_PORT`).
 - Tests: `server/test/run.sh` (CI job `server`): `scripts/server-local.sh` starts the pinned PocketBase; `test/api_rules_test.dart` (NFR-13), `backup_test.dart` + `restore_check_test.dart` (NFR-15). Helpers in `server/test/lib/fixtures.dart`.
 
@@ -29,6 +30,7 @@
 - FEAT-14: `sync/sync_service.dart` (`SyncService.run`: refresh, child + reset epoch + fields, push dirty rows in batches of 100, pull by `updated` cursor; `SyncOutcome`), `sync/sync_controller.dart` (`SyncController`, `SyncStatus`, `SyncTimers`, `SyncDataVersion`); `syncProvider`, `syncServiceProvider`, `syncAccountProvider`, `syncDataVersionProvider` (data providers watch it to reload after a sync) in `providers.dart`; `app.dart` keeps `syncProvider` alive and syncs on resume. Merge rules: `lib/domain/sync_merge.dart`; ids: `lib/domain/ids.dart`. `ServerClient` record calls throw `SyncException(SyncError)`. Tests: `test/data/sync/` (`fake_sync_timers.dart`), `FakeSyncServer` in `fake_server_client.dart` (two devices share one).
 - FEAT-13: `sync/token_store.dart` (`TokenStore`, `SecureTokenStore`, `MemoryTokenStore`); `ServerClient` auth calls throw `AuthException(AuthError)`; `sync/account_repository.dart` (`AccountRepository` notifier, `AccountState`, `AccountNotice`) = `accountProvider`; `signInBrowserProvider` (Custom Tab for Google) in `providers.dart`.
 - `revision_repository.dart` (`RevisionRepository.history()`); `revisionPlannerProvider`, `revisionHistoryProvider`, `revisionOffersProvider(scopeId)` in `providers.dart`. `round_repository.dart` has `roundKindNormal`/`roundKindRevision`; `finishedRounds()` is normal-only.
+- FEAT-15: `bank_store.dart` (`BankStore`: bundled + downloaded files under app support `banks/`, `loadActive`, `save`, check state), `bank_updater.dart` (`BankUpdater.check`, 24 h rule, `BankCheck`); providers `bankStoreProvider`, `activeBankProvider` → `bankProvider`, `bankUpdaterProvider`, `bankPendingProvider` (applied in `QuizController.start`/`startRevision`), `bankStatusProvider`, `bankCheckProvider` (launch + resume in `app.dart`, SCR-11 "Check now"). `ServerClient.latestBank`/`downloadBank`. Tests: `test/data/bank_test_support.dart` (`BankRig`); `QuizHarness.useBankStore`, `banksDir`, `MemoryBankBundle`.
 - Repositories: `topic_lock_repository.dart` (`topicLocksProvider` in `providers.dart`), `profile_repository.dart` (`childProfileProvider` is a FutureProvider; invalidate after a save), `pin_repository.dart`, `round_repository.dart`, `stats_repository.dart`, `usage_repository.dart`; `question_bank_loader.dart` (`loadBank`).
 
 ## Features (`lib/features`)
@@ -47,7 +49,7 @@
 ## Question bank (`tool/`)
 
 - `tool/generate_sounds.dart` (+ `tool/sounds/synth.dart`) writes `assets/sounds/*.wav`; `tool/generate_icon.dart` (+ `tool/icon/draw.dart`) writes `assets/icon/*.png`, then `dart run flutter_launcher_icons` writes the Android mipmaps.
-- `tool/generate_bank.dart` writes `assets/questions/*.json` (never read those). Templates: `tool/bank/templates_p1.dart`, `templates_p2.dart` (large: grep for the topic id), `templates_oly.dart`, `handwritten.dart`, `helpers.dart`, `generator.dart`.
+- `tool/generate_bank.dart` writes `assets/questions/bank.json` (never read it); version in `tool/bank/bank.dart` (`bankVersion`), retired ids in `tool/bank/retired.dart`. `tool/publish_bank.dart` (+ `tool/bank/publish.dart` checks) uploads it, run by `.github/workflows/publish-bank.yml` (FEAT-15). Templates: `tool/bank/templates_p1.dart`, `templates_p2.dart` (large: grep for the topic id), `templates_oly.dart`, `handwritten.dart`, `helpers.dart`, `generator.dart`.
 
 ## Tests
 
@@ -77,3 +79,5 @@
 - Every request inside a PocketBase batch counts against the rate limits (`*:create`, and `/api/batch` itself): the sync migration raises them for signed-in users, and `SyncService` waits and resends a batch on 429 (FEAT-14).
 - A sync writes local rows only through `SyncService`, with `dirty = 0`; every other local write bumps `dirty` (rows) or `stampFields` (profile/settings), or the change never reaches the server (FEAT-14).
 - Widget tests sync only when they override `serverConfigProvider` with a configured URL (`syncAccountProvider` reads it); override `syncTimersProvider` with `FakeSyncTimers` too (FEAT-14).
+- A schema step that adds columns to `app_settings` must run before `_from6To7` in `onUpgrade` (it rebuilds the table with every current column) (FEAT-15).
+- Tests that need real HTTP (live tests) must not call `TestWidgetsFlutterBinding.ensureInitialized()`: the binding answers every request with 400; read assets from disk instead (FEAT-15).

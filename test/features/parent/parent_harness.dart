@@ -13,7 +13,7 @@ const parentPin = '2468';
 /// The quiz harness with a real PIN and helpers to seed attempts and open
 /// parent screens (FEAT-06).
 class ParentHarness extends QuizHarness {
-  ParentHarness() {
+  ParentHarness({super.bank}) {
     pins = PinRepository(db, clock: clock, hasher: PinHasher(iterations: 10));
     more = [pinRepositoryProvider.overrideWithValue(pins)];
   }

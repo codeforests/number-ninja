@@ -5,6 +5,11 @@ import 'templates_p1.dart';
 import 'templates_p2.dart';
 import 'templates_oly.dart';
 import 'handwritten.dart';
+import 'retired.dart';
+
+/// The bank version the generator writes (FEAT-15 D2). Bump it to publish
+/// a new bank; "Publish bank" refuses a version that isn't higher.
+const bankVersion = 1;
 
 /// Every template, in no meaningful order: each one has its own seed.
 final allTemplates = <Template>[
@@ -26,4 +31,9 @@ QuestionBank buildFor(String prefix) => buildBank(
     for (final h in allHandwritten)
       if (h.topic.startsWith(prefix)) h,
   ],
+  version: bankVersion,
+  retired: {
+    for (final id in retiredIds)
+      if (id.startsWith(prefix)) id,
+  },
 );

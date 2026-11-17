@@ -107,6 +107,29 @@ class $AppSettingsTable extends AppSettings
     requiredDuringInsert: false,
     clientDefault: _newId,
   );
+  static const VerificationMeta _bankCheckedAtMeta = const VerificationMeta(
+    'bankCheckedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> bankCheckedAt =
+      GeneratedColumn<DateTime>(
+        'bank_checked_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _bankCheckNoteMeta = const VerificationMeta(
+    'bankCheckNote',
+  );
+  @override
+  late final GeneratedColumn<String> bankCheckNote = GeneratedColumn<String>(
+    'bank_check_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -117,6 +140,8 @@ class $AppSettingsTable extends AppSettings
     soundOn,
     profilePending,
     deviceId,
+    bankCheckedAt,
+    bankCheckNote,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -184,6 +209,24 @@ class $AppSettingsTable extends AppSettings
         deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta),
       );
     }
+    if (data.containsKey('bank_checked_at')) {
+      context.handle(
+        _bankCheckedAtMeta,
+        bankCheckedAt.isAcceptableOrUnknown(
+          data['bank_checked_at']!,
+          _bankCheckedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('bank_check_note')) {
+      context.handle(
+        _bankCheckNoteMeta,
+        bankCheckNote.isAcceptableOrUnknown(
+          data['bank_check_note']!,
+          _bankCheckNoteMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -225,6 +268,14 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.string,
         data['${effectivePrefix}device_id'],
       )!,
+      bankCheckedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}bank_checked_at'],
+      ),
+      bankCheckNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bank_check_note'],
+      ),
     );
   }
 
@@ -248,6 +299,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
 
   /// This install's id (schema v7, FEAT-14): keys its own `daily_usage` rows.
   final String deviceId;
+
+  /// Last successful bank check (schema v8, FEAT-15 D7); null = never.
+  final DateTime? bankCheckedAt;
+
+  /// Outcome of the last bank check attempt, shown on SCR-11 (BNK-12).
+  final String? bankCheckNote;
   const AppSetting({
     required this.id,
     this.pinHash,
@@ -257,6 +314,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.soundOn,
     required this.profilePending,
     required this.deviceId,
+    this.bankCheckedAt,
+    this.bankCheckNote,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -273,6 +332,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['sound_on'] = Variable<bool>(soundOn);
     map['profile_pending'] = Variable<bool>(profilePending);
     map['device_id'] = Variable<String>(deviceId);
+    if (!nullToAbsent || bankCheckedAt != null) {
+      map['bank_checked_at'] = Variable<DateTime>(bankCheckedAt);
+    }
+    if (!nullToAbsent || bankCheckNote != null) {
+      map['bank_check_note'] = Variable<String>(bankCheckNote);
+    }
     return map;
   }
 
@@ -290,6 +355,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       soundOn: Value(soundOn),
       profilePending: Value(profilePending),
       deviceId: Value(deviceId),
+      bankCheckedAt: bankCheckedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bankCheckedAt),
+      bankCheckNote: bankCheckNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bankCheckNote),
     );
   }
 
@@ -307,6 +378,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       soundOn: serializer.fromJson<bool>(json['soundOn']),
       profilePending: serializer.fromJson<bool>(json['profilePending']),
       deviceId: serializer.fromJson<String>(json['deviceId']),
+      bankCheckedAt: serializer.fromJson<DateTime?>(json['bankCheckedAt']),
+      bankCheckNote: serializer.fromJson<String?>(json['bankCheckNote']),
     );
   }
   @override
@@ -321,6 +394,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'soundOn': serializer.toJson<bool>(soundOn),
       'profilePending': serializer.toJson<bool>(profilePending),
       'deviceId': serializer.toJson<String>(deviceId),
+      'bankCheckedAt': serializer.toJson<DateTime?>(bankCheckedAt),
+      'bankCheckNote': serializer.toJson<String?>(bankCheckNote),
     };
   }
 
@@ -333,6 +408,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     bool? soundOn,
     bool? profilePending,
     String? deviceId,
+    Value<DateTime?> bankCheckedAt = const Value.absent(),
+    Value<String?> bankCheckNote = const Value.absent(),
   }) => AppSetting(
     id: id ?? this.id,
     pinHash: pinHash.present ? pinHash.value : this.pinHash,
@@ -342,6 +419,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     soundOn: soundOn ?? this.soundOn,
     profilePending: profilePending ?? this.profilePending,
     deviceId: deviceId ?? this.deviceId,
+    bankCheckedAt: bankCheckedAt.present
+        ? bankCheckedAt.value
+        : this.bankCheckedAt,
+    bankCheckNote: bankCheckNote.present
+        ? bankCheckNote.value
+        : this.bankCheckNote,
   );
   AppSetting copyWithCompanion(AppSettingsCompanion data) {
     return AppSetting(
@@ -359,6 +442,12 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ? data.profilePending.value
           : this.profilePending,
       deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      bankCheckedAt: data.bankCheckedAt.present
+          ? data.bankCheckedAt.value
+          : this.bankCheckedAt,
+      bankCheckNote: data.bankCheckNote.present
+          ? data.bankCheckNote.value
+          : this.bankCheckNote,
     );
   }
 
@@ -372,7 +461,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('bankVersion: $bankVersion, ')
           ..write('soundOn: $soundOn, ')
           ..write('profilePending: $profilePending, ')
-          ..write('deviceId: $deviceId')
+          ..write('deviceId: $deviceId, ')
+          ..write('bankCheckedAt: $bankCheckedAt, ')
+          ..write('bankCheckNote: $bankCheckNote')
           ..write(')'))
         .toString();
   }
@@ -387,6 +478,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     soundOn,
     profilePending,
     deviceId,
+    bankCheckedAt,
+    bankCheckNote,
   );
   @override
   bool operator ==(Object other) =>
@@ -399,7 +492,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.bankVersion == this.bankVersion &&
           other.soundOn == this.soundOn &&
           other.profilePending == this.profilePending &&
-          other.deviceId == this.deviceId);
+          other.deviceId == this.deviceId &&
+          other.bankCheckedAt == this.bankCheckedAt &&
+          other.bankCheckNote == this.bankCheckNote);
 }
 
 class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
@@ -411,6 +506,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<bool> soundOn;
   final Value<bool> profilePending;
   final Value<String> deviceId;
+  final Value<DateTime?> bankCheckedAt;
+  final Value<String?> bankCheckNote;
   const AppSettingsCompanion({
     this.id = const Value.absent(),
     this.pinHash = const Value.absent(),
@@ -420,6 +517,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.soundOn = const Value.absent(),
     this.profilePending = const Value.absent(),
     this.deviceId = const Value.absent(),
+    this.bankCheckedAt = const Value.absent(),
+    this.bankCheckNote = const Value.absent(),
   });
   AppSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -430,6 +529,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.soundOn = const Value.absent(),
     this.profilePending = const Value.absent(),
     this.deviceId = const Value.absent(),
+    this.bankCheckedAt = const Value.absent(),
+    this.bankCheckNote = const Value.absent(),
   });
   static Insertable<AppSetting> custom({
     Expression<int>? id,
@@ -440,6 +541,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<bool>? soundOn,
     Expression<bool>? profilePending,
     Expression<String>? deviceId,
+    Expression<DateTime>? bankCheckedAt,
+    Expression<String>? bankCheckNote,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -450,6 +553,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (soundOn != null) 'sound_on': soundOn,
       if (profilePending != null) 'profile_pending': profilePending,
       if (deviceId != null) 'device_id': deviceId,
+      if (bankCheckedAt != null) 'bank_checked_at': bankCheckedAt,
+      if (bankCheckNote != null) 'bank_check_note': bankCheckNote,
     });
   }
 
@@ -462,6 +567,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<bool>? soundOn,
     Value<bool>? profilePending,
     Value<String>? deviceId,
+    Value<DateTime?>? bankCheckedAt,
+    Value<String?>? bankCheckNote,
   }) {
     return AppSettingsCompanion(
       id: id ?? this.id,
@@ -472,6 +579,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       soundOn: soundOn ?? this.soundOn,
       profilePending: profilePending ?? this.profilePending,
       deviceId: deviceId ?? this.deviceId,
+      bankCheckedAt: bankCheckedAt ?? this.bankCheckedAt,
+      bankCheckNote: bankCheckNote ?? this.bankCheckNote,
     );
   }
 
@@ -502,6 +611,12 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (deviceId.present) {
       map['device_id'] = Variable<String>(deviceId.value);
     }
+    if (bankCheckedAt.present) {
+      map['bank_checked_at'] = Variable<DateTime>(bankCheckedAt.value);
+    }
+    if (bankCheckNote.present) {
+      map['bank_check_note'] = Variable<String>(bankCheckNote.value);
+    }
     return map;
   }
 
@@ -515,7 +630,9 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('bankVersion: $bankVersion, ')
           ..write('soundOn: $soundOn, ')
           ..write('profilePending: $profilePending, ')
-          ..write('deviceId: $deviceId')
+          ..write('deviceId: $deviceId, ')
+          ..write('bankCheckedAt: $bankCheckedAt, ')
+          ..write('bankCheckNote: $bankCheckNote')
           ..write(')'))
         .toString();
   }
@@ -4471,6 +4588,360 @@ class SyncStateCompanion extends UpdateCompanion<SyncStateData> {
   }
 }
 
+class $BankFilesTable extends BankFiles
+    with TableInfo<$BankFilesTable, BankFileRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BankFilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _formatMeta = const VerificationMeta('format');
+  @override
+  late final GeneratedColumn<int> format = GeneratedColumn<int>(
+    'format',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sha256Meta = const VerificationMeta('sha256');
+  @override
+  late final GeneratedColumn<String> sha256 = GeneratedColumn<String>(
+    'sha256',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pathMeta = const VerificationMeta('path');
+  @override
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _downloadedAtMeta = const VerificationMeta(
+    'downloadedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> downloadedAt = GeneratedColumn<DateTime>(
+    'downloaded_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    version,
+    format,
+    sha256,
+    path,
+    downloadedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'bank_files';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BankFileRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    }
+    if (data.containsKey('format')) {
+      context.handle(
+        _formatMeta,
+        format.isAcceptableOrUnknown(data['format']!, _formatMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_formatMeta);
+    }
+    if (data.containsKey('sha256')) {
+      context.handle(
+        _sha256Meta,
+        sha256.isAcceptableOrUnknown(data['sha256']!, _sha256Meta),
+      );
+    } else if (isInserting) {
+      context.missing(_sha256Meta);
+    }
+    if (data.containsKey('path')) {
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pathMeta);
+    }
+    if (data.containsKey('downloaded_at')) {
+      context.handle(
+        _downloadedAtMeta,
+        downloadedAt.isAcceptableOrUnknown(
+          data['downloaded_at']!,
+          _downloadedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_downloadedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {version};
+  @override
+  BankFileRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BankFileRow(
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+      format: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}format'],
+      )!,
+      sha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sha256'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+      downloadedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}downloaded_at'],
+      )!,
+    );
+  }
+
+  @override
+  $BankFilesTable createAlias(String alias) {
+    return $BankFilesTable(attachedDatabase, alias);
+  }
+}
+
+class BankFileRow extends DataClass implements Insertable<BankFileRow> {
+  final int version;
+  final int format;
+  final String sha256;
+
+  /// File name under the banks directory.
+  final String path;
+  final DateTime downloadedAt;
+  const BankFileRow({
+    required this.version,
+    required this.format,
+    required this.sha256,
+    required this.path,
+    required this.downloadedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['version'] = Variable<int>(version);
+    map['format'] = Variable<int>(format);
+    map['sha256'] = Variable<String>(sha256);
+    map['path'] = Variable<String>(path);
+    map['downloaded_at'] = Variable<DateTime>(downloadedAt);
+    return map;
+  }
+
+  BankFilesCompanion toCompanion(bool nullToAbsent) {
+    return BankFilesCompanion(
+      version: Value(version),
+      format: Value(format),
+      sha256: Value(sha256),
+      path: Value(path),
+      downloadedAt: Value(downloadedAt),
+    );
+  }
+
+  factory BankFileRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BankFileRow(
+      version: serializer.fromJson<int>(json['version']),
+      format: serializer.fromJson<int>(json['format']),
+      sha256: serializer.fromJson<String>(json['sha256']),
+      path: serializer.fromJson<String>(json['path']),
+      downloadedAt: serializer.fromJson<DateTime>(json['downloadedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'version': serializer.toJson<int>(version),
+      'format': serializer.toJson<int>(format),
+      'sha256': serializer.toJson<String>(sha256),
+      'path': serializer.toJson<String>(path),
+      'downloadedAt': serializer.toJson<DateTime>(downloadedAt),
+    };
+  }
+
+  BankFileRow copyWith({
+    int? version,
+    int? format,
+    String? sha256,
+    String? path,
+    DateTime? downloadedAt,
+  }) => BankFileRow(
+    version: version ?? this.version,
+    format: format ?? this.format,
+    sha256: sha256 ?? this.sha256,
+    path: path ?? this.path,
+    downloadedAt: downloadedAt ?? this.downloadedAt,
+  );
+  BankFileRow copyWithCompanion(BankFilesCompanion data) {
+    return BankFileRow(
+      version: data.version.present ? data.version.value : this.version,
+      format: data.format.present ? data.format.value : this.format,
+      sha256: data.sha256.present ? data.sha256.value : this.sha256,
+      path: data.path.present ? data.path.value : this.path,
+      downloadedAt: data.downloadedAt.present
+          ? data.downloadedAt.value
+          : this.downloadedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BankFileRow(')
+          ..write('version: $version, ')
+          ..write('format: $format, ')
+          ..write('sha256: $sha256, ')
+          ..write('path: $path, ')
+          ..write('downloadedAt: $downloadedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(version, format, sha256, path, downloadedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BankFileRow &&
+          other.version == this.version &&
+          other.format == this.format &&
+          other.sha256 == this.sha256 &&
+          other.path == this.path &&
+          other.downloadedAt == this.downloadedAt);
+}
+
+class BankFilesCompanion extends UpdateCompanion<BankFileRow> {
+  final Value<int> version;
+  final Value<int> format;
+  final Value<String> sha256;
+  final Value<String> path;
+  final Value<DateTime> downloadedAt;
+  const BankFilesCompanion({
+    this.version = const Value.absent(),
+    this.format = const Value.absent(),
+    this.sha256 = const Value.absent(),
+    this.path = const Value.absent(),
+    this.downloadedAt = const Value.absent(),
+  });
+  BankFilesCompanion.insert({
+    this.version = const Value.absent(),
+    required int format,
+    required String sha256,
+    required String path,
+    required DateTime downloadedAt,
+  }) : format = Value(format),
+       sha256 = Value(sha256),
+       path = Value(path),
+       downloadedAt = Value(downloadedAt);
+  static Insertable<BankFileRow> custom({
+    Expression<int>? version,
+    Expression<int>? format,
+    Expression<String>? sha256,
+    Expression<String>? path,
+    Expression<DateTime>? downloadedAt,
+  }) {
+    return RawValuesInsertable({
+      if (version != null) 'version': version,
+      if (format != null) 'format': format,
+      if (sha256 != null) 'sha256': sha256,
+      if (path != null) 'path': path,
+      if (downloadedAt != null) 'downloaded_at': downloadedAt,
+    });
+  }
+
+  BankFilesCompanion copyWith({
+    Value<int>? version,
+    Value<int>? format,
+    Value<String>? sha256,
+    Value<String>? path,
+    Value<DateTime>? downloadedAt,
+  }) {
+    return BankFilesCompanion(
+      version: version ?? this.version,
+      format: format ?? this.format,
+      sha256: sha256 ?? this.sha256,
+      path: path ?? this.path,
+      downloadedAt: downloadedAt ?? this.downloadedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (format.present) {
+      map['format'] = Variable<int>(format.value);
+    }
+    if (sha256.present) {
+      map['sha256'] = Variable<String>(sha256.value);
+    }
+    if (path.present) {
+      map['path'] = Variable<String>(path.value);
+    }
+    if (downloadedAt.present) {
+      map['downloaded_at'] = Variable<DateTime>(downloadedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BankFilesCompanion(')
+          ..write('version: $version, ')
+          ..write('format: $format, ')
+          ..write('sha256: $sha256, ')
+          ..write('path: $path, ')
+          ..write('downloadedAt: $downloadedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4485,6 +4956,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TopicUnlocksTable topicUnlocks = $TopicUnlocksTable(this);
   late final $SyncFieldsTable syncFields = $SyncFieldsTable(this);
   late final $SyncStateTable syncState = $SyncStateTable(this);
+  late final $BankFilesTable bankFiles = $BankFilesTable(this);
   late final Index roundsUuid = Index(
     'rounds_uuid',
     'CREATE UNIQUE INDEX rounds_uuid ON rounds (uuid)',
@@ -4509,6 +4981,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     topicUnlocks,
     syncFields,
     syncState,
+    bankFiles,
     roundsUuid,
     attemptsUuid,
   ];
@@ -4524,6 +4997,8 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<bool> soundOn,
       Value<bool> profilePending,
       Value<String> deviceId,
+      Value<DateTime?> bankCheckedAt,
+      Value<String?> bankCheckNote,
     });
 typedef $$AppSettingsTableUpdateCompanionBuilder =
     AppSettingsCompanion Function({
@@ -4535,6 +5010,8 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<bool> soundOn,
       Value<bool> profilePending,
       Value<String> deviceId,
+      Value<DateTime?> bankCheckedAt,
+      Value<String?> bankCheckNote,
     });
 
 class $$AppSettingsTableFilterComposer
@@ -4583,6 +5060,16 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<String> get deviceId => $composableBuilder(
     column: $table.deviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get bankCheckedAt => $composableBuilder(
+    column: $table.bankCheckedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bankCheckNote => $composableBuilder(
+    column: $table.bankCheckNote,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4635,6 +5122,16 @@ class $$AppSettingsTableOrderingComposer
     column: $table.deviceId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get bankCheckedAt => $composableBuilder(
+    column: $table.bankCheckedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bankCheckNote => $composableBuilder(
+    column: $table.bankCheckNote,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AppSettingsTableAnnotationComposer
@@ -4675,6 +5172,16 @@ class $$AppSettingsTableAnnotationComposer
 
   GeneratedColumn<String> get deviceId =>
       $composableBuilder(column: $table.deviceId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get bankCheckedAt => $composableBuilder(
+    column: $table.bankCheckedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get bankCheckNote => $composableBuilder(
+    column: $table.bankCheckNote,
+    builder: (column) => column,
+  );
 }
 
 class $$AppSettingsTableTableManager
@@ -4716,6 +5223,8 @@ class $$AppSettingsTableTableManager
                 Value<bool> soundOn = const Value.absent(),
                 Value<bool> profilePending = const Value.absent(),
                 Value<String> deviceId = const Value.absent(),
+                Value<DateTime?> bankCheckedAt = const Value.absent(),
+                Value<String?> bankCheckNote = const Value.absent(),
               }) => AppSettingsCompanion(
                 id: id,
                 pinHash: pinHash,
@@ -4725,6 +5234,8 @@ class $$AppSettingsTableTableManager
                 soundOn: soundOn,
                 profilePending: profilePending,
                 deviceId: deviceId,
+                bankCheckedAt: bankCheckedAt,
+                bankCheckNote: bankCheckNote,
               ),
           createCompanionCallback:
               ({
@@ -4736,6 +5247,8 @@ class $$AppSettingsTableTableManager
                 Value<bool> soundOn = const Value.absent(),
                 Value<bool> profilePending = const Value.absent(),
                 Value<String> deviceId = const Value.absent(),
+                Value<DateTime?> bankCheckedAt = const Value.absent(),
+                Value<String?> bankCheckNote = const Value.absent(),
               }) => AppSettingsCompanion.insert(
                 id: id,
                 pinHash: pinHash,
@@ -4745,6 +5258,8 @@ class $$AppSettingsTableTableManager
                 soundOn: soundOn,
                 profilePending: profilePending,
                 deviceId: deviceId,
+                bankCheckedAt: bankCheckedAt,
+                bankCheckNote: bankCheckNote,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -7374,6 +7889,209 @@ typedef $$SyncStateTableProcessedTableManager =
       SyncStateData,
       PrefetchHooks Function()
     >;
+typedef $$BankFilesTableCreateCompanionBuilder = BankFilesCompanion Function({
+  Value<int> version,
+  required int format,
+  required String sha256,
+  required String path,
+  required DateTime downloadedAt,
+});
+typedef $$BankFilesTableUpdateCompanionBuilder = BankFilesCompanion Function({
+  Value<int> version,
+  Value<int> format,
+  Value<String> sha256,
+  Value<String> path,
+  Value<DateTime> downloadedAt,
+});
+
+class $$BankFilesTableFilterComposer
+    extends Composer<_$AppDatabase, $BankFilesTable> {
+  $$BankFilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sha256 => $composableBuilder(
+    column: $table.sha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$BankFilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $BankFilesTable> {
+  $$BankFilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sha256 => $composableBuilder(
+    column: $table.sha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BankFilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BankFilesTable> {
+  $$BankFilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+
+  GeneratedColumn<int> get format =>
+      $composableBuilder(column: $table.format, builder: (column) => column);
+
+  GeneratedColumn<String> get sha256 =>
+      $composableBuilder(column: $table.sha256, builder: (column) => column);
+
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$BankFilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BankFilesTable,
+          BankFileRow,
+          $$BankFilesTableFilterComposer,
+          $$BankFilesTableOrderingComposer,
+          $$BankFilesTableAnnotationComposer,
+          $$BankFilesTableCreateCompanionBuilder,
+          $$BankFilesTableUpdateCompanionBuilder,
+          (
+            BankFileRow,
+            BaseReferences<_$AppDatabase, $BankFilesTable, BankFileRow>,
+          ),
+          BankFileRow,
+          PrefetchHooks Function()
+        > {
+  $$BankFilesTableTableManager(_$AppDatabase db, $BankFilesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BankFilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BankFilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BankFilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> version = const Value.absent(),
+                Value<int> format = const Value.absent(),
+                Value<String> sha256 = const Value.absent(),
+                Value<String> path = const Value.absent(),
+                Value<DateTime> downloadedAt = const Value.absent(),
+              }) => BankFilesCompanion(
+                version: version,
+                format: format,
+                sha256: sha256,
+                path: path,
+                downloadedAt: downloadedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> version = const Value.absent(),
+                required int format,
+                required String sha256,
+                required String path,
+                required DateTime downloadedAt,
+              }) => BankFilesCompanion.insert(
+                version: version,
+                format: format,
+                sha256: sha256,
+                path: path,
+                downloadedAt: downloadedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$BankFilesTable, BankFileRow>(table),
+                  BaseReferences<_$AppDatabase, $BankFilesTable, BankFileRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$BankFilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BankFilesTable,
+      BankFileRow,
+      $$BankFilesTableFilterComposer,
+      $$BankFilesTableOrderingComposer,
+      $$BankFilesTableAnnotationComposer,
+      $$BankFilesTableCreateCompanionBuilder,
+      $$BankFilesTableUpdateCompanionBuilder,
+      (
+        BankFileRow,
+        BaseReferences<_$AppDatabase, $BankFilesTable, BankFileRow>,
+      ),
+      BankFileRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7400,4 +8118,6 @@ class $AppDatabaseManager {
       $$SyncFieldsTableTableManager(_db, _db.syncFields);
   $$SyncStateTableTableManager get syncState =>
       $$SyncStateTableTableManager(_db, _db.syncState);
+  $$BankFilesTableTableManager get bankFiles =>
+      $$BankFilesTableTableManager(_db, _db.bankFiles);
 }
