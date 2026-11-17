@@ -248,7 +248,12 @@ void main() {
 
   group('banks', () {
     test('anyone lists banks; only a superuser creates one', () async {
-      final body = {'version': uniq('bank'), 'format': 1, 'min_app_build': 1};
+      // FEAT-15: version is a number; a high one no publish test uses.
+      final body = {
+        'version': 900000 + DateTime.now().microsecond,
+        'format': 1,
+        'min_app_build': 1,
+      };
       for (final pb in [anon, a.pb]) {
         expect(
           await statusOf(() => pb.collection('banks').create(body: body)),
@@ -270,6 +275,7 @@ void main() {
         400,
         reason: 'version is unique',
       );
+      await su.collection('banks').delete(bank.id);
     });
   });
 }

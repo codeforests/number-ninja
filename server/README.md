@@ -94,6 +94,16 @@ GitHub → Actions → "Deploy server" → Run workflow. It:
 - applies the migrations, sets the superuser, restarts PocketBase, and checks that
   `https://$SERVER_HOSTNAME/api/health` is 200 and `/_/` is 404.
 
+## Publishing a bank (FEAT-15)
+
+The generator is the only source of questions (D11). To ship new or changed questions:
+
+1. Change the templates in `tool/bank/`, bump `bankVersion` in `tool/bank/bank.dart`, run `dart run tool/generate_bank.dart` and merge the PR. Never delete a question id: list it in `tool/bank/retired.dart` instead (BNK-10).
+2. Actions → **Publish bank** → Run workflow on `main` (tick *dry run* first if you like). It refuses a bank that fails the validator, differs from the committed `assets/questions/bank.json`, isn't a higher version than the latest published one, or drops an id of the latest published bank or of the newest release's bundled bank.
+3. Tablets pick it up at their next launch or resume (at most once a day; "Check now" in the parent area forces it) and switch before the next round.
+
+A bank that needs a newer app (new topic, visual kind or question format) also bumps `format` and `bankFormatSupported` in the same release; older apps then ignore it (BNK-11). A published bank can be deleted in the admin UI; the apps keep whatever they already downloaded.
+
 ## Admin UI (through an SSH tunnel only)
 
 `ssh -L 8090:127.0.0.1:8090 deploy@<droplet IP>`, then open `http://localhost:8090/_/`
