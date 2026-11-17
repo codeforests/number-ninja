@@ -46,11 +46,11 @@ void main() {
     expect(client.calls, 0);
   });
 
-  testWidgets('configured: shows the host and calls only on Check', (
-    tester,
-  ) async {
+  testWidgets('configured: says set up, never the address, and calls only '
+      'on Check', (tester) async {
     await open(tester, configured);
-    expect(find.text('api.example.test'), findsOneWidget);
+    expect(textOf(tester, 'server-host'), 'Set up');
+    expect(find.textContaining('example.test'), findsNothing);
     expect(client.calls, 0);
     await h.tapKey(tester, 'server-check');
     expect(client.calls, 1);
