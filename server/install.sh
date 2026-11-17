@@ -5,7 +5,7 @@
 # shows in a process list):
 #   SERVER_HOSTNAME  PB_SUPERUSER_EMAIL  PB_SUPERUSER_PASSWORD  CERT_EMAIL
 # and, optional (FEAT-13; empty leaves email or Google sign-in off):
-#   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS
+#   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS RESEND_API_KEY
 #   GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
 # Idempotent: re-running is the upgrade path.
 #
@@ -23,12 +23,12 @@ site_link=/etc/nginx/sites-enabled/numberninja.conf
 acme=/var/www/numberninja-acme
 
 SERVER_HOSTNAME='' PB_SUPERUSER_EMAIL='' PB_SUPERUSER_PASSWORD='' CERT_EMAIL=''
-pb_env_keys=(SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET)
+pb_env_keys=(SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS RESEND_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET)
 for k in "${pb_env_keys[@]}"; do printf -v "$k" '%s' ''; done
 while IFS='=' read -r key value; do
   case "$key" in
     SERVER_HOSTNAME | PB_SUPERUSER_EMAIL | PB_SUPERUSER_PASSWORD | CERT_EMAIL | \
-      SMTP_HOST | SMTP_PORT | SMTP_USERNAME | SMTP_PASSWORD | MAIL_SENDER_ADDRESS | \
+      SMTP_HOST | SMTP_PORT | SMTP_USERNAME | SMTP_PASSWORD | MAIL_SENDER_ADDRESS | RESEND_API_KEY | \
       GOOGLE_CLIENT_ID | GOOGLE_CLIENT_SECRET)
       printf -v "$key" '%s' "$value" ;;
     '') ;;
@@ -103,7 +103,10 @@ umask_old="$(umask)"; umask 077
 umask "$umask_old"
 chmod 0600 "$env_file.new"
 mv "$env_file.new" "$env_file"
-echo "Email: $([ -n "$SMTP_HOST" ] && [ -n "$MAIL_SENDER_ADDRESS" ] && echo on || echo off), Google sign-in: $([ -n "$GOOGLE_CLIENT_ID" ] && [ -n "$GOOGLE_CLIENT_SECRET" ] && echo on || echo off)"
+if [ -n "$RESEND_API_KEY" ] && [ -n "$MAIL_SENDER_ADDRESS" ]; then mail=on-resend
+elif [ -n "$SMTP_HOST" ] && [ -n "$MAIL_SENDER_ADDRESS" ]; then mail=on-smtp
+else mail=off; fi
+echo "Email: $mail, Google sign-in: $([ -n "$GOOGLE_CLIENT_ID" ] && [ -n "$GOOGLE_CLIENT_SECRET" ] && echo on || echo off)"
 install -m 0644 "$here/numberninja-pb.service" /etc/systemd/system/numberninja-pb.service
 systemctl daemon-reload
 systemctl enable --quiet numberninja-pb

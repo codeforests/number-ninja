@@ -4,6 +4,8 @@
 // migration runs only once). Missing values leave the feature off.
 //   SERVER_HOSTNAME                     -> meta.appURL (links in emails)
 //   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS -> email
+//   RESEND_API_KEY + MAIL_SENDER_ADDRESS -> email through Resend (mail.pb.js),
+//     which wins over SMTP
 //   GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET -> Google sign-in on `users`
 onBootstrap((e) => {
   e.next();
@@ -25,8 +27,13 @@ onBootstrap((e) => {
 
   const smtpHost = env("SMTP_HOST");
   const sender = env("MAIL_SENDER_ADDRESS");
-  const smtpOn = !!(smtpHost && sender);
+  const resendOn = !!(env("RESEND_API_KEY") && sender);
+  const smtpOn = !resendOn && !!(smtpHost && sender);
   set(settings.smtp, "enabled", smtpOn);
+  if (resendOn) {
+    set(settings.meta, "senderAddress", sender);
+    set(settings.meta, "senderName", settings.meta.appName);
+  }
   if (smtpOn) {
     const port = parseInt(env("SMTP_PORT") || "2525", 10);
     set(settings.smtp, "host", smtpHost);
@@ -57,6 +64,9 @@ onBootstrap((e) => {
   }
 
   console.log(
-    "config: email " + (smtpOn ? "on" : "off") + ", google " + (want ? "on" : "off"),
+    "config: email " +
+      (resendOn ? "on (resend)" : smtpOn ? "on (smtp)" : "off") +
+      ", google " +
+      (want ? "on" : "off"),
   );
 });
