@@ -136,7 +136,24 @@ Future<void> _run(List<String> args) async {
 
 Future<String> _superuserToken(http.Client c, Uri base) async {
   final env = Platform.environment;
-  final r = await c.post(
+  // Sign-ins are rate limited (2 per 3 s per IP): wait and retry on 429.
+  var r = await _signIn(c, base, env);
+  for (var i = 0; r.statusCode == 429 && i < 5; i++) {
+    await Future<void>.delayed(const Duration(seconds: 2));
+    r = await _signIn(c, base, env);
+  }
+  if (r.statusCode != 200) {
+    throw _Refused('superuser sign-in failed: ${r.statusCode}');
+  }
+  return (jsonDecode(r.body) as Map<String, dynamic>)['token'] as String;
+}
+
+Future<http.Response> _signIn(
+  http.Client c,
+  Uri base,
+  Map<String, String> env,
+) async {
+  return c.post(
     base.resolve('/api/collections/_superusers/auth-with-password'),
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({
@@ -144,10 +161,6 @@ Future<String> _superuserToken(http.Client c, Uri base) async {
       'password': env['PB_SUPERUSER_PASSWORD'] ?? '',
     }),
   );
-  if (r.statusCode != 200) {
-    throw _Refused('superuser sign-in failed: ${r.statusCode}');
-  }
-  return (jsonDecode(r.body) as Map<String, dynamic>)['token'] as String;
 }
 
 Future<Map<String, dynamic>?> _latest(http.Client c, Uri base) async {

@@ -31,9 +31,10 @@ SERVER_HOSTNAME=$PB_TEST_HOST SMTP_HOST=127.0.0.1 SMTP_PORT=$PB_SMTP_PORT \
 PB_URL=http://127.0.0.1:8090 PB_BACKUP_OUT="$work/backup.zip" \
   dart test --concurrency=1 test/api_rules_test.dart test/auth_test.dart test/sync_test.dart test/bank_publish_test.dart test/backup_test.dart
 
-# FEAT-14 AC-7 (NFR-16): the app's sync against this server.
+# FEAT-14 AC-7 (NFR-16): the app's sync against this server; FEAT-15 AC-6:
+# a published bank reaches the app.
 (cd "$root" && flutter pub get >/dev/null &&
-  SYNC_LIVE_URL=http://127.0.0.1:8090 flutter test test/live/sync_live_test.dart)
+  SYNC_LIVE_URL=http://127.0.0.1:8090 flutter test test/live/sync_live_test.dart test/live/bank_live_test.dart)
 
 PB_HOME="$work/restored" PB_SERVICE='' PB_OWNER='' \
   "$root/server/restore.sh" "$work/backup.zip"
