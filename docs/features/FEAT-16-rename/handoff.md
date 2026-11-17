@@ -1,5 +1,5 @@
 # Handoff: FEAT-16 — New name and v2.0
-Branch: claude/project-thread-1sd1wa · PR: see STATE · Updated: 2026-11-17 by build
+Branch: claude/project-thread-1sd1wa · PR: https://github.com/codeforests/number-ninja/pull/27 · Updated: 2026-11-17 by build
 Stage done: build (T1–T4 of 4)
 Next: verify — kickoff: "Verify FEAT-16 on branch claude/project-thread-1sd1wa. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
