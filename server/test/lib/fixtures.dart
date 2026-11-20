@@ -204,3 +204,33 @@ Future<RecordModel> grant(
         'expires_at': expiresAt ?? pbDateIn(const Duration(days: 1)),
       },
     );
+
+/// FEAT-36 (IC-1): the invitation code alphabet (no 0/O, 1/I).
+const inviteAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+/// A random 8-character code from [inviteAlphabet].
+String randomCode() =>
+    [for (var i = 0; i < 8; i++) inviteAlphabet[_rand.nextInt(32)]].join();
+
+/// Makes an `invite_codes` record through the superuser (FEAT-36 IC-2).
+Future<RecordModel> inviteCode({
+  String? code,
+  int months = 12,
+  int maxUses = 5,
+  int uses = 0,
+  String? redeemBy,
+  String note = 'test',
+  bool revoked = false,
+}) async => (await superuser())
+    .collection('invite_codes')
+    .create(
+      body: {
+        'code': code ?? randomCode(),
+        'months': months,
+        'max_uses': maxUses,
+        'uses': uses,
+        'redeem_by': redeemBy ?? pbDateIn(const Duration(days: 30)),
+        'note': note,
+        'revoked': revoked,
+      },
+    );

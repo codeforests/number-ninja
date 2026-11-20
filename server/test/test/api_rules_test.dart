@@ -563,4 +563,101 @@ void main() {
       expect(codes.first, 200);
     });
   });
+
+  // FEAT-36 AC-1 (INV-01, IC-2, IC-3): codes and redemptions are superuser only.
+  group('invites', () {
+    test("guests and parents can't read or write codes or redemptions; "
+        'a superuser can', () async {
+      final code = await inviteCode();
+      final su = await superuser();
+      final red = await su
+          .collection('invite_redemptions')
+          .create(
+            body: {
+              'code': code.id,
+              'user': a.id,
+              'plus_until': pbDateIn(const Duration(days: 365)),
+            },
+          );
+      final bodies = {
+        'invite_codes': {
+          'code': randomCode(),
+          'months': 12,
+          'max_uses': 5,
+          'redeem_by': forever,
+        },
+        'invite_redemptions': {
+          'code': code.id,
+          'user': b.id,
+          'plus_until': forever,
+        },
+      };
+      final ids = {'invite_codes': code.id, 'invite_redemptions': red.id};
+      for (final pb in [a.pb, b.pb, anon]) {
+        for (final name in bodies.keys) {
+          final c = pb.collection(name);
+          expect(
+            await statusOf(() => c.getFullList()),
+            anyOf(200, 403),
+            reason: name,
+          );
+          final listed = await c.getFullList().catchError(
+            (_) => <RecordModel>[],
+          );
+          expect(listed, isEmpty, reason: name);
+          expect(await statusOf(() => c.getOne(ids[name]!)), anyOf(403, 404));
+          expect(await statusOf(() => c.create(body: bodies[name]!)), 403);
+          expect(
+            await statusOf(() => c.update(ids[name]!, body: {'uses': 4})),
+            anyOf(403, 404),
+          );
+          expect(await statusOf(() => c.delete(ids[name]!)), anyOf(403, 404));
+        }
+      }
+      expect(
+        (await su.collection('invite_codes').getOne(code.id))
+            .get<String>('code'),
+        code.get<String>('code'),
+      );
+      expect(
+        await statusOf(() => inviteCode(code: code.get<String>('code'))),
+        400,
+        reason: 'code is unique',
+      );
+      expect(
+        await statusOf(() => inviteCode(code: 'ABCD0OI1')),
+        400,
+        reason: 'only alphabet characters',
+      );
+      expect(
+        await statusOf(
+          () => su
+              .collection('invite_redemptions')
+              .create(
+                body: {'code': code.id, 'user': a.id, 'plus_until': forever},
+              ),
+        ),
+        400,
+        reason: '(code, user) is unique',
+      );
+    });
+
+    test('deleting a user deletes their redemptions, not the code', () async {
+      final p = await Parent.signUp('gone-invite');
+      final code = await inviteCode(uses: 1);
+      final su = await superuser();
+      final red = await su
+          .collection('invite_redemptions')
+          .create(body: {'code': code.id, 'user': p.id, 'plus_until': forever});
+      await su.collection('users').delete(p.id);
+      expect(
+        await statusOf(
+          () => su.collection('invite_redemptions').getOne(red.id),
+        ),
+        404,
+      );
+      final kept = await su.collection('invite_codes').getOne(code.id);
+      expect(kept.get<int>('uses'), 1);
+    });
+  });
 }
