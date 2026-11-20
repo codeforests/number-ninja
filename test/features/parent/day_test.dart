@@ -42,6 +42,7 @@ void main() {
           .into(h.db.dailyUsage)
           .insert(
             DailyUsageCompanion.insert(
+              childId: 1,
               day: today,
               deviceId: device,
               secondsUsed: Value(secs),
@@ -91,6 +92,7 @@ void main() {
         .into(h.db.dailyUsage)
         .insert(
           DailyUsageCompanion.insert(
+            childId: 1,
             day: '2027-01-04',
             deviceId: 'a',
             secondsUsed: const Value(120),

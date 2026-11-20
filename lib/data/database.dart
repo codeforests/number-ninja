@@ -497,6 +497,10 @@ class AppDatabase extends _$AppDatabase {
   Future<AppSetting> getSettings() =>
       (select(appSettings)..where((s) => s.id.equals(1))).getSingle();
 
+  /// Child [id]'s row (FEAT-25).
+  Future<ChildRow> child(int id) =>
+      (select(children)..where((c) => c.id.equals(id))).getSingle();
+
   /// The child playing now (FEAT-25 AD-3).
   Future<int> currentChildId() async => (await getSettings()).currentChildId;
 

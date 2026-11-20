@@ -4,22 +4,21 @@ import '../domain/clock.dart';
 import '../domain/profile.dart';
 import 'database.dart';
 
-/// Reads and saves the child profile (PRO-01, PRO-02).
+/// Reads and saves one child's profile (PRO-01, PRO-02): a view of her
+/// `children` row (FEAT-25). An empty nickname means not filled in yet.
 class ProfileRepository {
-  ProfileRepository(this.db, {required this.clock});
+  ProfileRepository(this.db, {required this.clock, this.childId = 1});
 
   final AppDatabase db;
   final Clock clock;
+  final int childId;
 
-  Future<ChildProfile?> load() async => _toProfile(
-    await (db.select(
-      db.childProfiles,
-    )..where((p) => p.id.equals(1))).getSingleOrNull(),
-  );
+  SimpleSelectStatement<$ChildrenTable, ChildRow> get _row =>
+      db.select(db.children)..where((c) => c.id.equals(childId));
 
-  Stream<ChildProfile?> watch() => (db.select(
-    db.childProfiles,
-  )..where((p) => p.id.equals(1))).watchSingleOrNull().map(_toProfile);
+  Future<ChildProfile?> load() async => profileOf(await _row.getSingleOrNull());
+
+  Stream<ChildProfile?> watch() => _row.watchSingleOrNull().map(profileOf);
 
   /// Whether the app must ask for the profile before play.
   Future<bool> pending() async => (await db.getSettings()).profilePending;
@@ -29,7 +28,7 @@ class ProfileRepository {
   Future<void> save(ChildProfile p) => db.transaction(() async {
     final before = await load();
     final now = clock();
-    await db.stampFields([
+    await db.stampFields(childId, [
       if (before?.nickname != p.nickname.trim()) syncFieldNickname,
       if (before?.schoolYear != p.schoolYear) syncFieldSchoolYear,
       if (before == null || before.schoolStartLevel != p.schoolStartLevel)
@@ -37,29 +36,29 @@ class ProfileRepository {
       if (before == null || before.olympiadStartLevel != p.olympiadStartLevel)
         syncFieldStartOlympiad,
     ], now);
-    await db
-        .into(db.childProfiles)
-        .insertOnConflictUpdate(
-          ChildProfilesCompanion.insert(
-            id: const Value(1),
-            nickname: p.nickname.trim(),
-            schoolYear: p.schoolYear,
-            schoolStartLevel: Value(p.schoolStartLevel),
-            olympiadStartLevel: Value(p.olympiadStartLevel),
-            updatedAt: now,
-          ),
-        );
+    await (db.update(db.children)..where((c) => c.id.equals(childId))).write(
+      ChildrenCompanion(
+        nickname: Value(p.nickname.trim()),
+        schoolYear: Value(p.schoolYear),
+        schoolStartLevel: Value(p.schoolStartLevel),
+        olympiadStartLevel: Value(p.olympiadStartLevel),
+        avatar: Value(p.avatar),
+        updatedAt: Value(now),
+      ),
+    );
     await (db.update(db.appSettings)..where((s) => s.id.equals(1))).write(
       const AppSettingsCompanion(profilePending: Value(false)),
     );
   });
-
-  ChildProfile? _toProfile(ProfileRow? row) => row == null
-      ? null
-      : ChildProfile(
-          nickname: row.nickname,
-          schoolYear: row.schoolYear,
-          schoolStartLevel: row.schoolStartLevel,
-          olympiadStartLevel: row.olympiadStartLevel,
-        );
 }
+
+/// [row]'s profile, or null while its nickname is empty (FEAT-25 AD-2).
+ChildProfile? profileOf(ChildRow? row) => row == null || row.nickname.isEmpty
+    ? null
+    : ChildProfile(
+        nickname: row.nickname,
+        schoolYear: row.schoolYear,
+        schoolStartLevel: row.schoolStartLevel,
+        olympiadStartLevel: row.olympiadStartLevel,
+        avatar: row.avatar,
+      );

@@ -44,7 +44,7 @@ void main() {
       ),
     );
     expect(await repo.pending(), isFalse);
-    final row = await db.select(db.childProfiles).getSingle();
+    final row = await db.select(db.children).getSingle();
     expect(row.updatedAt, now);
   });
 
@@ -58,8 +58,8 @@ void main() {
       await repo.load(),
       const ChildProfile(nickname: 'Bee', schoolYear: 3),
     );
-    expect(await db.select(db.childProfiles).get(), hasLength(1));
-    expect((await db.select(db.childProfiles).getSingle()).updatedAt, now);
+    expect(await db.select(db.children).get(), hasLength(1));
+    expect((await db.select(db.children).getSingle()).updatedAt, now);
   });
 
   test('watch emits saves', () async {

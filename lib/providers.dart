@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'data/badge_repository.dart';
 import 'data/bank_store.dart';
 import 'data/bank_updater.dart';
+import 'data/child_repository.dart';
 import 'data/database.dart';
 import 'data/pin_repository.dart';
 import 'data/profile_repository.dart';
@@ -26,6 +27,7 @@ import 'data/topic_lock_repository.dart';
 import 'data/usage_repository.dart';
 import 'domain/question.dart';
 import 'domain/clock.dart';
+import 'domain/family.dart';
 import 'domain/profile.dart';
 import 'domain/progress.dart';
 import 'domain/revision.dart';
@@ -214,6 +216,42 @@ final syncProvider = NotifierProvider<SyncController, SyncStatus>(
   ),
 );
 
+/// The family's children (FEAT-25).
+final childRepositoryProvider = Provider<ChildRepository>(
+  (ref) => ChildRepository(
+    ref.watch(databaseProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// The children in the order they were added (FEAT-25). Not a stream (see
+/// [childProfileProvider]); invalidate after a change.
+final childrenProvider = FutureProvider.autoDispose<List<FamilyChild>>((ref) {
+  ref.watch(syncDataVersionProvider);
+  return ref.watch(childRepositoryProvider).all();
+});
+
+/// The child playing now (FEAT-25 AD-3): every per-child repository
+/// provider watches it, so changing it reloads her data.
+class CurrentChild extends Notifier<int> {
+  @override
+  int build() => ref.read(startChildProvider);
+
+  /// Makes [id] the child playing now and saves it for the next launch.
+  Future<void> select(int id) async {
+    await ref.read(childRepositoryProvider).setCurrent(id);
+    state = id;
+  }
+}
+
+/// The child playing at launch (FEAT-25 AD-3), loaded in main();
+/// [currentChildProvider] holds the current one after that.
+final startChildProvider = Provider<int>((ref) => 1);
+
+final currentChildProvider = NotifierProvider<CurrentChild, int>(
+  CurrentChild.new,
+);
+
 final pinRepositoryProvider = Provider<PinRepository>(
   (ref) => PinRepository(
     ref.watch(databaseProvider),
@@ -226,6 +264,7 @@ final profileRepositoryProvider = Provider<ProfileRepository>(
   (ref) => ProfileRepository(
     ref.watch(databaseProvider),
     clock: ref.watch(clockProvider),
+    childId: ref.watch(currentChildProvider),
   ),
 );
 
@@ -241,6 +280,7 @@ final usageRepositoryProvider = Provider<UsageRepository>(
   (ref) => UsageRepository(
     ref.watch(databaseProvider),
     clock: ref.watch(clockProvider),
+    childId: ref.watch(currentChildProvider),
   ),
 );
 
@@ -255,6 +295,7 @@ final roundRepositoryProvider = Provider<RoundRepository>(
   (ref) => RoundRepository(
     ref.watch(databaseProvider),
     clock: ref.watch(clockProvider),
+    childId: ref.watch(currentChildProvider),
   ),
 );
 
@@ -264,6 +305,7 @@ final statsRepositoryProvider = FutureProvider<StatsRepository>(
     ref.watch(databaseProvider),
     await ref.watch(bankProvider.future),
     clock: ref.watch(clockProvider),
+    childId: ref.watch(currentChildProvider),
   ),
 );
 
@@ -273,6 +315,7 @@ final badgeRepositoryProvider = FutureProvider<BadgeRepository>(
     ref.watch(databaseProvider),
     await ref.watch(statsRepositoryProvider.future),
     clock: ref.watch(clockProvider),
+    childId: ref.watch(currentChildProvider),
   ),
 );
 
@@ -332,6 +375,7 @@ final topicLockRepositoryProvider = Provider<TopicLockRepository>(
   (ref) => TopicLockRepository(
     ref.watch(databaseProvider),
     clock: ref.watch(clockProvider),
+    childId: ref.watch(currentChildProvider),
   ),
 );
 

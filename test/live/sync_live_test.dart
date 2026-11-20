@@ -76,6 +76,7 @@ class _Tablet {
             .insert(
               RoundsCompanion.insert(
                 sessionId: session,
+                childId: 1,
                 topicId: 'p1.place',
                 startedAt: at,
                 score: const Value(7),
@@ -88,6 +89,7 @@ class _Tablet {
             for (var a = 0; a < answers; a++)
               AttemptsCompanion.insert(
                 roundId: id,
+                childId: 1,
                 questionId: 'q$a',
                 answerGiven: '$a',
                 correct: a.isEven,

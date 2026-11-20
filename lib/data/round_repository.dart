@@ -11,9 +11,12 @@ const roundKindRevision = 'revision';
 /// Saves rounds and attempts (PRC-04, PRC-06) and reads recent results
 /// (PRC-08).
 class RoundRepository {
-  RoundRepository(this.db, {required this.clock});
+  RoundRepository(this.db, {required this.clock, this.childId = 1});
 
   final AppDatabase db;
+
+  /// The child playing (FEAT-25): every row written and read is hers.
+  final int childId;
   final Clock clock;
 
   /// This app opening's `play_sessions` row, created on first use.
@@ -41,6 +44,7 @@ class RoundRepository {
         .insert(
           RoundsCompanion.insert(
             sessionId: session,
+            childId: childId,
             topicId: topicId,
             level: Value(level),
             startedAt: clock(),
@@ -55,6 +59,7 @@ class RoundRepository {
       .insert(
         AttemptsCompanion.insert(
           roundId: roundId,
+          childId: childId,
           questionId: r.questionId,
           answerGiven: r.given,
           correct: r.correct,
@@ -85,7 +90,12 @@ class RoundRepository {
   /// them (REV-04).
   Future<List<FinishedRound>> finishedRounds({String? topicId}) async {
     final q = db.select(db.rounds)
-      ..where((r) => r.finishedAt.isNotNull() & r.kind.equals(roundKindNormal));
+      ..where(
+        (r) =>
+            r.childId.equals(childId) &
+            r.finishedAt.isNotNull() &
+            r.kind.equals(roundKindNormal),
+      );
     if (topicId != null) q.where((r) => r.topicId.equals(topicId));
     return [
       for (final r in await q.get())
@@ -115,7 +125,9 @@ class RoundRepository {
   Future<Set<String>> recentCorrectIds(String topicId, {int rounds = 3}) async {
     final recent =
         await (db.select(db.rounds)
-              ..where((r) => r.topicId.equals(topicId))
+              ..where(
+                (r) => r.topicId.equals(topicId) & r.childId.equals(childId),
+              )
               ..orderBy([
                 (r) => OrderingTerm.desc(r.startedAt),
                 (r) => OrderingTerm.desc(r.id),

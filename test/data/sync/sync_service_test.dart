@@ -74,7 +74,9 @@ class Device {
 
   Future<void> earn(String badge) => db
       .into(db.badgesEarned)
-      .insert(BadgesEarnedCompanion.insert(badgeId: badge, earnedAt: now));
+      .insert(
+        BadgesEarnedCompanion.insert(childId: 1, badgeId: badge, earnedAt: now),
+      );
 
   Future<int> count(TableInfo<Table, Object?> t) async =>
       (await db.select(t).get()).length;
@@ -126,7 +128,7 @@ void main() {
     expect(profile?.nickname, 'Mei');
     expect(profile?.schoolYear, 2);
     expect(await b.profiles.pending(), isFalse);
-    final settings = await b.db.getSettings();
+    final settings = await b.db.child(1);
     expect(settings.dailyLimitMin, 35);
     expect(settings.soundOn, isFalse);
     expect(await b.topics.opened(), {'p2.fractions'});
@@ -197,12 +199,12 @@ void main() {
       await a.usage.setDailyLimit(30);
       await a.sync.run();
       await b.sync.run();
-      expect((await b.db.getSettings()).dailyLimitMin, 30);
+      expect((await b.db.child(1)).dailyLimitMin, 30);
       b.now = a.now.add(const Duration(hours: 1));
       await b.usage.setDailyLimit(45);
       await b.sync.run();
       await a.sync.run();
-      expect((await a.db.getSettings()).dailyLimitMin, 45);
+      expect((await a.db.child(1)).dailyLimitMin, 45);
     },
   );
 

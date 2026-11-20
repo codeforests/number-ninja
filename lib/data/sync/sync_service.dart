@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import '../../domain/clock.dart';
 import '../../domain/sync_merge.dart';
 import '../database.dart';
+import '../profile_repository.dart' show profileOf;
 import 'server_client.dart';
 
 /// What one sync run did (FEAT-14). Counts are records, by collection.
@@ -50,6 +51,9 @@ class SyncService {
 
   /// One run. Throws [SyncException] when it has to stop (offline, server
   /// error, expired session); the controller retries.
+  /// Until per-child sync (FEAT-25 T5) the account's child is local child 1.
+  static const _child1 = 1;
+
   Future<SyncOutcome> run() async {
     final out = SyncOutcome();
     final Account account;
@@ -279,25 +283,24 @@ class SyncService {
       final nickname = v(syncFieldNickname) as String? ?? '';
       final year = v(syncFieldSchoolYear) as int?;
       if (nickname.isNotEmpty && year != null) {
-        await db
-            .into(db.childProfiles)
-            .insertOnConflictUpdate(
-              ChildProfilesCompanion.insert(
-                id: const Value(1),
-                nickname: nickname,
-                schoolYear: year,
-                schoolStartLevel: Value(v(syncFieldStartSchool) as int?),
-                olympiadStartLevel: Value(v(syncFieldStartOlympiad) as int?),
-                updatedAt: clock(),
-              ),
-            );
+        await (db.update(
+          db.children,
+        )..where((c) => c.id.equals(_child1))).write(
+          ChildrenCompanion(
+            nickname: Value(nickname),
+            schoolYear: Value(year),
+            schoolStartLevel: Value(v(syncFieldStartSchool) as int?),
+            olympiadStartLevel: Value(v(syncFieldStartOlympiad) as int?),
+            updatedAt: Value(clock()),
+          ),
+        );
         await (db.update(db.appSettings)..where((s) => s.id.equals(1))).write(
           const AppSettingsCompanion(profilePending: Value(false)),
         );
         changed = true;
       }
     }
-    final settings = AppSettingsCompanion(
+    final settings = ChildrenCompanion(
       dailyLimitMin: fields.contains(syncFieldDailyLimit)
           ? Value(remote[syncFieldDailyLimit] as int)
           : const Value.absent(),
@@ -307,24 +310,27 @@ class SyncService {
     );
     if (settings.dailyLimitMin.present || settings.soundOn.present) {
       await (db.update(
-        db.appSettings,
-      )..where((s) => s.id.equals(1))).write(settings);
+        db.children,
+      )..where((c) => c.id.equals(_child1))).write(settings);
       changed = true;
     }
     if (fields.contains(syncFieldTopics)) {
       final want = (remote[syncFieldTopics] as List<String>).toSet();
-      final have = {
-        for (final r in await db.select(db.topicUnlocks).get()) r.topicId,
-      };
+      final have = {for (final r in await _topicRows()) r.topicId};
       if (want.length != have.length || !want.containsAll(have)) {
-        await (db.delete(
-          db.topicUnlocks,
-        )..where((t) => t.topicId.isNotIn(want))).go();
+        await (db.delete(db.topicUnlocks)..where(
+              (t) => t.topicId.isNotIn(want) & t.childId.equals(_child1),
+            ))
+            .go();
         for (final id in want.difference(have)) {
           await db
               .into(db.topicUnlocks)
               .insert(
-                TopicUnlocksCompanion.insert(topicId: id, openedAt: clock()),
+                TopicUnlocksCompanion.insert(
+                  childId: _child1,
+                  topicId: id,
+                  openedAt: clock(),
+                ),
               );
         }
         changed = true;
@@ -332,7 +338,9 @@ class SyncService {
     }
     for (final f in fields) {
       if (profileSyncFields.contains(f) && !profileFields.contains(f)) continue;
-      await (db.update(db.syncFields)..where((s) => s.field.equals(f))).write(
+      await (db.update(
+        db.syncFields,
+      )..where((s) => s.field.equals(f) & s.childId.equals(_child1))).write(
         SyncFieldsCompanion(
           changedAt: Value(remoteTimes[f]!),
           dirty: const Value(0),
@@ -344,15 +352,16 @@ class SyncService {
 
   Future<({Map<String, Object?> values, Map<String, DateTime> times})>
   _localFields() async {
-    final profile = await (db.select(
-      db.childProfiles,
-    )..where((p) => p.id.equals(1))).getSingleOrNull();
-    final settings = await db.getSettings();
-    final topics = [
-      for (final r in await db.select(db.topicUnlocks).get()) r.topicId,
-    ]..sort();
+    final child = await (db.select(
+      db.children,
+    )..where((c) => c.id.equals(_child1))).getSingle();
+    final profile = profileOf(child);
+    final settings = child;
+    final topics = [for (final r in await _topicRows()) r.topicId]..sort();
     final times = {
-      for (final f in await db.select(db.syncFields).get())
+      for (final f in await (db.select(
+        db.syncFields,
+      )..where((f) => f.childId.equals(_child1))).get())
         f.field: f.changedAt,
     };
     if (profile == null) {
@@ -373,6 +382,10 @@ class SyncService {
       times: times,
     );
   }
+
+  Future<List<TopicUnlock>> _topicRows() => (db.select(
+    db.topicUnlocks,
+  )..where((t) => t.childId.equals(_child1))).get();
 
   /// The child record's fields as local values (a start level of 0 means
   /// none: PocketBase numbers can't be null).
@@ -724,6 +737,7 @@ class SyncService {
                 .insert(
                   RoundsCompanion.insert(
                     sessionId: ctx.session!,
+                    childId: _child1,
                     topicId: item['topic_id'] as String,
                     level: Value(_int(item['level'])),
                     startedAt: _date(item['started_at']) ?? clock(),
@@ -777,6 +791,7 @@ class SyncService {
             .insert(
               AttemptsCompanion.insert(
                 roundId: round.id,
+                childId: round.childId,
                 questionId: item['question_id'] as String,
                 answerGiven: item['answer_given'] as String? ?? '',
                 correct: item['correct'] == true,
@@ -800,6 +815,7 @@ class SyncService {
                 .into(db.badgesEarned)
                 .insert(
                   BadgesEarnedCompanion.insert(
+                    childId: _child1,
                     badgeId: id,
                     earnedAt: remoteAt,
                     dirty: const Value(0),
@@ -848,6 +864,7 @@ class SyncService {
             .into(db.dailyUsage)
             .insertOnConflictUpdate(
               DailyUsageCompanion.insert(
+                childId: _child1,
                 day: day,
                 deviceId: device,
                 secondsUsed: Value(merged.secondsUsed),

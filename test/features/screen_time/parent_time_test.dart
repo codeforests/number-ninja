@@ -91,7 +91,7 @@ void main() {
 
     await tap(tester, 'limit-plus');
     expect(text(tester, 'limit-value'), '25 min');
-    expect((await h.db.getSettings()).dailyLimitMin, 25);
+    expect((await h.db.child(1)).dailyLimitMin, 25);
     expect(text(tester, 'today-usage'), 'Today: 20 min used, 5 min left');
 
     await tap(tester, 'parent-done');
@@ -109,7 +109,7 @@ void main() {
     }
     expect(text(tester, 'limit-value'), '120 min');
     expect(button('limit-plus').onPressed, isNull);
-    expect((await h.db.getSettings()).dailyLimitMin, 120);
+    expect((await h.db.child(1)).dailyLimitMin, 120);
 
     for (var i = 0; i < 30; i++) {
       if (button('limit-minus').onPressed == null) break;
@@ -117,7 +117,7 @@ void main() {
     }
     expect(text(tester, 'limit-value'), '5 min');
     expect(button('limit-minus').onPressed, isNull);
-    expect((await h.db.getSettings()).dailyLimitMin, 5);
+    expect((await h.db.child(1)).dailyLimitMin, 5);
     expect(text(tester, 'today-usage'), 'Today: 20 min used, 0 min left');
   });
 }

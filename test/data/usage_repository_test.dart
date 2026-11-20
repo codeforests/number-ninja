@@ -21,7 +21,7 @@ void main() {
       expect(await repo.soundOn(), isTrue);
       await repo.setSoundOn(false);
       expect(await repo.soundOn(), isFalse);
-      expect((await db.getSettings()).soundOn, isFalse);
+      expect((await db.select(db.children).getSingle()).soundOn, isFalse);
       await repo.setSoundOn(true);
       expect(await repo.soundOn(), isTrue);
     });
@@ -58,9 +58,9 @@ void main() {
       expect(await repo.setDailyLimit(45), 45);
       expect((await repo.status('2027-01-05')).limitMinutes, 45);
       expect(await repo.setDailyLimit(2), 5);
-      expect((await db.getSettings()).dailyLimitMin, 5);
+      expect((await db.child(1)).dailyLimitMin, 5);
       expect(await repo.setDailyLimit(500), 120);
-      expect((await db.getSettings()).dailyLimitMin, 120);
+      expect((await db.child(1)).dailyLimitMin, 120);
     });
 
     test('works as the ScreenTimeClock store', () async {

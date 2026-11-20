@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'app.dart';
+import 'data/child_repository.dart';
 import 'data/database.dart';
 import 'data/pin_repository.dart';
 import 'data/profile_repository.dart';
@@ -16,10 +17,12 @@ Future<void> main() async {
     db,
     clock: systemClock,
   ).pending();
+  final childId = await ChildRepository(db, clock: systemClock).current();
   runApp(
     ProviderScope(
       overrides: [
         databaseProvider.overrideWithValue(db),
+        startChildProvider.overrideWithValue(childId),
         appSessionProvider.overrideWithValue(
           AppSession(
             hasPin: hasPin,
