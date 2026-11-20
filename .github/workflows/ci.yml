@@ -171,6 +171,11 @@ jobs:
         run: |
           set -euo pipefail
           cp build/app/outputs/flutter-apk/app-release.apk "brainbubblz-$TAG.apk"
+          # Optional notes for Ken in docs/releases/<tag>.md go above the usual line.
+          {
+            if [ -f "docs/releases/$TAG.md" ]; then cat "docs/releases/$TAG.md"; echo; fi
+            echo "Release-signed APK from $GITHUB_SHA for the milestone check on the tablet. Open this page on the tablet, download the APK and install it."
+          } > release-notes.md
           gh release create "$TAG" "brainbubblz-$TAG.apk" \
             --target "$GITHUB_SHA" --title "BrainBubblz $TAG" \
-            --notes "Release-signed APK from $GITHUB_SHA for the milestone check on the tablet. Open this page on the tablet, download the APK and install it."
+            --notes-file release-notes.md
