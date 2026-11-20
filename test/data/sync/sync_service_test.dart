@@ -266,7 +266,7 @@ void main() {
         await d.db.delete(d.db.playSessions).go();
         await d.db.delete(d.db.badgesEarned).go();
       });
-      await d.sync.markPendingReset();
+      await d.sync.markPendingReset(1);
     }
 
     test('online: clears the server and B at its next sync', () async {

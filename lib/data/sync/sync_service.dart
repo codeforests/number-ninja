@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../../domain/clock.dart';
+import '../../domain/family.dart';
 import '../../domain/sync_merge.dart';
+import '../child_repository.dart';
 import '../database.dart';
 import '../profile_repository.dart' show profileOf;
 import 'server_client.dart';
@@ -28,7 +30,8 @@ const _batchSize = 100;
 const _pageSize = 500;
 
 /// Copies progress to the server and back (SYN-01..07, ADR-04), as one
-/// serial run: refresh, child, push, pull, done. The merge decisions come
+/// serial run: refresh, children, push, pull, done. Each local child syncs
+/// with her own server `children` record (FEAT-25 FAM-06). The merge decisions come
 /// from `domain/sync_merge.dart`.
 class SyncService {
   SyncService({
@@ -51,8 +54,6 @@ class SyncService {
 
   /// One run. Throws [SyncException] when it has to stop (offline, server
   /// error, expired session); the controller retries.
-  /// Until per-child sync (FEAT-25 T5) the account's child is local child 1.
-  static const _child1 = 1;
 
   Future<SyncOutcome> run() async {
     final out = SyncOutcome();
@@ -73,9 +74,15 @@ class SyncService {
       state = await _state();
     }
     final device = await db.deviceId();
-    final child = await _child(state, out);
-    await _pushAll(child, device, out);
-    await _pullAll(child, device, out);
+    final linked = await _children(out);
+    await _moveLegacyCursors(state);
+    for (final (local, remote) in linked) {
+      await _pushAll(local, remote, device, out);
+    }
+    final ctx = _PullContext(device);
+    for (final (local, remote) in linked) {
+      await _pullAll(local, remote, ctx, out);
+    }
     await _setState(
       SyncStateCompanion(lastSyncAt: Value(clock()), lastError: Value(null)),
     );
@@ -103,10 +110,12 @@ class SyncService {
   Future<void> recordError(SyncError? e) =>
       _setState(SyncStateCompanion(lastError: Value(e?.name)));
 
-  /// Asks the next run to clear the server's progress (SCR-11 reset while
-  /// signed in, SYN-06).
-  Future<void> markPendingReset() =>
-      _setState(const SyncStateCompanion(pendingReset: Value(true)));
+  /// Asks the next run to clear the server's progress of child [childId]
+  /// (SCR-11 reset while signed in, SYN-06, FEAT-25 AD-11).
+  Future<void> markPendingReset(int childId) =>
+      (db.update(db.children)..where((c) => c.id.equals(childId))).write(
+        const ChildrenCompanion(pendingReset: Value(true)),
+      );
 
   /// First sign-in of [accountId] on this device (SYN-03): forget the old
   /// account's ids and cursors and mark everything unsent, so this device's
@@ -124,6 +133,15 @@ class SyncService {
             pendingReset: switched ? const Value(false) : const Value.absent(),
             cursors: const Value('{}'),
           ),
+        );
+        // Children link again by nickname (AD-9); a child removed here
+        // while signed out has nothing left to delete there.
+        await db.customStatement(
+          'DELETE FROM children WHERE pending_delete = 1',
+        );
+        await db.customStatement(
+          'UPDATE children SET remote_id = NULL, reset_epoch = 0'
+          '${switched ? ', pending_reset = 0' : ''}',
         );
         for (final t in ['rounds', 'badges_earned', 'daily_usage']) {
           await db.customStatement(
@@ -145,80 +163,242 @@ class SyncService {
 
   // --- child, reset and fields ----------------------------------------------
 
-  Future<String> _child(SyncStateData state, SyncOutcome out) async {
-    final children = await client.listChildren();
-    if (children.isEmpty) {
-      final local = await _localFields();
-      final created = await client.createChild({
-        ..._fieldBody(local.values, local.times.keys),
-        'field_times': _timesJson(local.times),
-        'reset_epoch': 0,
-      });
-      final id = created['id'] as String;
-      await _setState(
-        SyncStateCompanion(
-          childId: Value(id),
-          resetEpoch: const Value(0),
-          pendingReset: const Value(false),
-        ),
-      );
-      await db.customStatement('UPDATE sync_fields SET dirty = 0');
-      return id;
+  Future<List<ChildRow>> _visibleChildren() =>
+      (db.select(db.children)
+            ..where((c) => c.pendingDelete.equals(false))
+            ..orderBy([(c) => OrderingTerm.asc(c.id)]))
+          .get();
+
+  Future<void> _setChild(int id, ChildrenCompanion c) =>
+      (db.update(db.children)..where((r) => r.id.equals(id))).write(c);
+
+  /// Brings the family in line with the account's `children` records and
+  /// returns each local child with her server id (FEAT-25): removed
+  /// children go (AD-10), unlinked ones match by nickname (AD-9), the
+  /// account's other children are added here and this device's are created
+  /// there; then each child's reset and fields (AD-11).
+  Future<List<(int, String)>> _children(SyncOutcome out) async {
+    var remote = await client.listChildren();
+
+    // AD-10: removed here while offline: delete her server record now.
+    final gone = await (db.select(
+      db.children,
+    )..where((c) => c.pendingDelete.equals(true))).get();
+    for (final l in gone) {
+      final rid = l.remoteId;
+      if (rid != null && remote.any((c) => c['id'] == rid)) {
+        await client.deleteChild(rid);
+        remote = [
+          for (final c in remote)
+            if (c['id'] != rid) c,
+        ];
+      }
+      await (db.delete(db.children)..where((c) => c.id.equals(l.id))).go();
     }
-    final c = children.first;
-    final id = c['id'] as String;
-    final remoteEpoch = _int(c['reset_epoch']);
-    if (state.pendingReset) {
-      // Also when newly linked: a reset made before this device's first
-      // successful sync clears the server before the pull (SYN-06).
-      final r = await client.resetChild(id);
-      await _setState(
-        SyncStateCompanion(
-          childId: Value(id),
-          resetEpoch: Value(r.epoch),
-          pendingReset: const Value(false),
-        ),
-      );
-    } else if (state.childId == null) {
+    final byId = {for (final c in remote) c['id'] as String: c};
+
+    // AD-9: unlinked children here meet the account's unlinked ones.
+    var locals = await _visibleChildren();
+    final linked = {
+      for (final l in locals)
+        if (byId.containsKey(l.remoteId)) l.remoteId!,
+    };
+    final matches = matchChildren(
+      [
+        for (final l in locals)
+          if (l.remoteId == null) (l.id, l.nickname),
+      ],
+      [
+        for (final c in remote)
+          if (!linked.contains(c['id']))
+            (c['id'] as String, '${c['nickname'] ?? ''}'),
+      ],
+    );
+    for (final MapEntry(key: local, value: rid) in matches.entries) {
       // Newly linked: take the account's epoch, keep this device's progress.
-      await _setState(
-        SyncStateCompanion(childId: Value(id), resetEpoch: Value(remoteEpoch)),
+      await _setChild(
+        local,
+        ChildrenCompanion(
+          remoteId: Value(rid),
+          resetEpoch: Value(_int(byId[rid]!['reset_epoch'])),
+        ),
       );
-    } else if (remoteEpoch > state.resetEpoch) {
-      final at = _date(c['reset_at']);
-      if (at != null) await _clearBefore(at);
-      forgetSession();
-      out.changed = true;
-      await _setState(SyncStateCompanion(resetEpoch: Value(remoteEpoch)));
     }
-    await _mergeChild(c, out);
-    return id;
+    final taken = {...linked, ...matches.values};
+    for (final c in remote) {
+      if (taken.contains(c['id'])) continue;
+      // A sibling added on another device (AD-1: never dropped, even past
+      // maxChildren). Her fields come from the account in the merge below.
+      final now = clock();
+      final year = _int(c['school_year']);
+      final avatar = '${c['avatar'] ?? ''}';
+      final id = await db
+          .into(db.children)
+          .insert(
+            ChildrenCompanion.insert(
+              schoolYear: Value(year == 0 ? 1 : year),
+              avatar: Value(
+                avatarIds.contains(avatar)
+                    ? avatar
+                    : nextAvatar(locals.map((l) => l.avatar)),
+              ),
+              createdAt: now,
+              updatedAt: now,
+              remoteId: Value(c['id'] as String),
+              resetEpoch: Value(_int(c['reset_epoch'])),
+            ),
+          );
+      await db.seedChildFields(id, profileTime: null);
+      out.changed = true;
+    }
+
+    // AD-10: a linked child the account no longer has was removed on
+    // another device.
+    for (final l in await _visibleChildren()) {
+      if (l.remoteId == null || byId.containsKey(l.remoteId)) continue;
+      if ((await _visibleChildren()).length <= 1) {
+        // There is always a child (AD-2): keep her, as new to the account.
+        await _setChild(
+          l.id,
+          const ChildrenCompanion(
+            remoteId: Value(null),
+            resetEpoch: Value(0),
+            pendingReset: Value(false),
+          ),
+        );
+        for (final t in ['rounds', 'badges_earned', 'daily_usage']) {
+          await db.customStatement(
+            'UPDATE $t SET dirty = dirty + 1, remote_id = NULL '
+            'WHERE child_id = ?',
+            [l.id],
+          );
+        }
+        await db.customStatement(
+          'UPDATE attempts SET dirty = dirty + 1 WHERE child_id = ?',
+          [l.id],
+        );
+        continue;
+      }
+      await db.transaction(() async {
+        await ChildRepository(db, clock: clock).deleteRows(l.id);
+        await (db.delete(db.children)..where((c) => c.id.equals(l.id))).go();
+      });
+      out.changed = true;
+    }
+
+    final pairs = <(int, String)>[];
+    locals = await _visibleChildren();
+    for (final l in locals) {
+      final rid = l.remoteId;
+      if (rid == null) {
+        final local = await _localFields(l.id);
+        final created = await client.createChild({
+          ..._fieldBody(local.values, local.times.keys),
+          'field_times': _timesJson(local.times),
+          'reset_epoch': 0,
+        });
+        await _setChild(
+          l.id,
+          ChildrenCompanion(
+            remoteId: Value(created['id'] as String),
+            resetEpoch: const Value(0),
+            pendingReset: const Value(false),
+          ),
+        );
+        await _fieldsSent(l.id);
+        pairs.add((l.id, created['id'] as String));
+        continue;
+      }
+      final c = byId[rid]!;
+      final remoteEpoch = _int(c['reset_epoch']);
+      if (l.pendingReset) {
+        // Also when newly linked: a reset made before this device's first
+        // successful sync clears the server before the pull (SYN-06).
+        final r = await client.resetChild(rid);
+        await _setChild(
+          l.id,
+          ChildrenCompanion(
+            resetEpoch: Value(r.epoch),
+            pendingReset: const Value(false),
+          ),
+        );
+      } else if (remoteEpoch > l.resetEpoch) {
+        final at = _date(c['reset_at']);
+        if (at != null) await _clearBefore(l.id, at);
+        forgetSession();
+        out.changed = true;
+        await _setChild(
+          l.id,
+          ChildrenCompanion(resetEpoch: Value(remoteEpoch)),
+        );
+      }
+      await _mergeChild(l.id, c, out);
+      pairs.add((l.id, rid));
+    }
+    return pairs;
   }
 
-  /// Deletes local rounds started before [at] (with their attempts) and
-  /// badges earned before it: another device reset her progress (SYN-06).
-  Future<void> _clearBefore(DateTime at) => db.transaction(() async {
+  Future<void> _fieldsSent(int childId) => db.customStatement(
+    'UPDATE sync_fields SET dirty = 0 WHERE child_id = ?',
+    [childId],
+  );
+
+  /// Cursors before FEAT-25 were per collection for the one child
+  /// (`sync_state.child_id`); they become that child's (AD-16).
+  Future<void> _moveLegacyCursors(SyncStateData state) async {
+    final cursors = Map<String, String>.from(
+      jsonDecode((await _state()).cursors) as Map,
+    );
+    final old = state.childId;
+    if (!_pulled.any(cursors.containsKey)) return;
+    for (final c in _pulled) {
+      final v = cursors.remove(c);
+      if (v != null && old != null) cursors.putIfAbsent('$old/$c', () => v);
+    }
+    await _setState(SyncStateCompanion(cursors: Value(jsonEncode(cursors))));
+  }
+
+  static const _pulled = ['rounds', 'attempts', 'badges', 'daily_usage'];
+
+  /// Deletes child [childId]'s local rounds started before [at] (with their
+  /// attempts) and badges earned before it: another device reset her
+  /// progress (SYN-06, AD-11).
+  Future<void> _clearBefore(
+    int childId,
+    DateTime at,
+  ) => db.transaction(() async {
     final old = db.selectOnly(db.rounds)
       ..addColumns([db.rounds.id])
-      ..where(db.rounds.startedAt.isSmallerThanValue(at));
+      ..where(
+        db.rounds.startedAt.isSmallerThanValue(at) &
+            db.rounds.childId.equals(childId),
+      );
     await (db.delete(db.attempts)..where((a) => a.roundId.isInQuery(old))).go();
-    await (db.delete(
-      db.rounds,
-    )..where((r) => r.startedAt.isSmallerThanValue(at))).go();
-    await (db.delete(
-      db.badgesEarned,
-    )..where((b) => b.earnedAt.isSmallerThanValue(at))).go();
+    await (db.delete(db.rounds)..where(
+          (r) => r.startedAt.isSmallerThanValue(at) & r.childId.equals(childId),
+        ))
+        .go();
+    await (db.delete(db.badgesEarned)..where(
+          (b) => b.earnedAt.isSmallerThanValue(at) & b.childId.equals(childId),
+        ))
+        .go();
   });
 
-  Future<void> _mergeChild(Map<String, dynamic> c, SyncOutcome out) async {
-    final local = await _localFields();
+  Future<void> _mergeChild(
+    int childId,
+    Map<String, dynamic> c,
+    SyncOutcome out,
+  ) async {
+    final local = await _localFields(childId);
     final remoteTimes = <String, DateTime>{
       for (final e in ((c['field_times'] as Map?) ?? const {}).entries)
         if (_date(e.value) != null) e.key as String: _date(e.value)!,
     };
     final remoteValues = _remoteValues(c);
     final localTimes = {...local.times};
-    final pending = (await db.getSettings()).profilePending;
+    // Her profile isn't filled in here yet (a first run, or a sibling just
+    // added from the account).
+    final pending = local.values[syncFieldNickname] == null;
     final remoteHasProfile =
         (remoteValues[syncFieldNickname] as String? ?? '').isNotEmpty;
     if (pending) {
@@ -242,6 +422,7 @@ class SyncService {
     ];
     if (takeRemote.isNotEmpty) {
       final changed = await _applyRemote(
+        childId,
         takeRemote,
         remoteValues,
         remoteTimes,
@@ -251,7 +432,7 @@ class SyncService {
       if (changed) out.changed = true;
     }
     if (sendLocal.isEmpty) {
-      await db.customStatement('UPDATE sync_fields SET dirty = 0');
+      await _fieldsSent(childId);
       return;
     }
     final times = {...remoteTimes};
@@ -262,12 +443,13 @@ class SyncService {
       ..._fieldBody(local.values, sendLocal),
       'field_times': _timesJson(times),
     });
-    await db.customStatement('UPDATE sync_fields SET dirty = 0');
+    await _fieldsSent(childId);
   }
 
   /// Writes the server's value of each of [fields] here, stamped with the
   /// server's time (no new change). Returns whether anything changed.
   Future<bool> _applyRemote(
+    int childId,
     List<String> fields,
     Map<String, Object?> remote,
     Map<String, DateTime> remoteTimes,
@@ -285,7 +467,7 @@ class SyncService {
       if (nickname.isNotEmpty && year != null) {
         await (db.update(
           db.children,
-        )..where((c) => c.id.equals(_child1))).write(
+        )..where((c) => c.id.equals(childId))).write(
           ChildrenCompanion(
             nickname: Value(nickname),
             schoolYear: Value(year),
@@ -307,19 +489,27 @@ class SyncService {
       soundOn: fields.contains(syncFieldSound)
           ? Value(remote[syncFieldSound] as bool)
           : const Value.absent(),
+      // A record from before FEAT-25 has no avatar: keep hers.
+      avatar:
+          fields.contains(syncFieldAvatar) &&
+              avatarIds.contains(remote[syncFieldAvatar])
+          ? Value(remote[syncFieldAvatar] as String)
+          : const Value.absent(),
     );
-    if (settings.dailyLimitMin.present || settings.soundOn.present) {
+    if (settings.dailyLimitMin.present ||
+        settings.soundOn.present ||
+        settings.avatar.present) {
       await (db.update(
         db.children,
-      )..where((c) => c.id.equals(_child1))).write(settings);
+      )..where((c) => c.id.equals(childId))).write(settings);
       changed = true;
     }
     if (fields.contains(syncFieldTopics)) {
       final want = (remote[syncFieldTopics] as List<String>).toSet();
-      final have = {for (final r in await _topicRows()) r.topicId};
+      final have = {for (final r in await _topicRows(childId)) r.topicId};
       if (want.length != have.length || !want.containsAll(have)) {
         await (db.delete(db.topicUnlocks)..where(
-              (t) => t.topicId.isNotIn(want) & t.childId.equals(_child1),
+              (t) => t.topicId.isNotIn(want) & t.childId.equals(childId),
             ))
             .go();
         for (final id in want.difference(have)) {
@@ -327,7 +517,7 @@ class SyncService {
               .into(db.topicUnlocks)
               .insert(
                 TopicUnlocksCompanion.insert(
-                  childId: _child1,
+                  childId: childId,
                   topicId: id,
                   openedAt: clock(),
                 ),
@@ -340,7 +530,7 @@ class SyncService {
       if (profileSyncFields.contains(f) && !profileFields.contains(f)) continue;
       await (db.update(
         db.syncFields,
-      )..where((s) => s.field.equals(f) & s.childId.equals(_child1))).write(
+      )..where((s) => s.field.equals(f) & s.childId.equals(childId))).write(
         SyncFieldsCompanion(
           changedAt: Value(remoteTimes[f]!),
           dirty: const Value(0),
@@ -351,17 +541,18 @@ class SyncService {
   });
 
   Future<({Map<String, Object?> values, Map<String, DateTime> times})>
-  _localFields() async {
+  _localFields(int childId) async {
     final child = await (db.select(
       db.children,
-    )..where((c) => c.id.equals(_child1))).getSingle();
+    )..where((c) => c.id.equals(childId))).getSingle();
     final profile = profileOf(child);
     final settings = child;
-    final topics = [for (final r in await _topicRows()) r.topicId]..sort();
+    final topics = [for (final r in await _topicRows(childId)) r.topicId]
+      ..sort();
     final times = {
       for (final f in await (db.select(
         db.syncFields,
-      )..where((f) => f.childId.equals(_child1))).get())
+      )..where((f) => f.childId.equals(childId))).get())
         f.field: f.changedAt,
     };
     if (profile == null) {
@@ -377,15 +568,16 @@ class SyncService {
         syncFieldStartOlympiad: profile?.olympiadStartLevel,
         syncFieldDailyLimit: settings.dailyLimitMin,
         syncFieldSound: settings.soundOn,
+        syncFieldAvatar: settings.avatar,
         syncFieldTopics: topics,
       },
       times: times,
     );
   }
 
-  Future<List<TopicUnlock>> _topicRows() => (db.select(
+  Future<List<TopicUnlock>> _topicRows(int childId) => (db.select(
     db.topicUnlocks,
-  )..where((t) => t.childId.equals(_child1))).get();
+  )..where((t) => t.childId.equals(childId))).get();
 
   /// The child record's fields as local values (a start level of 0 means
   /// none: PocketBase numbers can't be null).
@@ -400,6 +592,7 @@ class SyncService {
       syncFieldStartOlympiad: level(c['start_level_olympiad']),
       syncFieldDailyLimit: _int(c['daily_limit_min']),
       syncFieldSound: c['sound_on'] == true,
+      syncFieldAvatar: c['avatar'] as String? ?? '',
       syncFieldTopics: [
         for (final t in (c['unlocked_topics'] as List?) ?? const []) '$t',
       ],
@@ -423,10 +616,18 @@ class SyncService {
 
   // --- push ------------------------------------------------------------------
 
-  Future<void> _pushAll(String child, String device, SyncOutcome out) async {
-    final rounds = await (db.select(
-      db.rounds,
-    )..where((r) => r.dirty.isBiggerThanValue(0))).get();
+  /// Pushes child [local]'s dirty rows to her server record [child].
+  Future<void> _pushAll(
+    int local,
+    String child,
+    String device,
+    SyncOutcome out,
+  ) async {
+    final rounds =
+        await (db.select(db.rounds)..where(
+              (r) => r.dirty.isBiggerThanValue(0) & r.childId.equals(local),
+            ))
+            .get();
     await _push(
       'rounds',
       [
@@ -460,7 +661,9 @@ class SyncService {
         .customSelect(
           'SELECT a.uuid, a.dirty, a.question_id, a.answer_given, a.correct, '
           'a.time_ms, a.answered_at, r.uuid AS round_uuid FROM attempts a '
-          'JOIN rounds r ON r.id = a.round_id WHERE a.dirty > 0',
+          'JOIN rounds r ON r.id = a.round_id '
+          'WHERE a.dirty > 0 AND a.child_id = ?',
+          variables: [Variable.withInt(local)],
           readsFrom: {db.attempts, db.rounds},
         )
         .get();
@@ -490,9 +693,11 @@ class SyncService {
       out,
     );
 
-    final badges = await (db.select(
-      db.badgesEarned,
-    )..where((b) => b.dirty.isBiggerThanValue(0))).get();
+    final badges =
+        await (db.select(db.badgesEarned)..where(
+              (b) => b.dirty.isBiggerThanValue(0) & b.childId.equals(local),
+            ))
+            .get();
     await _push(
       'badges',
       [
@@ -522,13 +727,18 @@ class SyncService {
         row.key,
         row.dirty,
         remoteId,
+        extra: ' AND child_id = ?',
+        extraArgs: [local],
       ),
       out,
     );
 
     final usage =
         await (db.select(db.dailyUsage)..where(
-              (u) => u.dirty.isBiggerThanValue(0) & u.deviceId.equals(device),
+              (u) =>
+                  u.dirty.isBiggerThanValue(0) &
+                  u.deviceId.equals(device) &
+                  u.childId.equals(local),
             ))
             .get();
     await _push(
@@ -558,8 +768,8 @@ class SyncService {
         row.key,
         row.dirty,
         remoteId,
-        extra: ' AND device_id = ?',
-        extraArgs: [device],
+        extra: ' AND device_id = ? AND child_id = ?',
+        extraArgs: [device, local],
       ),
       out,
     );
@@ -673,13 +883,20 @@ class SyncService {
 
   // --- pull ------------------------------------------------------------------
 
-  Future<void> _pullAll(String child, String device, SyncOutcome out) async {
+  /// Pulls child [local]'s records from her server record [child], from
+  /// her own cursor per collection (`<child>/<collection>`, AD-16).
+  Future<void> _pullAll(
+    int local,
+    String child,
+    _PullContext ctx,
+    SyncOutcome out,
+  ) async {
     final cursors = Map<String, String>.from(
       jsonDecode((await _state()).cursors) as Map,
     );
-    final ctx = _PullContext(device);
-    for (final collection in ['rounds', 'attempts', 'badges', 'daily_usage']) {
-      final from = cursors[collection] ?? '';
+    for (final collection in _pulled) {
+      final key = '$child/$collection';
+      final from = cursors[key] ?? '';
       var last = from;
       String? blockedAt;
       var total = 1;
@@ -695,7 +912,7 @@ class SyncService {
         await db.transaction(() async {
           for (final item in p.items) {
             final updated = item['updated'] as String? ?? '';
-            final ok = await _merge(collection, item, ctx, out);
+            final ok = await _merge(local, collection, item, ctx, out);
             if (!ok) blockedAt ??= updated;
             if (updated.compareTo(last) > 0) last = updated;
           }
@@ -703,7 +920,7 @@ class SyncService {
         out._pull(collection, p.items.length);
         if (p.items.isEmpty) break;
       }
-      cursors[collection] = blockedAt ?? last;
+      cursors[key] = blockedAt ?? last;
     }
     await _setState(SyncStateCompanion(cursors: Value(jsonEncode(cursors))));
   }
@@ -711,6 +928,7 @@ class SyncService {
   /// Merges one pulled record; false when it can't be placed yet (an
   /// attempt of an unknown round).
   Future<bool> _merge(
+    int childId,
     String collection,
     Map<String, dynamic> item,
     _PullContext ctx,
@@ -737,7 +955,7 @@ class SyncService {
                 .insert(
                   RoundsCompanion.insert(
                     sessionId: ctx.session!,
-                    childId: _child1,
+                    childId: childId,
                     topicId: item['topic_id'] as String,
                     level: Value(_int(item['level'])),
                     startedAt: _date(item['started_at']) ?? clock(),
@@ -806,16 +1024,18 @@ class SyncService {
       case 'badges':
         final id = item['badge_id'] as String;
         final remoteAt = _date(item['earned_at']) ?? clock();
-        final local = await (db.select(
-          db.badgesEarned,
-        )..where((b) => b.badgeId.equals(id))).getSingleOrNull();
+        final local =
+            await (db.select(db.badgesEarned)..where(
+                  (b) => b.badgeId.equals(id) & b.childId.equals(childId),
+                ))
+                .getSingleOrNull();
         switch (mergeBadge(local?.earnedAt, remoteAt)) {
           case BadgeMerge.insert:
             await db
                 .into(db.badgesEarned)
                 .insert(
                   BadgesEarnedCompanion.insert(
-                    childId: _child1,
+                    childId: childId,
                     badgeId: id,
                     earnedAt: remoteAt,
                     dirty: const Value(0),
@@ -824,20 +1044,21 @@ class SyncService {
                 );
             out.changed = true;
           case BadgeMerge.takeRemote:
-            await (db.update(
-              db.badgesEarned,
-            )..where((b) => b.badgeId.equals(id))).write(
-              BadgesEarnedCompanion(
-                earnedAt: Value(remoteAt),
-                remoteId: Value(item['id'] as String),
-              ),
-            );
+            await (db.update(db.badgesEarned)..where(
+                  (b) => b.badgeId.equals(id) & b.childId.equals(childId),
+                ))
+                .write(
+                  BadgesEarnedCompanion(
+                    earnedAt: Value(remoteAt),
+                    remoteId: Value(item['id'] as String),
+                  ),
+                );
             out.changed = true;
           case BadgeMerge.pushLocal:
             await db.customStatement(
               'UPDATE badges_earned SET dirty = dirty + 1, remote_id = ? '
-              'WHERE badge_id = ?',
-              [item['id'] as String, id],
+              'WHERE badge_id = ? AND child_id = ?',
+              [item['id'] as String, id, childId],
             );
           case BadgeMerge.keep:
             break;
@@ -848,8 +1069,12 @@ class SyncService {
         if (device == ctx.device) return true;
         final day = item['day'] as String;
         final local =
-            await (db.select(db.dailyUsage)
-                  ..where((u) => u.day.equals(day) & u.deviceId.equals(device)))
+            await (db.select(db.dailyUsage)..where(
+                  (u) =>
+                      u.day.equals(day) &
+                      u.deviceId.equals(device) &
+                      u.childId.equals(childId),
+                ))
                 .getSingleOrNull();
         final remote = UsageCounts(
           _int(item['seconds_used']),
@@ -864,7 +1089,7 @@ class SyncService {
             .into(db.dailyUsage)
             .insertOnConflictUpdate(
               DailyUsageCompanion.insert(
-                childId: _child1,
+                childId: childId,
                 day: day,
                 deviceId: device,
                 secondsUsed: Value(merged.secondsUsed),

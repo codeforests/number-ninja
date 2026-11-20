@@ -246,6 +246,75 @@ void main() {
     );
   });
 
+  // FEAT-25 AC-8: siblings are several children of one owner.
+  group('siblings', () {
+    test('A creates and lists 2 children and writes records for each; the '
+        'avatar is stored', () async {
+      final mei = await ChildData.create(a);
+      final leo = await ChildData.create(a);
+      await a.pb
+          .collection('children')
+          .update(leo.child.id, body: {'nickname': 'Leo', 'avatar': 'frog'});
+      final mine = await a.pb
+          .collection('children')
+          .getFullList(filter: 'owner = "${a.id}"');
+      expect(mine.map((c) => c.id), containsAll([mei.child.id, leo.child.id]));
+      final got = await a.pb.collection('children').getOne(leo.child.id);
+      expect(got.getStringValue('avatar'), 'frog');
+      for (final d in [mei, leo]) {
+        final rounds = await a.pb
+            .collection('rounds')
+            .getFullList(filter: 'child = "${d.child.id}"');
+        expect(rounds.map((r) => r.id), [d.round.id]);
+      }
+    });
+
+    test("B can't read or write A's second child", () async {
+      final leo = await ChildData.create(a);
+      expect(
+        await statusOf(() => b.pb.collection('children').getOne(leo.child.id)),
+        404,
+      );
+      expect(
+        await statusOf(
+          () => b.pb
+              .collection('children')
+              .update(leo.child.id, body: {'nickname': 'X'}),
+        ),
+        404,
+      );
+      expect(
+        await statusOf(
+          () => b.pb
+              .collection('rounds')
+              .create(body: roundBody(leo.child.id, uniq('round'))),
+        ),
+        anyOf(400, 403),
+      );
+      expect(
+        await statusOf(() => b.pb.collection('children').delete(leo.child.id)),
+        404,
+      );
+    });
+
+    test("deleting a child removes her records, not her sibling's", () async {
+      final mei = await ChildData.create(a);
+      final leo = await ChildData.create(a);
+      await a.pb.collection('children').delete(leo.child.id);
+      final su = await superuser();
+      for (final MapEntry(key: name, value: r) in leo.perChild.entries) {
+        expect(
+          await statusOf(() => su.collection(name).getOne(r.id)),
+          404,
+          reason: name,
+        );
+      }
+      for (final MapEntry(key: name, value: r) in mei.perChild.entries) {
+        expect((await su.collection(name).getOne(r.id)).id, r.id);
+      }
+    });
+  });
+
   group('banks', () {
     test('anyone lists banks; only a superuser creates one', () async {
       // FEAT-15: version is a number; a high one no publish test uses.

@@ -235,7 +235,15 @@ final childrenProvider = FutureProvider.autoDispose<List<FamilyChild>>((ref) {
 /// provider watches it, so changing it reloads her data.
 class CurrentChild extends Notifier<int> {
   @override
-  int build() => ref.read(startChildProvider);
+  int build() {
+    // A sync may remove the current child (FEAT-25 AD-10): follow
+    // ChildRepository.current then.
+    ref.listen(syncDataVersionProvider, (_, _) async {
+      final now = await ref.read(childRepositoryProvider).current();
+      if (ref.mounted && now != state) state = now;
+    });
+    return ref.read(startChildProvider);
+  }
 
   /// Makes [id] the child playing now and saves it for the next launch.
   Future<void> select(int id) async {

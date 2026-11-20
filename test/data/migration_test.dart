@@ -390,7 +390,10 @@ void main() {
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(db.close);
       expect(await db.deviceId(), matches(RegExp(r'^[0-9a-f]{32}$')));
-      expect(await db.select(db.syncFields).get(), hasLength(7));
+      expect(
+        await db.select(db.syncFields).get(),
+        hasLength(syncFieldNames.length),
+      );
       expect(await db.select(db.syncState).get(), hasLength(1));
     },
   );

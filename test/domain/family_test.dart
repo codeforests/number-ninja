@@ -15,4 +15,51 @@ void main() {
     expect(avatarIds.toSet(), hasLength(avatarIds.length));
     expect(avatarIds.length, greaterThanOrEqualTo(maxChildren));
   });
+
+  group('matchChildren (AD-9)', () {
+    test('same nickname, trimmed and ignoring case', () {
+      expect(
+        matchChildren(
+          [(1, 'mia '), (2, 'Leo')],
+          [('r1', 'Leo'), ('r2', 'Mia')],
+        ),
+        {1: 'r2', 2: 'r1'},
+      );
+    });
+
+    test('one and one with different nicknames merge', () {
+      expect(matchChildren([(1, 'Mimi')], [('r1', 'Mia')]), {1: 'r1'});
+      expect(matchChildren([(1, '')], [('r1', 'Mia')]), {1: 'r1'});
+    });
+
+    test('no merge by count once a nickname matched or with more children', () {
+      expect(
+        matchChildren([(1, 'Mia'), (2, 'Ana')], [('r1', 'Mia'), ('r2', 'Leo')]),
+        {1: 'r1'},
+      );
+      expect(matchChildren([(1, 'Ana'), (2, 'Bo')], [('r1', 'Leo')]), isEmpty);
+      expect(
+        matchChildren([(1, 'Ana')], [('r1', 'Leo'), ('r2', 'Mia')]),
+        isEmpty,
+      );
+      expect(matchChildren([], [('r1', 'Leo')]), isEmpty);
+      expect(matchChildren([(1, 'Leo')], []), isEmpty);
+    });
+
+    test('a child with no nickname yet takes the first child left', () {
+      expect(matchChildren([(1, '')], [('r1', 'Mia'), ('r2', 'Leo')]), {
+        1: 'r1',
+      });
+      expect(
+        matchChildren([(1, ''), (2, 'Leo')], [('r1', 'Mia'), ('r2', 'Leo')]),
+        {1: 'r1', 2: 'r2'},
+      );
+    });
+
+    test('each server child matches once', () {
+      expect(matchChildren([(1, 'Leo'), (2, 'leo')], [('r1', 'Leo')]), {
+        1: 'r1',
+      });
+    });
+  });
 }

@@ -35,6 +35,7 @@ class ProfileRepository {
         syncFieldStartSchool,
       if (before == null || before.olympiadStartLevel != p.olympiadStartLevel)
         syncFieldStartOlympiad,
+      if (before?.avatar != p.avatar) syncFieldAvatar,
     ], now);
     await (db.update(db.children)..where((c) => c.id.equals(childId))).write(
       ChildrenCompanion(

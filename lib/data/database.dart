@@ -234,6 +234,7 @@ const syncFieldStartOlympiad = 'start_level_olympiad';
 const syncFieldDailyLimit = 'daily_limit_min';
 const syncFieldSound = 'sound_on';
 const syncFieldTopics = 'unlocked_topics';
+const syncFieldAvatar = 'avatar'; // FEAT-25 AD-7
 const profileSyncFields = [
   syncFieldNickname,
   syncFieldSchoolYear,
@@ -245,6 +246,7 @@ const syncFieldNames = [
   syncFieldDailyLimit,
   syncFieldSound,
   syncFieldTopics,
+  syncFieldAvatar,
 ];
 
 @DriftDatabase(
@@ -465,7 +467,9 @@ class AppDatabase extends _$AppDatabase {
   }) async {
     final zero = DateTime.fromMillisecondsSinceEpoch(0);
     for (final f in syncFieldNames) {
-      final at = profileSyncFields.contains(f) ? profileTime ?? zero : zero;
+      // The avatar is picked with the profile (FEAT-25 AD-7).
+      final withProfile = profileSyncFields.contains(f) || f == syncFieldAvatar;
+      final at = withProfile ? profileTime ?? zero : zero;
       await into(syncFields).insert(
         SyncFieldsCompanion.insert(childId: childId, field: f, changedAt: at),
         mode: InsertMode.insertOrIgnore,

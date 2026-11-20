@@ -37,7 +37,9 @@ class _ResetScreenState extends ConsumerState<ResetScreen> {
         ref.read(roundRepositoryProvider).forgetSession();
         if (ref.read(syncAccountProvider) != null) {
           // The server and her other tablets clear at the next sync (SYN-06).
-          await ref.read(syncServiceProvider).markPendingReset();
+          await ref
+              .read(syncServiceProvider)
+              .markPendingReset(ref.read(currentChildProvider));
           ref.read(syncProvider.notifier).requestSync();
         }
         if (!mounted) return;
