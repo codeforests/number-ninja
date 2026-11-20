@@ -146,13 +146,13 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| SET-01 | On first launch the app shall show a step-by-step parent setup with progress dots and Back on every step: welcome, PIN (PAR-01), optional account, children, daily time and sound, and a last page; the child can't play until it is finished. (D21) | M | FEAT-26 | |
-| SET-02 | The welcome step shall explain in three short cards what the app does, and the last page shall show how to reach the parent area. | S | FEAT-26 | |
-| SET-03 | If the app is closed during setup it shall reopen at the same step with what was entered kept; past the PIN step it shall ask for the PIN first. | M | FEAT-26 | |
-| SET-04 | The account step shall let the parent sign in (email or Google, ACC-02), create an account, or skip; if the account already has children they shall come back with their settings and the children and time steps are skipped. | M | FEAT-26 | |
-| SET-05 | The children step shall add 1 to 4 children (nickname, school year, avatar, optional starting levels; FAM-01); the time step shall suggest 20 minutes a day per child (D5) and set sound on or off. | M | FEAT-26 | |
-| SET-06 | Setup screens shall use large buttons and plain words written for parents, and fit every supported screen size (NFR-09, NFR-17). | S | FEAT-26 | |
-| SET-07 | An install that is already set up (including one updated from an earlier version) shall never show the setup. | M | FEAT-26 | |
+| SET-01 | On first launch the app shall show a step-by-step parent setup with progress dots and Back on every step: welcome, PIN (PAR-01), optional account, children, daily time and sound, and a last page; the child can't play until it is finished. (D21) | M | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-02 | The welcome step shall explain in three short cards what the app does, and the last page shall show how to reach the parent area. | S | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-03 | If the app is closed during setup it shall reopen at the same step with what was entered kept; past the PIN step it shall ask for the PIN first. | M | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-04 | The account step shall let the parent sign in (email or Google, ACC-02), create an account, or skip; if the account already has children they shall come back with their settings and the children and time steps are skipped. | M | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-05 | The children step shall add 1 to 4 children (nickname, school year, avatar, optional starting levels; FAM-01); the time step shall suggest 20 minutes a day per child (D5) and set sound on or off. | M | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-06 | Setup screens shall use large buttons and plain words written for parents, and fit every supported screen size (NFR-09, NFR-17). | S | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-07 | An install that is already set up (including one updated from an earlier version) shall never show the setup. | M | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
 
 ### Revision (REV)
 

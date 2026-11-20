@@ -1,5 +1,14 @@
 # FEAT-26: Verify
 
+## Re-verify (2026-11-20, auto mode)
+
+> Verdict: **accepted**. Re-verified `8f74de9..7cc107a` (R1 fix in `children_step.dart`, AD-16).
+
+- R1 / AC-1: **pass**. `onBack` stays on while the form is open with no child; with children it stays off and Cancel returns to the list. `AC-1: Back on an empty Children step (verify)` now passes.
+- AC-6: **pass**. `setup_layout_test.dart` passes with Back shown on the open form.
+- `flutter test test/features/setup/` 18 pass; full `scripts/check.sh` PASS (format, analyze, all tests). CI on the head: see PR #33.
+- Not redone: clean clone, ACs that already passed. AC-7 stays Ken's optional tablet check.
+
 > Verdict: **rework** (2026-11-20, auto mode). Code verified at `8f74de9`. One AC-1 failure: an empty Children step has no Back. Everything else passes. This stage added three tests to `test/features/setup/setup_flow_test.dart`; one fails on purpose until the fix.
 
 ## Rework
