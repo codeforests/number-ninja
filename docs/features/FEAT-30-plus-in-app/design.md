@@ -1,7 +1,7 @@
 # FEAT-30: Free tier and BrainBubblz Plus in the app
 
 > Implements: PLS-01..08 (D24; plan §4, ADR-09, ADR-10 in `05-phase3-plan.md`) · Reads: ENT-03 (`GET /api/nn/entitlement`, FEAT-29 AD-5) · Touches: REV-03..05, PAR-06, PAR-09, PAR-11, FAM-01/02, SET-05, BNK-08/12/13 (now Plus or limited on free) · Screens: new SCR-20 Plus; SCR-02, SCR-05, SCR-09, SCR-10, SCR-11, SCR-18, SCR-19 (children step) change
-> Status: designed · Branch: `feat/FEAT-30-plus-in-app` · 2026-11-20 (auto mode: decisions below taken by Claude on Ken's standing instruction)
+> Status: built (T1–T7) · Branch: `feat/FEAT-30-plus-in-app` · 2026-11-20 (auto mode: decisions below taken by Claude on Ken's standing instruction)
 
 ## Scope
 
