@@ -125,6 +125,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/revise/:scopeId',
+        // Revision needs Plus (FEAT-30 PD-1); read, not watched (gotcha).
+        redirect: (context, state) =>
+            ref.read(plusProvider) ? null : Routes.home,
         builder: (context, state) =>
             RevisionStartScreen(scopeId: state.pathParameters['scopeId']!),
         routes: [

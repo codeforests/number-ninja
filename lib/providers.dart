@@ -456,9 +456,9 @@ final revisionHistoryProvider = FutureProvider.autoDispose<RevisionHistory>((
   return (await ref.watch(revisionRepositoryProvider.future)).history();
 });
 
-/// Whether to offer a revision round of a scope id (REV-03): a topic id
-/// on SCR-05, [mixedScopeId] on SCR-02. False until the history is read.
-final revisionOffersProvider = FutureProvider.autoDispose.family<bool, String>(
+/// Whether the planner would offer a revision round of a scope id
+/// (REV-03), Plus or not; SCR-02's lock card uses it (FEAT-30 PD-8).
+final revisionDueProvider = FutureProvider.autoDispose.family<bool, String>(
   (ref, scopeId) async => ref
       .watch(revisionPlannerProvider)
       .offers(
@@ -466,6 +466,17 @@ final revisionOffersProvider = FutureProvider.autoDispose.family<bool, String>(
         RevisionScope.fromId(scopeId),
       ),
 );
+
+/// Whether to offer a revision round of a scope id (REV-03): a topic id
+/// on SCR-05, [mixedScopeId] on SCR-02. False until the history is read,
+/// and always on free (FEAT-30 PD-1).
+final revisionOffersProvider = FutureProvider.autoDispose.family<bool, String>((
+  ref,
+  scopeId,
+) async {
+  if (!ref.watch(plusProvider)) return false;
+  return ref.watch(revisionDueProvider(scopeId).future);
+});
 
 /// Topics the parent opened by hand (PRC-14).
 final topicLockRepositoryProvider = Provider<TopicLockRepository>(
