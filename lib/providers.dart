@@ -594,3 +594,20 @@ class AppSession extends ChangeNotifier {
 final appSessionProvider = Provider<AppSession>(
   (ref) => throw UnimplementedError('appSessionProvider must be overridden'),
 );
+
+/// The device's offset from UTC, for the weekly email's week (FEAT-31 WE-4).
+/// Tests override it (NFR-08).
+final tzOffsetProvider = Provider<Duration>(
+  (ref) => DateTime.now().timeZoneOffset,
+);
+
+/// The signed-in account's weekly email setting, read from the server when
+/// SCR-13 shows it (FEAT-31 WE-13); null while signed out. Invalidate after
+/// a write.
+final weeklyEmailProvider = FutureProvider.autoDispose<WeeklyEmailSetting?>((
+  ref,
+) async {
+  final account = ref.watch(accountProvider.select((s) => s.account?.id));
+  if (account == null) return null;
+  return ref.watch(serverClientProvider).weeklyEmail();
+});

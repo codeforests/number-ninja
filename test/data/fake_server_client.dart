@@ -359,6 +359,37 @@ class FakeServerClient implements ServerClient {
     plus = e;
     return InviteResult.ok(e);
   }
+
+  /// What [weeklyEmail] answers (FEAT-31).
+  WeeklyEmailSetting weeklyEmailSetting = const WeeklyEmailSetting(
+    on: false,
+    tzMinutes: 480,
+  );
+
+  /// While set, [weeklyEmail] and [setWeeklyEmail] throw it.
+  SyncException? weeklyEmailFail;
+
+  /// Every [setWeeklyEmail] call, as (on, tzMinutes).
+  final weeklyEmailWrites = <(bool, int?)>[];
+
+  @override
+  Future<WeeklyEmailSetting> weeklyEmail() async {
+    final e = weeklyEmailFail;
+    if (e != null) throw e;
+    return weeklyEmailSetting;
+  }
+
+  @override
+  Future<void> setWeeklyEmail({required bool on, int? tzMinutes}) async {
+    weeklyEmailWrites.add((on, tzMinutes));
+    final e = weeklyEmailFail;
+    if (e != null) throw e;
+    weeklyEmailSetting = WeeklyEmailSetting(
+      on: on,
+      tzMinutes: tzMinutes ?? weeklyEmailSetting.tzMinutes,
+      verified: weeklyEmailSetting.verified,
+    );
+  }
 }
 
 class FakeSyncServer {

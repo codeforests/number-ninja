@@ -17,6 +17,7 @@ const plusAdds = [
   'PDF reports, the day-by-day view and weekly trends',
   'New questions from BrainBubblz as they come out',
   'Up to 4 children on one account',
+  'A weekly progress email',
 ];
 
 /// SCR-20 BrainBubblz Plus, inside the PIN-protected parent area (FEAT-30
