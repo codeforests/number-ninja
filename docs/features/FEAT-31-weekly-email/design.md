@@ -1,7 +1,7 @@
 # FEAT-31: Weekly progress email for parents (Plus)
 
 > Implements: WEM-01..06 (D26; plan row FEAT-31 in `05-phase3-plan.md`, §4 "weekly email" is Plus) · Uses: ENT-01 (`activeEntitlement`, FEAT-29), the synced `children`, `rounds`, `attempts`, `badges`, `daily_usage` (FEAT-14/25), mail through Resend (`mail.pb.js`, FEAT-13), SCR-13 (account), SCR-20 (Plus list) · Screens: SCR-13 gains the "Weekly progress email" switch
-> Status: designed · Branch: `feat/FEAT-31-weekly-email` · 2026-11-20 (auto mode: decisions below taken by Claude on Ken's standing instruction)
+> Status: built (T1–T5), to verify · Branch: `feat/FEAT-31-weekly-email` · 2026-11-20 (auto mode: decisions below taken by Claude on Ken's standing instruction)
 
 ## Scope
 
@@ -53,6 +53,12 @@ Auto mode (Ken, 2026-11-20): each takes the recommended option; the reason follo
 - **AC-8 (WEM-01, WE-12/13)** Widget tests on SCR-13 (`test/features/parent/weekly_email_test.dart`): Plus + verified shows the server value; turning on writes `on` with the overridden tz offset; turning off writes off; a failed write restores the switch and shows the error line; unverified and no-Plus states are disabled (no-Plus shows the Plus card); offline is disabled; tz refresh on open when the offset changed; SCR-20 lists "A weekly progress email".
 - **AC-9** `scripts/check.sh` green (format, analyze, app tests, server tests); CI green on the PR.
 - **AC-10 (live, after the M9 deploy)** Ken's account with the switch on gets the Monday email; Ken previews it once with the admin call. Not blocking the merge (same as FEAT-29/36 live checks).
+
+## Build notes (deviations, auto mode)
+
+- **SCR-13 scroll:** the account list's key now includes the signed-in state, so after signing in the page starts at the top (the longer signed-in page left the account tile scrolled out of view; caught by `account_screen_test.dart`).
+- **Subject check:** the mail sink sees the subject RFC 2047-encoded (en dash), so AC-2 checks the body's date line and child heading instead; the preview test checks the subject text.
+- **Plus end in tests:** weekly tests grant Plus `forever`, since their `now` (23 Nov 2026) is past `grant()`'s default end of one day from the real time.
 
 ## Tasks
 
