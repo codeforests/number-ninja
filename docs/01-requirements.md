@@ -220,14 +220,14 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| PLS-01 | While signed in, the app shall read the account's Plus state from the server (ENT-03) at launch, after sign-in, after each sync and on request, and keep the last answer on the device; signing out or deleting the account shall clear it. (D24) | M | FEAT-30 | |
-| PLS-02 | Plus shall count as active only while the cached answer says Plus, its end (judged by the server's clock) is ahead, and the last successful check was at most 7 days ago by a device clock that has not been wound back. | M | FEAT-30 | |
-| PLS-03 | Without Plus the app shall not offer revision (REV-03..05), PDF export (PAR-09), the day view (PAR-11), weekly trend charts (PAR-06) or server question updates (BNK-08); every other feature stays free. | M | FEAT-30 | |
-| PLS-04 | Losing Plus shall hide Plus features and delete nothing; downloaded banks stay in use and the features come back when Plus does. | M | FEAT-30 | |
-| PLS-05 | Without Plus a family shall have one active child: other children are kept, still sync, are shown as paused in the parent area where the parent picks the active child, and "Who's playing?" is hidden; setup and the parent area add a second child only with Plus. | M | FEAT-30 | |
-| PLS-06 | A child meeting a Plus feature shall see at most one friendly lock (home screen, revision) that asks her to talk to a grown-up, with no price, store or parent-area link. | M | FEAT-30 | |
-| PLS-07 | The PIN-protected parent area shall have a Plus screen showing the Plus state and its end or renewal, what Plus adds, a way to check again and to sign in; parent-side locked features lead to it. | M | FEAT-30 | |
-| PLS-08 | Buying, restoring and managing Plus shall sit behind one purchase interface; until store purchases exist (FEAT-35) the Plus screen says buying is coming soon. | S | FEAT-30 | |
+| PLS-01 | While signed in, the app shall read the account's Plus state from the server (ENT-03) at launch, after sign-in, after each sync and on request, and keep the last answer on the device; signing out or deleting the account shall clear it. (D24) | M | FEAT-30 || FEAT-30 AC-2: `plus_repository_test.dart`, `migration_test.dart` v12 |
+| PLS-02 | Plus shall count as active only while the cached answer says Plus, its end (judged by the server's clock) is ahead, and the last successful check was at most 7 days ago by a device clock that has not been wound back. | M | FEAT-30 || FEAT-30 AC-1: `domain/plus_test.dart` |
+| PLS-03 | Without Plus the app shall not offer revision (REV-03..05), PDF export (PAR-09), the day view (PAR-11), weekly trend charts (PAR-06) or server question updates (BNK-08); every other feature stays free. | M | FEAT-30 || FEAT-30 AC-3/AC-8: `plus_gates_test.dart`, `revision_free_test.dart`, `bank_updater_test.dart` |
+| PLS-04 | Losing Plus shall hide Plus features and delete nothing; downloaded banks stay in use and the features come back when Plus does. | M | FEAT-30 || FEAT-30 AC-3/AC-4: `revision_free_test.dart` (Plus back on), `siblings_free_test.dart` |
+| PLS-05 | Without Plus a family shall have one active child: other children are kept, still sync, are shown as paused in the parent area where the parent picks the active child, and "Who's playing?" is hidden; setup and the parent area add a second child only with Plus. | M | FEAT-30 || FEAT-30 AC-4: `siblings_free_test.dart`, `setup_flow_test.dart` |
+| PLS-06 | A child meeting a Plus feature shall see at most one friendly lock (home screen, revision) that asks her to talk to a grown-up, with no price, store or parent-area link. | M | FEAT-30 || FEAT-30 AC-5: `revision_free_test.dart` |
+| PLS-07 | The PIN-protected parent area shall have a Plus screen showing the Plus state and its end or renewal, what Plus adds, a way to check again and to sign in; parent-side locked features lead to it. | M | FEAT-30 || FEAT-30 AC-6: `plus_screen_test.dart`, `domain/plus_test.dart` |
+| PLS-08 | Buying, restoring and managing Plus shall sit behind one purchase interface; until store purchases exist (FEAT-35) the Plus screen says buying is coming soon. | S | FEAT-30 || FEAT-30 AC-7: `plus_screen_test.dart` |
 
 ## 5. Non-functional requirements
 

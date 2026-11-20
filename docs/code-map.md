@@ -71,6 +71,7 @@
 
 ## Gotchas
 
+- FEAT-30: `plusProvider` is a plain bool from `plusCacheProvider` (a FutureProvider), so code that `ref.read`s it right after launch can see false while the cache loads; await `plusCacheProvider.future` first. `checkBank` doesn't yet (FEAT-30 verify follow-up). Widget tests set Plus with `QuizHarness.plus` / `setPlus`, never through the cache.
 - Phone layouts (FEAT-19) hang off `compact(size)`; keep tablet paths untouched. `ParentHarness.openParent` sets the view size itself: pass `size:`, don't set `tester.view.physicalSize` before it. `PinnedAction` only pins when its height is bounded.
 
 - FEAT-16 renamed the app to BrainBubblz for people only; FEAT-20 (D19) changed the application id to `com.brainbubblz.kids` and the sign-in scheme to `brainbubblz://signin` (manifest, Kotlin, `SignInBrowser`, nginx `map`, `deploy.sh` check, `test/tool/app_id_test.dart`). Keep the old name in the Dart package `number_ninja`, the server unit and nginx file names, the keystore alias and badge id `ninja-master`. The nginx return page sends `numberninja://` on `SERVER_LEGACY_HOSTNAME` (old APKs) and `brainbubblz://` elsewhere; render the site only through `server/nginx/render.sh`.
