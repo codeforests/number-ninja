@@ -1,5 +1,5 @@
 # Handoff: FEAT-36 — Invitation codes
-Branch: feat/FEAT-36-invite-codes · PR: (draft, see STATE/PR list) · Updated: 2026-11-20 by build
+Branch: feat/FEAT-36-invite-codes · PR: https://github.com/codeforests/number-ninja/pull/37 (draft) · Updated: 2026-11-20 by build
 Stage done: build (T1–T6 of 6)
 Next: verify — kickoff: "Verify FEAT-36 on branch feat/FEAT-36-invite-codes. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
