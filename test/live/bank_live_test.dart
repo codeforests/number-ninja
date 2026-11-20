@@ -1,5 +1,6 @@
 /// FEAT-15 AC-6 (BNK-08): publish with tool/publish_bank.dart to a real
-/// PocketBase, then the app's updater downloads and the store loads it.
+/// PocketBase, then the app's updater (signed in as a parent with Plus,
+/// FEAT-29) downloads and the store loads it.
 /// Skipped unless SYNC_LIVE_URL is set; `server/test/run.sh` runs it.
 library;
 
@@ -63,6 +64,38 @@ void main() {
       );
       expect(pub.exitCode, 0, reason: '${pub.stdout}${pub.stderr}');
 
+      // FEAT-29 (BNK-13): only a signed-in parent with Plus sees the bank.
+      final email =
+          'bank-live-${DateTime.now().microsecondsSinceEpoch}@test.local';
+      const password = 'parent-password-1';
+      final user = await admin
+          .collection('users')
+          .create(
+            body: {
+              'email': email,
+              'password': password,
+              'passwordConfirm': password,
+              'verified': true,
+            },
+          );
+      await admin
+          .collection('entitlements')
+          .create(
+            body: {
+              'user': user.id,
+              'plan': 'plus',
+              'source': 'complimentary',
+              'status': 'active',
+              'expires_at': '2099-12-31 23:59:59.000Z',
+            },
+          );
+      final client = PocketBaseServerClient(
+        ServerConfig.loopback(Uri.parse(_base).port),
+        store: MemoryTokenStore(),
+        timeout: const Duration(seconds: 30),
+      );
+      await client.signIn(email, password);
+
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(db.close);
       final store = BankStore(
@@ -71,11 +104,7 @@ void main() {
         dir: () async => Directory('${tmp.path}/banks'),
       );
       final updater = BankUpdater(
-        client: PocketBaseServerClient(
-          ServerConfig.loopback(Uri.parse(_base).port),
-          store: MemoryTokenStore(),
-          timeout: const Duration(seconds: 30),
-        ),
+        client: client,
         store: store,
         clock: () => DateTime(2027, 1, 5, 9),
       );

@@ -627,11 +627,16 @@ class PocketBaseServerClient implements ServerClient {
         );
     if (page.items.isEmpty) return null;
     final r = page.items.first;
+    // FEAT-29 (AD-4): the bank file is protected; a short-lived file token
+    // downloads it (only a parent with Plus sees a bank at all).
+    final token = _pb.authStore.token.isEmpty
+        ? null
+        : await _pb.files.getToken();
     return BankInfo(
       version: r.getIntValue('version'),
       format: r.getIntValue('format'),
       sha256: r.getStringValue('sha256'),
-      fileUrl: _pb.files.getURL(r, r.getStringValue('file')),
+      fileUrl: _pb.files.getURL(r, r.getStringValue('file'), token: token),
     );
   });
 

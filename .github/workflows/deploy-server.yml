@@ -6,6 +6,7 @@ name: Deploy server
 # Optional (FEAT-13): SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD,
 # MAIL_SENDER_ADDRESS, RESEND_API_KEY (email over HTTPS; wins over SMTP),
 # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET. Optional (FEAT-24): CRASH_DIGEST_TO.
+# Optional (FEAT-29, set in FEAT-35): BILLING_WEBHOOK_SECRET (empty = webhook off).
 # Variables: SERVER_HOSTNAME, optional SERVER_LEGACY_HOSTNAME (FEAT-20). Steps: server/README.md.
 on:
   workflow_dispatch:
@@ -52,6 +53,7 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           CRASH_DIGEST_TO: ${{ secrets.CRASH_DIGEST_TO }}
+          BILLING_WEBHOOK_SECRET: ${{ secrets.BILLING_WEBHOOK_SECRET }}
         run: server/deploy.sh
 
       - name: Remove key

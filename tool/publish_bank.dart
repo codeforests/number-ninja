@@ -76,13 +76,22 @@ Future<void> _run(List<String> args) async {
   final client = http.Client();
   try {
     final token = await _superuserToken(client, base);
-    final latest = await _latest(client, base);
+    final latest = await _latest(client, base, token);
     int? latestVersion;
     if (latest != null) {
       latestVersion = (latest['version'] as num).toInt();
       final file = latest['file'] as String? ?? '';
       if (file.isNotEmpty) {
-        final url = base.resolve('/api/files/banks/${latest['id']}/$file');
+        // FEAT-29 (AD-4): the file is protected; a file token downloads it.
+        final ft = await client.post(
+          base.resolve('/api/files/token'),
+          headers: {'Authorization': token},
+        );
+        final fileToken =
+            (jsonDecode(ft.body) as Map<String, dynamic>)['token'] as String?;
+        final url = base
+            .resolve('/api/files/banks/${latest['id']}/$file')
+            .replace(queryParameters: {'token': fileToken ?? ''});
         final r = await client.get(url);
         if (r.statusCode != 200) {
           throw _Refused('cannot download the published bank: ${r.statusCode}');
@@ -163,9 +172,15 @@ Future<http.Response> _signIn(
   );
 }
 
-Future<Map<String, dynamic>?> _latest(http.Client c, Uri base) async {
+/// Listed as the superuser: FEAT-29 (BNK-13) shows banks only to Plus.
+Future<Map<String, dynamic>?> _latest(
+  http.Client c,
+  Uri base,
+  String token,
+) async {
   final r = await c.get(
     base.resolve('/api/collections/banks/records?sort=-version&perPage=1'),
+    headers: {'Authorization': token},
   );
   if (r.statusCode != 200) {
     throw _Refused('cannot list banks: ${r.statusCode}');

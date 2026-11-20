@@ -1,0 +1,12 @@
+{
+  "api_version": "1.0",
+  "event": {
+    "type": "TEST",
+    "id": "$ID",
+    "app_id": "app1234",
+    "app_user_id": "$USER",
+    "event_timestamp_ms": "$AT",
+    "store": "PLAY_STORE",
+    "environment": "SANDBOX"
+  }
+}

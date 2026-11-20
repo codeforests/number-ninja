@@ -1,0 +1,73 @@
+name: Grant Plus
+
+# FEAT-29 (AD-9, ENT-05): gives or takes away complimentary BrainBubblz Plus
+# for one account with tool/grant_plus.dart. Manual, main only. The email is
+# masked in the log. Secrets: PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD (same
+# as Deploy server). Variable: SERVER_HOSTNAME. Steps: server/README.md,
+# "Granting Plus".
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: 'Account email'
+        required: true
+        type: string
+      until:
+        description: 'Last day of Plus (YYYY-MM-DD); empty = no end'
+        required: false
+        type: string
+      note:
+        description: 'Note for the record (who and why)'
+        required: false
+        type: string
+      revoke:
+        description: 'Take Plus away now instead'
+        type: boolean
+        default: false
+
+concurrency:
+  group: grant-plus
+  cancel-in-progress: false
+
+jobs:
+  grant:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Mask the email
+        env:
+          EMAIL: ${{ inputs.email }}
+        run: echo "::add-mask::$EMAIL"
+
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.50.0
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Grant
+        env:
+          SERVER_HOSTNAME: ${{ vars.SERVER_HOSTNAME }}
+          PB_SUPERUSER_EMAIL: ${{ secrets.PB_SUPERUSER_EMAIL }}
+          PB_SUPERUSER_PASSWORD: ${{ secrets.PB_SUPERUSER_PASSWORD }}
+          EMAIL: ${{ inputs.email }}
+          UNTIL: ${{ inputs.until }}
+          NOTE: ${{ inputs.note }}
+          REVOKE: ${{ inputs.revoke }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SERVER_HOSTNAME" ]; then
+            echo "Set the SERVER_HOSTNAME repository variable first." >&2
+            exit 1
+          fi
+          args=(--server "https://$SERVER_HOSTNAME" --email "$EMAIL")
+          if [ "$REVOKE" = "true" ]; then args+=(--revoke)
+          elif [ -n "$UNTIL" ]; then args+=(--until "$UNTIL")
+          else args+=(--forever); fi
+          if [ -n "$NOTE" ]; then args+=(--note "$NOTE"); fi
+          dart run tool/grant_plus.dart "${args[@]}"

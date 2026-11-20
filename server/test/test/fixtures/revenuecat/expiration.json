@@ -1,0 +1,29 @@
+{
+  "api_version": "1.0",
+  "event": {
+    "type": "EXPIRATION",
+    "id": "$ID",
+    "app_id": "app1234",
+    "app_user_id": "$USER",
+    "original_app_user_id": "$USER",
+    "aliases": [
+      "$RCANON",
+      "$USER"
+    ],
+    "event_timestamp_ms": "$AT",
+    "purchased_at_ms": "$AT",
+    "expiration_at_ms": "$EXP",
+    "entitlement_ids": [
+      "plus"
+    ],
+    "product_id": "plus_yearly:yearly",
+    "period_type": "NORMAL",
+    "store": "PLAY_STORE",
+    "environment": "SANDBOX",
+    "currency": "SGD",
+    "price": 39.98,
+    "transaction_id": "GPA.0000-0000-0000-00000",
+    "original_transaction_id": "GPA.0000-0000-0000-00000",
+    "expiration_reason": "UNSUBSCRIBE"
+  }
+}

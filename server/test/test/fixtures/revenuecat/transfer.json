@@ -1,0 +1,17 @@
+{
+  "api_version": "1.0",
+  "event": {
+    "type": "TRANSFER",
+    "id": "$ID",
+    "app_id": "app1234",
+    "event_timestamp_ms": "$AT",
+    "store": "PLAY_STORE",
+    "environment": "SANDBOX",
+    "transferred_from": [
+      "$FROM"
+    ],
+    "transferred_to": [
+      "$TO"
+    ]
+  }
+}

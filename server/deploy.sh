@@ -16,6 +16,7 @@
 #   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS RESEND_API_KEY
 #   GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
 #   CRASH_DIGEST_TO        daily crash digest recipient (FEAT-24)
+#   BILLING_WEBHOOK_SECRET RevenueCat webhook Authorization value (FEAT-29; empty = off)
 # Remote paths expand locally on purpose (stage is a path we created).
 # shellcheck disable=SC2029
 set -euo pipefail
@@ -48,7 +49,8 @@ printf '%s\n' \
   "RESEND_API_KEY=${RESEND_API_KEY:-}" \
   "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}" \
   "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}" \
-  "CRASH_DIGEST_TO=${CRASH_DIGEST_TO:-}" |
+  "CRASH_DIGEST_TO=${CRASH_DIGEST_TO:-}" \
+  "BILLING_WEBHOOK_SECRET=${BILLING_WEBHOOK_SECRET:-}" |
   ssh "${ssh_opts[@]}" "$target" "sudo bash '$stage/install.sh'" || status=$?
 ssh "${ssh_opts[@]}" "$target" "rm -rf '$stage'" || true
 [ "$status" -eq 0 ] || exit "$status"

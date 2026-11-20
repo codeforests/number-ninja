@@ -16,6 +16,8 @@ bin="$cache/pocketbase"
 port="${PB_PORT:-8090}"
 email="${PB_SUPERUSER_EMAIL:-admin@test.local}"
 password="${PB_SUPERUSER_PASSWORD:-test-password-123}"
+# FEAT-29: a test may migrate only up to an earlier migration.
+migrations="${PB_MIGRATIONS_DIR:-$root/server/pb_migrations}"
 
 fetch() {
   [ -x "$bin" ] && return
@@ -34,10 +36,10 @@ case "$cmd" in
   start)
     fetch
     mkdir -p "$dir"
-    "$bin" migrate up --dir="$dir/pb_data" --migrationsDir="$root/server/pb_migrations" >"$dir/migrate.log" 2>&1
+    "$bin" migrate up --dir="$dir/pb_data" --migrationsDir="$migrations" >"$dir/migrate.log" 2>&1
     "$bin" superuser upsert "$email" "$password" --dir="$dir/pb_data" >/dev/null
     "$bin" serve --http="127.0.0.1:$port" --dir="$dir/pb_data" \
-      --migrationsDir="$root/server/pb_migrations" --hooksDir="$root/server/pb_hooks" --publicDir="$root/server/pb_public" \
+      --migrationsDir="$migrations" --hooksDir="$root/server/pb_hooks" --publicDir="$root/server/pb_public" \
       >"$dir/serve.log" 2>&1 &
     echo $! >"$dir/pid"
     for _ in $(seq 1 50); do

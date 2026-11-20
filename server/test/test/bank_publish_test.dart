@@ -55,9 +55,13 @@ Future<ProcessResult> publish(String file, {bool dryRun = false}) =>
       },
     );
 
+/// Listed as the superuser: FEAT-29 (BNK-13) hides banks from anyone
+/// without Plus.
 Future<List<Map<String, dynamic>>> banks() async {
+  final su = await superuser();
   final r = await http.get(
     Uri.parse('$baseUrl/api/collections/banks/records?sort=-version'),
+    headers: {'Authorization': su.authStore.token},
   );
   return [
     for (final i in (jsonDecode(r.body) as Map)['items'] as List)
@@ -91,13 +95,15 @@ void main() {
     final list = await banks();
     expect(list.single['version'], 2);
     expect(list.single['format'], 1);
+    // FEAT-29 (AD-4): the file is protected; a file token downloads it.
+    final token = await (await superuser()).files.getToken();
     final file = await http.get(
       Uri.parse(
         '$baseUrl/api/files/banks/${list.single['id']}/'
-        '${list.single['file']}',
+        '${list.single['file']}?token=$token',
       ),
     );
-    expect(file.statusCode, 200, reason: 'anyone downloads');
+    expect(file.statusCode, 200, reason: 'downloads with a file token');
     final bytes = File(v2).readAsBytesSync();
     expect(file.bodyBytes, bytes);
     expect(list.single['sha256'], sha256.convert(bytes).toString());
