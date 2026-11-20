@@ -76,6 +76,9 @@ abstract final class AppSizes {
   static const stepCurrent = 22.0;
   static const gap = 16.0;
 
+  /// Widest a one-column parent screen grows (SCR-16).
+  static const parentColumn = 900.0;
+
   /// Trend chart plot height and dot radius on parent screens.
   static const chartHeight = 180.0;
   static const chartDot = 4.0;

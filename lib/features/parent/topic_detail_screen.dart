@@ -145,8 +145,6 @@ class _Figure extends StatelessWidget {
   );
 }
 
-String _answer(Object a) => a is List ? a.join(', ') : '$a';
-
 class _QuestionList extends StatelessWidget {
   const _QuestionList({
     super.key,
@@ -191,7 +189,7 @@ class _QuestionList extends StatelessWidget {
                       ),
                       if (showAnswer && q != null)
                         Text(
-                          'Answer: ${_answer(q.answer)}',
+                          'Answer: ${answerText(q.answer)}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: StatsText.muted,

@@ -15,6 +15,7 @@ import 'domain/stats.dart';
 import 'features/parent/account_screen.dart';
 import 'features/parent/change_pin_screen.dart';
 import 'features/parent/dashboard_screen.dart';
+import 'features/parent/day_screen.dart';
 import 'features/parent/parent_screen.dart';
 import 'features/parent/pin_entry_screen.dart';
 import 'features/parent/reset_screen.dart';
@@ -39,6 +40,7 @@ abstract final class Routes {
   static const changePin = '/parent/change-pin'; // SCR-11 (change PIN)
   static const dashboard = '/parent/dashboard'; // SCR-09, `?p=7|30|all`
   static const reset = '/parent/reset'; // SCR-11 (reset progress, PAR-10)
+  static String day(String day) => '/parent/day?d=$day'; // SCR-16
   static String dashboardFor(StatsPeriod p) => '$dashboard?p=${p.query}';
   static String topicDetail(String topicId, StatsPeriod p) =>
       '/parent/topic/$topicId?p=${p.query}'; // SCR-10
@@ -172,6 +174,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => DashboardScreen(
               period: StatsPeriod.fromQuery(state.uri.queryParameters['p']),
             ),
+          ),
+          GoRoute(
+            path: 'day',
+            builder: (context, state) =>
+                DayScreen(day: state.uri.queryParameters['d']),
           ),
           GoRoute(
             path: 'topic/:topicId',
