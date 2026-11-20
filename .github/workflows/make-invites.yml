@@ -1,0 +1,88 @@
+name: Make invitation codes
+
+# FEAT-36 (IC-6, INV-05): makes a batch of invitation codes with
+# tool/make_invites.dart. Manual, main only. The repository is public, so the
+# codes are never printed here: they are emailed (send_to, masked, or the
+# server's INVITE_MAIL_TO / CRASH_DIGEST_TO when empty) or read in the
+# PocketBase admin (invite_codes, filter by note). Secrets:
+# PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD (same as Deploy server).
+# Variable: SERVER_HOSTNAME. Steps: server/README.md, "Invitation codes".
+on:
+  workflow_dispatch:
+    inputs:
+      count:
+        description: 'How many codes (1-100)'
+        required: true
+        default: '1'
+        type: string
+      note:
+        description: 'Who they are for (shown in the admin and the email)'
+        required: true
+        type: string
+      months:
+        description: 'Months of Plus per family (1-24)'
+        required: true
+        default: '12'
+        type: string
+      uses:
+        description: 'Families per code (1-100)'
+        required: true
+        default: '5'
+        type: string
+      days:
+        description: 'Days the code can be redeemed (1-3650)'
+        required: true
+        default: '365'
+        type: string
+      send_to:
+        description: 'Email the codes to (empty = the server default)'
+        required: false
+        type: string
+
+concurrency:
+  group: make-invites
+  cancel-in-progress: false
+
+jobs:
+  make:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Mask the email
+        env:
+          SEND_TO: ${{ inputs.send_to }}
+        run: if [ -n "$SEND_TO" ]; then echo "::add-mask::$SEND_TO"; fi
+
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.50.0
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Make
+        env:
+          SERVER_HOSTNAME: ${{ vars.SERVER_HOSTNAME }}
+          PB_SUPERUSER_EMAIL: ${{ secrets.PB_SUPERUSER_EMAIL }}
+          PB_SUPERUSER_PASSWORD: ${{ secrets.PB_SUPERUSER_PASSWORD }}
+          COUNT: ${{ inputs.count }}
+          NOTE: ${{ inputs.note }}
+          MONTHS: ${{ inputs.months }}
+          USES: ${{ inputs.uses }}
+          DAYS: ${{ inputs.days }}
+          SEND_TO: ${{ inputs.send_to }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SERVER_HOSTNAME" ]; then
+            echo "Set the SERVER_HOSTNAME repository variable first." >&2
+            exit 1
+          fi
+          args=(--server "https://$SERVER_HOSTNAME" --count "$COUNT" --note "$NOTE"
+            --months "$MONTHS" --uses "$USES" --days "$DAYS")
+          if [ -n "$SEND_TO" ]; then args+=(--send-to "$SEND_TO"); else args+=(--email); fi
+          # Never --print or --list here: this log is public.
+          dart run tool/make_invites.dart "${args[@]}"
