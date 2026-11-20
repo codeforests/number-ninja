@@ -34,6 +34,29 @@ Each feature is a vertical slice that ends in something Ken can install and try.
 | FEAT-19 | Phone layout: compact quiz keypad and layout with Check always in view, PIN pads and parent pages fitted to phones, tablet unchanged (after v2.0) | D18, NFR-17 | after M7 |
 | FEAT-20 | Own domain: API at `api.brainbubblz.com` with the old host as a legacy alias, app id `com.brainbubblz.kids` and `brainbubblz://signin`, email from `noreply@brainbubblz.com`, Ken's DNS/Resend/Google steps. Small feature. | D19 | after v2.0.1 |
 
+### Phase 3 (v3.x, signed off by Ken 2026-11-20)
+
+Details, reasons and decisions: [05-phase3-plan.md](05-phase3-plan.md). Requirement ids are added by each feature's design.
+
+| Feature | What it delivers | Requirements | Milestone |
+|---|---|---|---|
+| FEAT-25 | Siblings: up to 4 children, "Who's playing?", per-child progress, screen time, reports and sync | new (design) | M8 |
+| FEAT-26 | Parent first-run setup wizard | new (design) | M8 |
+| FEAT-24 | Crash reports to our own server | new (design) | M8 |
+| FEAT-29 | Entitlements on the server, complimentary grants | new (design) | M9 |
+| FEAT-30 | Free tier and Plus in the app (store connection in FEAT-35) | new (design) | M9 |
+| FEAT-36 | Invitation codes that unlock Plus for friends | new (design) | M9 |
+| FEAT-31 | Weekly parent report email (Plus) | new (design) | M9 |
+| FEAT-28 | Teacher review of the question bank on a web page, "Report this question" | new (design) | parallel |
+| FEAT-21 | Server move to Ubuntu 24.04, off-site backups | NFR-15 | M10 |
+| FEAT-22 | Website: privacy policy, terms, account deletion page | new (design) | M10 |
+| FEAT-23 | Play release pipeline: AAB, Play App Signing | new (design) | M10 |
+| FEAT-35 | Store purchases (Google Play Billing) | new (design) | M10 |
+| FEAT-32 | Google Play launch `v3.0.0` | new (design) | M11 |
+| FEAT-33 | iOS app on TestFlight | new (design) | M12 |
+| FEAT-34 | App Store launch `v3.1.0` | new (design) | M12 |
+| FEAT-27 | Accessibility (deferred by Ken 2026-11-20) | new (design) | deferred |
+
 **Phase 2 milestones:** M5 = she gets the right starting level, School topics unlock in order, and revision rounds, still fully offline (FEAT-10, 17, 11; ids are permanent, so FEAT-17 is built before FEAT-11); no server needed, so it can ship while Ken sets up the droplet. M6 = parent account and sync across devices (12–14). M7 = server question bank and v2.0 under the new name (15–16). Same sign-off and `m<N>` release rule as M1–M4; the v2.0 release after FEAT-16 merges is tagged `v2.0`.
 
 **Milestones:** M1 = she can play a real round (FEAT-01..03). M2 = safe for daily use (04–05). M3 = parent insights and rewards (06–08). M4 = v1.0 (09). Ken tries the APK on the tablet at the end of each milestone and signs it off before the next one starts. When a milestone's last PR merges, run the CI workflow on `main` with input `release` = `m<N>` (e.g. `m1`): it publishes a GitHub Release with the release-signed `number-ninja-m<N>.apk` for him to install.

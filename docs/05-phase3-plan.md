@@ -1,7 +1,7 @@
-# BrainBubblz: Phase 3 plan (proposal)
+# BrainBubblz: Phase 3 plan
 
-> Version 0.1 · 2026-11-20 · **Proposal for Ken's review, not signed off.** Nothing here is built yet.
-> On sign-off: the decisions become D20+ and the requirement rows (ids below are placeholders by group) go into [01-requirements.md](01-requirements.md) 3.0, the ADRs into [04-architecture.md](04-architecture.md), the feature rows into [03-plan.md](03-plan.md) §1. Each feature then runs design → build → verify as in AGENTS.md.
+> Version 1.0 · 2026-11-20 · **Signed off by Ken 2026-11-20** ("everything else is ok") with his changes: app features first, server move and seller identity later, accessibility deferred, teacher review on a web page, invitation codes added. The recommendations in §6 are the defaults; each feature's design confirms the decision it needs, and decision 1 (seller identity) stays open until M10.
+> Requirement ids and D20+ decisions are added to [01-requirements.md](01-requirements.md) by each feature's design (as FEAT-18..20 did); ADR-09..13 go into [04-architecture.md](04-architecture.md) with the feature that first needs them; feature rows are in [03-plan.md](03-plan.md) §1. Each feature runs design → build → verify as in AGENTS.md.
 > Read by section: `grep -n '^## ' docs/05-phase3-plan.md`.
 
 ## 1. Goal
@@ -27,7 +27,7 @@ Changed 2026-11-20 at Ken's request: **app features first**; the new server (ava
 | Milestone | What Ken gets | Features | Release |
 |---|---|---|---|
 | **M8 Family ready** | Siblings, the new parent setup, crash reports | FEAT-25, 26, 24 | `v2.2.0` (APK on GitHub) |
-| **M9 Free and Plus** | Server entitlements, free/Plus split in the app with complimentary grants, weekly parent report email | FEAT-29, 30, 31 | `v2.3.0` (APK on GitHub) |
+| **M9 Free and Plus** | Server entitlements, free/Plus split in the app with complimentary grants, weekly parent report email | FEAT-29, 30, 36, 31 | `v2.3.0` (APK on GitHub) |
 | **Parallel track** | Teacher review web page (`review.brainbubblz.com`), "Report this question"; fixes ship as new bank versions (no app release) | FEAT-28 | bank v3+ |
 | **M10 Store-ready** (after the new server and the seller decision) | Server on Ubuntu 24.04 with off-site backups, website with privacy policy, terms and account deletion, Play-ready AAB, real store purchases | FEAT-21, 22, 23, 35 | `v2.4.0`; **closed test starts here** (14 days, if a personal account) |
 | **M11 Android launch** | Store listing, Families declarations, production rollout | FEAT-32 | `v3.0.0` on Google Play |
@@ -43,6 +43,7 @@ flowchart LR
   F25 --> F29[29 entitlements server]
   F29 --> F30[30 free + Plus in app]
   F30 --> F31[31 weekly report email]
+  F30 --> F36[36 invitation codes]
   F28[28 teacher review web page]
   NS{{new server}} --> F21[21 server move + backups]
   SI{{seller decision}} --> F23
@@ -86,6 +87,7 @@ Sizes: **S** = small (≤5 tasks, design and build in one thread), **M** = 6–8
 |---|---|---|---|
 | **FEAT-29** Entitlements on the server | An `entitlements` record per parent account: plan, source (Google Play, App Store, or **complimentary**), expiry, status. A webhook endpoint (from the billing service, ADR-09) with a shared secret updates it. API rules: downloading a server bank needs an active entitlement (the bundled bank stays free); child data rules unchanged. Complimentary grants from the admin for Ken's family and testers. Rule tests in `server/test`. | M | Billing service account and webhook secret as repo secrets |
 | **FEAT-30** Free tier and BrainBubblz Plus in the app | Everything in the app except the store connection: the Plus screen in the PIN-protected parent area (the parental gate both stores require), which features are free and which are Plus (§4), the child's friendly "Ask a grown-up" lock (never a buy button), the cached entitlement with a 7-day offline grace so offline-first holds, downgrade hides Plus features and deletes nothing. Purchases sit behind a `PurchaseService` interface; until FEAT-35 the only way to get Plus is a complimentary grant from the admin, so Ken's family and testers can use and test it end to end. | M | none |
+| **FEAT-36** Invitation codes (Ken, 2026-11-20) | Ken makes codes that let friends (and closed-test testers) unlock Plus without paying. Server: an `invite_codes` collection (code, Plus length such as 3 or 12 months, how many uses, expiry date, a note like "school friends"), only Ken (admin) creates them; a redeem endpoint that needs a signed-in parent, checks the code, counts the use, and writes a complimentary entitlement with its own end date (FEAT-29); wrong guesses are rate-limited. Codes are short and easy to type (no 0/O or 1/I). App: "Have an invitation code?" on the Plus screen; after redeeming it shows "Plus until <date>, from an invitation". A small script or CI workflow makes a batch of codes and prints them. Store rules: Google Play allows free codes like this because no payment is involved; **Apple does not allow an app's own codes to unlock features (guideline 3.1.1)**, so on iOS the code box is hidden and friends either redeem on Android or the website (the account-wide entitlement then works on iPhone too) or get Apple's own subscription offer codes (FEAT-34). | S | Decide code lengths and who gets them; make codes |
 | **FEAT-31** Weekly parent report email (Plus) | A weekly server job builds a short email per child from synced data (time practised, rounds, accuracy, weakest topics, new badges) and sends it through Resend; parent turns it on or off. Uses only data already synced; no new data collected. | S | none |
 
 ### Parallel track: question quality
@@ -162,6 +164,7 @@ Existing behaviour that moves behind Plus (revision, PDF, day view, server bank)
 9. **Sign in with Apple on iOS.** Apple's rule 4.8 asks for it when Google sign-in is offered. *Recommend:* add it on iOS (and allow it on Android later).
 10. **iPhone or iPad only.** *Recommend:* both; the phone layouts from FEAT-19 already exist.
 11. **Closed-test testers.** 12 people with Android devices who stay opted in for 14 days in a row. *Recommend:* line them up now (friends, family, school parents) so the test starts the day M10 is released (personal account only).
+13. **Invitation codes.** *Recommend:* each code gives 12 months of Plus, up to 5 uses per code unless Ken sets otherwise; the code redeems once per account; when it ends the family drops to free (nothing deleted) unless they subscribe.
 12. **Wider age range** (K2, P3, P4–P6): see §8. *Recommend:* P3 next, then P4; P5–P6 and K2 later.
 
 ## 7. What needs Ken's hands, and costs
