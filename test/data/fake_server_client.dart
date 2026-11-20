@@ -297,6 +297,21 @@ class FakeServerClient implements ServerClient {
     _bankCall('downloadBank:${info.version}');
     return banks.firstWhere((b) => b.$1.version == info.version).$2;
   }
+
+  // Crash reports (FEAT-24).
+
+  /// Bodies posted by [sendCrashReport].
+  final crashReports = <Map<String, dynamic>>[];
+
+  /// While set, [sendCrashReport] throws it.
+  SyncException? crashFail;
+
+  @override
+  Future<void> sendCrashReport(Map<String, dynamic> body) async {
+    final e = crashFail;
+    if (e != null) throw e;
+    crashReports.add(body);
+  }
 }
 
 class FakeSyncServer {

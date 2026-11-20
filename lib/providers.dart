@@ -11,6 +11,8 @@ import 'data/badge_repository.dart';
 import 'data/bank_store.dart';
 import 'data/bank_updater.dart';
 import 'data/child_repository.dart';
+import 'data/crash_reporter.dart';
+import 'data/crash_repository.dart';
 import 'data/database.dart';
 import 'data/pin_repository.dart';
 import 'data/profile_repository.dart';
@@ -126,6 +128,45 @@ final bankCheckProvider =
     );
 
 final clockProvider = Provider<Clock>((ref) => systemClock);
+
+/// Crash reports (FEAT-24). `main()` overrides the reporter with the one it
+/// installed; tests make their own.
+final crashReporterProvider = Provider<CrashReporter>(
+  (ref) => CrashReporter(clock: ref.watch(clockProvider)),
+);
+
+final crashRepositoryProvider = Provider<CrashRepository>(
+  (ref) => CrashRepository(ref.watch(databaseProvider)),
+);
+
+/// Names and email to scrub and the bank in use, read when an error is saved
+/// (AD-7).
+final crashContextProvider = Provider<Future<CrashContext> Function()>(
+  (ref) => () async {
+    final names = [
+      for (final c in await ref.read(childRepositoryProvider).all()) c.nickname,
+    ];
+    var bank = 0;
+    try {
+      bank = (await ref.read(bankProvider.future)).version;
+    } on Object {
+      // The bank itself may be what failed.
+    }
+    return CrashContext(
+      names: names,
+      email: ref.read(accountProvider).account?.email,
+      bankVersion: bank,
+    );
+  },
+);
+
+/// Sends unsent crash reports (AD-9): at launch and on resume.
+final crashSendProvider = Provider<Future<void> Function()>(
+  (ref) =>
+      () => ref
+          .read(crashReporterProvider)
+          .sendPending(ref.read(serverClientProvider)),
+);
 
 /// The sync server (FEAT-12). Built with `--dart-define=SERVER_URL`; tests
 /// override [serverClientProvider] with a fake.
