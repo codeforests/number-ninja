@@ -51,6 +51,44 @@ class SyncException implements Exception {
 }
 
 /// One record to send: a create when [id] is null, else an update.
+/// The family's Plus as the server sees it (FEAT-29 AD-5, FEAT-30 PD-11).
+class Entitlement {
+  const Entitlement({
+    required this.plus,
+    required this.checkedAt,
+    this.until,
+    this.source,
+    this.status,
+    this.willRenew = false,
+    this.endedAt,
+  });
+
+  factory Entitlement.fromJson(Map<String, dynamic> j) => Entitlement(
+    plus: j['plus'] == true,
+    until: _date(j['until']),
+    source: _text(j['source']),
+    status: _text(j['status']),
+    willRenew: j['will_renew'] == true,
+    endedAt: _date(j['ended_at']),
+    checkedAt: _date(j['checked_at']) ?? DateTime.now().toUtc(),
+  );
+
+  final bool plus;
+  final DateTime? until;
+  final String? source;
+  final String? status;
+  final bool willRenew;
+  final DateTime? endedAt;
+
+  /// The server's clock at the answer.
+  final DateTime checkedAt;
+
+  static DateTime? _date(Object? v) =>
+      v is String && v.isNotEmpty ? DateTime.tryParse(v)?.toUtc() : null;
+
+  static String? _text(Object? v) => v is String && v.isNotEmpty ? v : null;
+}
+
 /// A published question bank (FEAT-15 D10).
 class BankInfo {
   const BankInfo({
@@ -206,6 +244,10 @@ abstract class ServerClient {
   /// Posts one crash report (FEAT-24 AD-4) with no auth header, even when
   /// signed in. Throws [SyncException].
   Future<void> sendCrashReport(Map<String, dynamic> body);
+
+  /// The signed-in family's Plus (FEAT-29 AD-5). Throws [SyncException]
+  /// (`expired` with status 401 when the session is gone).
+  Future<Entitlement> entitlement();
 }
 
 /// [ServerClient] over the `pocketbase` package. The session is persisted
@@ -669,5 +711,13 @@ class PocketBaseServerClient implements ServerClient {
     } finally {
       client.close();
     }
+  });
+
+  // Plus (FEAT-30).
+
+  @override
+  Future<Entitlement> entitlement() => _sync(() async {
+    final out = await _pb.send<Map<String, dynamic>>('/api/nn/entitlement');
+    return Entitlement.fromJson(out);
   });
 }

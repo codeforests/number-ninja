@@ -74,6 +74,24 @@ class CrashReports extends Table {
   DateTimeColumn get sentAt => dateTime().nullable()();
 }
 
+/// The cached Plus answer of the server (schema v12, FEAT-30 PD-3): one row,
+/// `id = 1`, device state that is never synced.
+class PlusState extends Table {
+  IntColumn get id => integer().withDefault(const Constant(1))();
+  BoolColumn get plus => boolean()();
+  DateTimeColumn get until => dateTime().nullable()();
+  TextColumn get source => text().nullable()();
+  TextColumn get status => text().nullable()();
+  BoolColumn get willRenew => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get endedAt => dateTime().nullable()();
+  DateTimeColumn get serverCheckedAt => dateTime()();
+  DateTimeColumn get deviceCheckedAt => dateTime()();
+  TextColumn get accountId => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// The children of the family (schema v9, FEAT-25, FAM-01). There is always
 /// at least one; an empty [nickname] means the parent hasn't filled in her
 /// profile yet (AD-2).
@@ -291,6 +309,7 @@ const syncFieldNames = [
     SyncState,
     BankFiles,
     CrashReports,
+    PlusState,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -298,7 +317,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'number_ninja'));
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -343,6 +362,7 @@ class AppDatabase extends _$AppDatabase {
       if (from < 7) await _from6To7(m);
       if (from < 9) await _from8To9(m);
       if (from < 10) await _from9To10();
+      if (from < 12) await m.createTable(plusState);
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

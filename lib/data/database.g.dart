@@ -6639,6 +6639,613 @@ class CrashReportsCompanion extends UpdateCompanion<CrashReport> {
   }
 }
 
+class $PlusStateTable extends PlusState
+    with TableInfo<$PlusStateTable, PlusStateData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PlusStateTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _plusMeta = const VerificationMeta('plus');
+  @override
+  late final GeneratedColumn<bool> plus = GeneratedColumn<bool>(
+    'plus',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("plus" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _untilMeta = const VerificationMeta('until');
+  @override
+  late final GeneratedColumn<DateTime> until = GeneratedColumn<DateTime>(
+    'until',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _willRenewMeta = const VerificationMeta(
+    'willRenew',
+  );
+  @override
+  late final GeneratedColumn<bool> willRenew = GeneratedColumn<bool>(
+    'will_renew',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("will_renew" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _endedAtMeta = const VerificationMeta(
+    'endedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> endedAt = GeneratedColumn<DateTime>(
+    'ended_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _serverCheckedAtMeta = const VerificationMeta(
+    'serverCheckedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> serverCheckedAt =
+      GeneratedColumn<DateTime>(
+        'server_checked_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _deviceCheckedAtMeta = const VerificationMeta(
+    'deviceCheckedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deviceCheckedAt =
+      GeneratedColumn<DateTime>(
+        'device_checked_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    plus,
+    until,
+    source,
+    status,
+    willRenew,
+    endedAt,
+    serverCheckedAt,
+    deviceCheckedAt,
+    accountId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'plus_state';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PlusStateData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('plus')) {
+      context.handle(
+        _plusMeta,
+        plus.isAcceptableOrUnknown(data['plus']!, _plusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_plusMeta);
+    }
+    if (data.containsKey('until')) {
+      context.handle(
+        _untilMeta,
+        until.isAcceptableOrUnknown(data['until']!, _untilMeta),
+      );
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('will_renew')) {
+      context.handle(
+        _willRenewMeta,
+        willRenew.isAcceptableOrUnknown(data['will_renew']!, _willRenewMeta),
+      );
+    }
+    if (data.containsKey('ended_at')) {
+      context.handle(
+        _endedAtMeta,
+        endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
+      );
+    }
+    if (data.containsKey('server_checked_at')) {
+      context.handle(
+        _serverCheckedAtMeta,
+        serverCheckedAt.isAcceptableOrUnknown(
+          data['server_checked_at']!,
+          _serverCheckedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_serverCheckedAtMeta);
+    }
+    if (data.containsKey('device_checked_at')) {
+      context.handle(
+        _deviceCheckedAtMeta,
+        deviceCheckedAt.isAcceptableOrUnknown(
+          data['device_checked_at']!,
+          _deviceCheckedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceCheckedAtMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PlusStateData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PlusStateData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      plus: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}plus'],
+      )!,
+      until: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}until'],
+      ),
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      ),
+      willRenew: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}will_renew'],
+      )!,
+      endedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}ended_at'],
+      ),
+      serverCheckedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}server_checked_at'],
+      )!,
+      deviceCheckedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}device_checked_at'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+    );
+  }
+
+  @override
+  $PlusStateTable createAlias(String alias) {
+    return $PlusStateTable(attachedDatabase, alias);
+  }
+}
+
+class PlusStateData extends DataClass implements Insertable<PlusStateData> {
+  final int id;
+  final bool plus;
+  final DateTime? until;
+  final String? source;
+  final String? status;
+  final bool willRenew;
+  final DateTime? endedAt;
+  final DateTime serverCheckedAt;
+  final DateTime deviceCheckedAt;
+  final String accountId;
+  const PlusStateData({
+    required this.id,
+    required this.plus,
+    this.until,
+    this.source,
+    this.status,
+    required this.willRenew,
+    this.endedAt,
+    required this.serverCheckedAt,
+    required this.deviceCheckedAt,
+    required this.accountId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['plus'] = Variable<bool>(plus);
+    if (!nullToAbsent || until != null) {
+      map['until'] = Variable<DateTime>(until);
+    }
+    if (!nullToAbsent || source != null) {
+      map['source'] = Variable<String>(source);
+    }
+    if (!nullToAbsent || status != null) {
+      map['status'] = Variable<String>(status);
+    }
+    map['will_renew'] = Variable<bool>(willRenew);
+    if (!nullToAbsent || endedAt != null) {
+      map['ended_at'] = Variable<DateTime>(endedAt);
+    }
+    map['server_checked_at'] = Variable<DateTime>(serverCheckedAt);
+    map['device_checked_at'] = Variable<DateTime>(deviceCheckedAt);
+    map['account_id'] = Variable<String>(accountId);
+    return map;
+  }
+
+  PlusStateCompanion toCompanion(bool nullToAbsent) {
+    return PlusStateCompanion(
+      id: Value(id),
+      plus: Value(plus),
+      until: until == null && nullToAbsent
+          ? const Value.absent()
+          : Value(until),
+      source: source == null && nullToAbsent
+          ? const Value.absent()
+          : Value(source),
+      status: status == null && nullToAbsent
+          ? const Value.absent()
+          : Value(status),
+      willRenew: Value(willRenew),
+      endedAt: endedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endedAt),
+      serverCheckedAt: Value(serverCheckedAt),
+      deviceCheckedAt: Value(deviceCheckedAt),
+      accountId: Value(accountId),
+    );
+  }
+
+  factory PlusStateData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PlusStateData(
+      id: serializer.fromJson<int>(json['id']),
+      plus: serializer.fromJson<bool>(json['plus']),
+      until: serializer.fromJson<DateTime?>(json['until']),
+      source: serializer.fromJson<String?>(json['source']),
+      status: serializer.fromJson<String?>(json['status']),
+      willRenew: serializer.fromJson<bool>(json['willRenew']),
+      endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
+      serverCheckedAt: serializer.fromJson<DateTime>(json['serverCheckedAt']),
+      deviceCheckedAt: serializer.fromJson<DateTime>(json['deviceCheckedAt']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'plus': serializer.toJson<bool>(plus),
+      'until': serializer.toJson<DateTime?>(until),
+      'source': serializer.toJson<String?>(source),
+      'status': serializer.toJson<String?>(status),
+      'willRenew': serializer.toJson<bool>(willRenew),
+      'endedAt': serializer.toJson<DateTime?>(endedAt),
+      'serverCheckedAt': serializer.toJson<DateTime>(serverCheckedAt),
+      'deviceCheckedAt': serializer.toJson<DateTime>(deviceCheckedAt),
+      'accountId': serializer.toJson<String>(accountId),
+    };
+  }
+
+  PlusStateData copyWith({
+    int? id,
+    bool? plus,
+    Value<DateTime?> until = const Value.absent(),
+    Value<String?> source = const Value.absent(),
+    Value<String?> status = const Value.absent(),
+    bool? willRenew,
+    Value<DateTime?> endedAt = const Value.absent(),
+    DateTime? serverCheckedAt,
+    DateTime? deviceCheckedAt,
+    String? accountId,
+  }) => PlusStateData(
+    id: id ?? this.id,
+    plus: plus ?? this.plus,
+    until: until.present ? until.value : this.until,
+    source: source.present ? source.value : this.source,
+    status: status.present ? status.value : this.status,
+    willRenew: willRenew ?? this.willRenew,
+    endedAt: endedAt.present ? endedAt.value : this.endedAt,
+    serverCheckedAt: serverCheckedAt ?? this.serverCheckedAt,
+    deviceCheckedAt: deviceCheckedAt ?? this.deviceCheckedAt,
+    accountId: accountId ?? this.accountId,
+  );
+  PlusStateData copyWithCompanion(PlusStateCompanion data) {
+    return PlusStateData(
+      id: data.id.present ? data.id.value : this.id,
+      plus: data.plus.present ? data.plus.value : this.plus,
+      until: data.until.present ? data.until.value : this.until,
+      source: data.source.present ? data.source.value : this.source,
+      status: data.status.present ? data.status.value : this.status,
+      willRenew: data.willRenew.present ? data.willRenew.value : this.willRenew,
+      endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
+      serverCheckedAt: data.serverCheckedAt.present
+          ? data.serverCheckedAt.value
+          : this.serverCheckedAt,
+      deviceCheckedAt: data.deviceCheckedAt.present
+          ? data.deviceCheckedAt.value
+          : this.deviceCheckedAt,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlusStateData(')
+          ..write('id: $id, ')
+          ..write('plus: $plus, ')
+          ..write('until: $until, ')
+          ..write('source: $source, ')
+          ..write('status: $status, ')
+          ..write('willRenew: $willRenew, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('serverCheckedAt: $serverCheckedAt, ')
+          ..write('deviceCheckedAt: $deviceCheckedAt, ')
+          ..write('accountId: $accountId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    plus,
+    until,
+    source,
+    status,
+    willRenew,
+    endedAt,
+    serverCheckedAt,
+    deviceCheckedAt,
+    accountId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PlusStateData &&
+          other.id == this.id &&
+          other.plus == this.plus &&
+          other.until == this.until &&
+          other.source == this.source &&
+          other.status == this.status &&
+          other.willRenew == this.willRenew &&
+          other.endedAt == this.endedAt &&
+          other.serverCheckedAt == this.serverCheckedAt &&
+          other.deviceCheckedAt == this.deviceCheckedAt &&
+          other.accountId == this.accountId);
+}
+
+class PlusStateCompanion extends UpdateCompanion<PlusStateData> {
+  final Value<int> id;
+  final Value<bool> plus;
+  final Value<DateTime?> until;
+  final Value<String?> source;
+  final Value<String?> status;
+  final Value<bool> willRenew;
+  final Value<DateTime?> endedAt;
+  final Value<DateTime> serverCheckedAt;
+  final Value<DateTime> deviceCheckedAt;
+  final Value<String> accountId;
+  const PlusStateCompanion({
+    this.id = const Value.absent(),
+    this.plus = const Value.absent(),
+    this.until = const Value.absent(),
+    this.source = const Value.absent(),
+    this.status = const Value.absent(),
+    this.willRenew = const Value.absent(),
+    this.endedAt = const Value.absent(),
+    this.serverCheckedAt = const Value.absent(),
+    this.deviceCheckedAt = const Value.absent(),
+    this.accountId = const Value.absent(),
+  });
+  PlusStateCompanion.insert({
+    this.id = const Value.absent(),
+    required bool plus,
+    this.until = const Value.absent(),
+    this.source = const Value.absent(),
+    this.status = const Value.absent(),
+    this.willRenew = const Value.absent(),
+    this.endedAt = const Value.absent(),
+    required DateTime serverCheckedAt,
+    required DateTime deviceCheckedAt,
+    required String accountId,
+  }) : plus = Value(plus),
+       serverCheckedAt = Value(serverCheckedAt),
+       deviceCheckedAt = Value(deviceCheckedAt),
+       accountId = Value(accountId);
+  static Insertable<PlusStateData> custom({
+    Expression<int>? id,
+    Expression<bool>? plus,
+    Expression<DateTime>? until,
+    Expression<String>? source,
+    Expression<String>? status,
+    Expression<bool>? willRenew,
+    Expression<DateTime>? endedAt,
+    Expression<DateTime>? serverCheckedAt,
+    Expression<DateTime>? deviceCheckedAt,
+    Expression<String>? accountId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (plus != null) 'plus': plus,
+      if (until != null) 'until': until,
+      if (source != null) 'source': source,
+      if (status != null) 'status': status,
+      if (willRenew != null) 'will_renew': willRenew,
+      if (endedAt != null) 'ended_at': endedAt,
+      if (serverCheckedAt != null) 'server_checked_at': serverCheckedAt,
+      if (deviceCheckedAt != null) 'device_checked_at': deviceCheckedAt,
+      if (accountId != null) 'account_id': accountId,
+    });
+  }
+
+  PlusStateCompanion copyWith({
+    Value<int>? id,
+    Value<bool>? plus,
+    Value<DateTime?>? until,
+    Value<String?>? source,
+    Value<String?>? status,
+    Value<bool>? willRenew,
+    Value<DateTime?>? endedAt,
+    Value<DateTime>? serverCheckedAt,
+    Value<DateTime>? deviceCheckedAt,
+    Value<String>? accountId,
+  }) {
+    return PlusStateCompanion(
+      id: id ?? this.id,
+      plus: plus ?? this.plus,
+      until: until ?? this.until,
+      source: source ?? this.source,
+      status: status ?? this.status,
+      willRenew: willRenew ?? this.willRenew,
+      endedAt: endedAt ?? this.endedAt,
+      serverCheckedAt: serverCheckedAt ?? this.serverCheckedAt,
+      deviceCheckedAt: deviceCheckedAt ?? this.deviceCheckedAt,
+      accountId: accountId ?? this.accountId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (plus.present) {
+      map['plus'] = Variable<bool>(plus.value);
+    }
+    if (until.present) {
+      map['until'] = Variable<DateTime>(until.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (willRenew.present) {
+      map['will_renew'] = Variable<bool>(willRenew.value);
+    }
+    if (endedAt.present) {
+      map['ended_at'] = Variable<DateTime>(endedAt.value);
+    }
+    if (serverCheckedAt.present) {
+      map['server_checked_at'] = Variable<DateTime>(serverCheckedAt.value);
+    }
+    if (deviceCheckedAt.present) {
+      map['device_checked_at'] = Variable<DateTime>(deviceCheckedAt.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlusStateCompanion(')
+          ..write('id: $id, ')
+          ..write('plus: $plus, ')
+          ..write('until: $until, ')
+          ..write('source: $source, ')
+          ..write('status: $status, ')
+          ..write('willRenew: $willRenew, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('serverCheckedAt: $serverCheckedAt, ')
+          ..write('deviceCheckedAt: $deviceCheckedAt, ')
+          ..write('accountId: $accountId')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6655,6 +7262,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SyncStateTable syncState = $SyncStateTable(this);
   late final $BankFilesTable bankFiles = $BankFilesTable(this);
   late final $CrashReportsTable crashReports = $CrashReportsTable(this);
+  late final $PlusStateTable plusState = $PlusStateTable(this);
   late final Index roundsUuid = Index(
     'rounds_uuid',
     'CREATE UNIQUE INDEX rounds_uuid ON rounds (uuid)',
@@ -6681,6 +7289,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     syncState,
     bankFiles,
     crashReports,
+    plusState,
     roundsUuid,
     attemptsUuid,
   ];
@@ -10517,6 +11126,306 @@ typedef $$CrashReportsTableProcessedTableManager =
       CrashReport,
       PrefetchHooks Function()
     >;
+typedef $$PlusStateTableCreateCompanionBuilder = PlusStateCompanion Function({
+  Value<int> id,
+  required bool plus,
+  Value<DateTime?> until,
+  Value<String?> source,
+  Value<String?> status,
+  Value<bool> willRenew,
+  Value<DateTime?> endedAt,
+  required DateTime serverCheckedAt,
+  required DateTime deviceCheckedAt,
+  required String accountId,
+});
+typedef $$PlusStateTableUpdateCompanionBuilder = PlusStateCompanion Function({
+  Value<int> id,
+  Value<bool> plus,
+  Value<DateTime?> until,
+  Value<String?> source,
+  Value<String?> status,
+  Value<bool> willRenew,
+  Value<DateTime?> endedAt,
+  Value<DateTime> serverCheckedAt,
+  Value<DateTime> deviceCheckedAt,
+  Value<String> accountId,
+});
+
+class $$PlusStateTableFilterComposer
+    extends Composer<_$AppDatabase, $PlusStateTable> {
+  $$PlusStateTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get plus => $composableBuilder(
+    column: $table.plus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get until => $composableBuilder(
+    column: $table.until,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get willRenew => $composableBuilder(
+    column: $table.willRenew,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get serverCheckedAt => $composableBuilder(
+    column: $table.serverCheckedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deviceCheckedAt => $composableBuilder(
+    column: $table.deviceCheckedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PlusStateTableOrderingComposer
+    extends Composer<_$AppDatabase, $PlusStateTable> {
+  $$PlusStateTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get plus => $composableBuilder(
+    column: $table.plus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get until => $composableBuilder(
+    column: $table.until,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get willRenew => $composableBuilder(
+    column: $table.willRenew,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get serverCheckedAt => $composableBuilder(
+    column: $table.serverCheckedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deviceCheckedAt => $composableBuilder(
+    column: $table.deviceCheckedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PlusStateTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PlusStateTable> {
+  $$PlusStateTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<bool> get plus =>
+      $composableBuilder(column: $table.plus, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get until =>
+      $composableBuilder(column: $table.until, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<bool> get willRenew =>
+      $composableBuilder(column: $table.willRenew, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endedAt =>
+      $composableBuilder(column: $table.endedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get serverCheckedAt => $composableBuilder(
+    column: $table.serverCheckedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get deviceCheckedAt => $composableBuilder(
+    column: $table.deviceCheckedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+}
+
+class $$PlusStateTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PlusStateTable,
+          PlusStateData,
+          $$PlusStateTableFilterComposer,
+          $$PlusStateTableOrderingComposer,
+          $$PlusStateTableAnnotationComposer,
+          $$PlusStateTableCreateCompanionBuilder,
+          $$PlusStateTableUpdateCompanionBuilder,
+          (
+            PlusStateData,
+            BaseReferences<_$AppDatabase, $PlusStateTable, PlusStateData>,
+          ),
+          PlusStateData,
+          PrefetchHooks Function()
+        > {
+  $$PlusStateTableTableManager(_$AppDatabase db, $PlusStateTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PlusStateTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PlusStateTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PlusStateTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<bool> plus = const Value.absent(),
+                Value<DateTime?> until = const Value.absent(),
+                Value<String?> source = const Value.absent(),
+                Value<String?> status = const Value.absent(),
+                Value<bool> willRenew = const Value.absent(),
+                Value<DateTime?> endedAt = const Value.absent(),
+                Value<DateTime> serverCheckedAt = const Value.absent(),
+                Value<DateTime> deviceCheckedAt = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+              }) => PlusStateCompanion(
+                id: id,
+                plus: plus,
+                until: until,
+                source: source,
+                status: status,
+                willRenew: willRenew,
+                endedAt: endedAt,
+                serverCheckedAt: serverCheckedAt,
+                deviceCheckedAt: deviceCheckedAt,
+                accountId: accountId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required bool plus,
+                Value<DateTime?> until = const Value.absent(),
+                Value<String?> source = const Value.absent(),
+                Value<String?> status = const Value.absent(),
+                Value<bool> willRenew = const Value.absent(),
+                Value<DateTime?> endedAt = const Value.absent(),
+                required DateTime serverCheckedAt,
+                required DateTime deviceCheckedAt,
+                required String accountId,
+              }) => PlusStateCompanion.insert(
+                id: id,
+                plus: plus,
+                until: until,
+                source: source,
+                status: status,
+                willRenew: willRenew,
+                endedAt: endedAt,
+                serverCheckedAt: serverCheckedAt,
+                deviceCheckedAt: deviceCheckedAt,
+                accountId: accountId,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$PlusStateTable, PlusStateData>(table),
+                  BaseReferences<_$AppDatabase, $PlusStateTable, PlusStateData>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PlusStateTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PlusStateTable,
+      PlusStateData,
+      $$PlusStateTableFilterComposer,
+      $$PlusStateTableOrderingComposer,
+      $$PlusStateTableAnnotationComposer,
+      $$PlusStateTableCreateCompanionBuilder,
+      $$PlusStateTableUpdateCompanionBuilder,
+      (
+        PlusStateData,
+        BaseReferences<_$AppDatabase, $PlusStateTable, PlusStateData>,
+      ),
+      PlusStateData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -10547,4 +11456,6 @@ class $AppDatabaseManager {
       $$BankFilesTableTableManager(_db, _db.bankFiles);
   $$CrashReportsTableTableManager get crashReports =>
       $$CrashReportsTableTableManager(_db, _db.crashReports);
+  $$PlusStateTableTableManager get plusState =>
+      $$PlusStateTableTableManager(_db, _db.plusState);
 }
