@@ -153,6 +153,9 @@ jobs:
           grep -q 'android:usesCleartextTraffic="false"' "$m" || { echo "::error::usesCleartextTraffic is not false"; exit 1; }
           grep -q 'android:networkSecurityConfig="@xml/network_security_config"' "$m" || { echo "::error::no network security config"; exit 1; }
           grep -q 'cleartextTrafficPermitted="false"' android/app/src/main/res/xml/network_security_config.xml
+          # FEAT-20 (D19): BrainBubblz app id and sign-in return scheme.
+          grep -q 'package="com.brainbubblz.app"' "$m" || { echo "::error::app id is not com.brainbubblz.app"; exit 1; }
+          grep -q 'android:scheme="brainbubblz"' "$m" || { echo "::error::no brainbubblz:// sign-in return"; exit 1; }
 
       - uses: actions/upload-artifact@v4
         with:

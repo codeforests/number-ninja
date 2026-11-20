@@ -138,9 +138,9 @@ final serverClientProvider = Provider<ServerClient>(
 class SignInBrowser {
   const SignInBrowser();
 
-  /// Android hands the `numberninja://signin/...` link to this channel
+  /// Android hands the `brainbubblz://signin/...` link to this channel
   /// (`SignInReturnActivity`).
-  static const _channel = MethodChannel('number_ninja/sign_in');
+  static const _channel = MethodChannel('brainbubblz/sign_in');
 
   /// Opens [url] in a Custom Tab and completes with the link Google's sign-in
   /// sends back into the app. The caller's timeout ends a sign-in the parent

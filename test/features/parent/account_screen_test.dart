@@ -18,7 +18,7 @@ class FakeBrowser extends SignInBrowser {
   @override
   Future<Uri> open(Uri url) async {
     opened.add(url);
-    return Uri.parse('numberninja://signin/google?state=s&code=c');
+    return Uri.parse('brainbubblz://signin/google?state=s&code=c');
   }
 
   @override
