@@ -1,5 +1,5 @@
 # Handoff: FEAT-31 — Weekly progress email
-Branch: feat/FEAT-31-weekly-email · PR: draft (see STATE / PR list) · Updated: 2026-11-20 by design + build
+Branch: feat/FEAT-31-weekly-email · PR: https://github.com/codeforests/number-ninja/pull/38 (draft) · Updated: 2026-11-20 by design + build
 Stage done: build (T1–T5 of 5); small feature, design carried straight into the build
 Next: verify — kickoff: "Verify FEAT-31 on branch feat/FEAT-31-weekly-email. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
