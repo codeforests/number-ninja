@@ -1,5 +1,5 @@
 # Handoff: FEAT-20 — Own domain and new app id
-Branch: claude/project-thread-wqok43 · PR: see STATE (draft) · Updated: 2026-11-20 by design+build
+Branch: claude/project-thread-wqok43 · PR: https://github.com/codeforests/number-ninja/pull/30 (draft) · Updated: 2026-11-20 by design+build
 Stage done: build (T1–T3 of 3)
 Next: verify — kickoff: "Verify FEAT-20 on branch claude/project-thread-wqok43. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
