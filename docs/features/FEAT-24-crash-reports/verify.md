@@ -27,4 +27,4 @@
 
 - Changed older tests are setup only: `migration_test.dart` drops the v11 column/table before faking older versions; `account_screen_test.dart` adds privacy-note asserts. No assertion removed or skipped.
 - Read `crash_reporter.dart`, `crash.dart`, `device_info.dart`, the migration and the digest hook: errors in capture, save and send are swallowed; the upload has no auth header (AD-4); route pattern only (AD-6). The server needs a deploy for the `crash_reports` collection and the cron.
-- Released as v2.2.0 (`pubspec.yaml` 2.2.0+6), closing M8.
+- Released as v2.2.0 (`pubspec.yaml` 2.2.0+6, pinned in `test/tool/icon_test.dart`), closing M8. CI run 1 on `120df03` failed only that pin; fixed.
