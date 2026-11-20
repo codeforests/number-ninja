@@ -179,6 +179,10 @@ class QuizHarness {
   bool choosingChild = false;
   int startChild = 1;
 
+  /// The app session; null = setup finished, child from [choosingChild]
+  /// (FEAT-26 setup tests pass their own).
+  AppSession? session;
+
   /// More overrides for one test, added after the defaults.
   List<Override> more = [];
 
@@ -195,7 +199,7 @@ class QuizHarness {
     elapsedProvider.overrideWithValue(() => elapsed),
     soundPlayerProvider.overrideWithValue(sounds),
     appSessionProvider.overrideWithValue(
-      AppSession(clock: clock, choosingChild: choosingChild),
+      session ?? AppSession(clock: clock, choosingChild: choosingChild),
     ),
     startChildProvider.overrideWithValue(startChild),
     if (!lockTopics)
