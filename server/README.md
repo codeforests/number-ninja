@@ -137,6 +137,31 @@ The generator is the only source of questions (D11). To ship new or changed ques
 
 A bank that needs a newer app (new topic, visual kind or question format) also bumps `format` and `bankFormatSupported` in the same release; older apps then ignore it (BNK-11). A published bank can be deleted in the admin UI; the apps keep whatever they already downloaded.
 
+## Granting Plus (FEAT-29)
+
+An account has BrainBubblz Plus while one of its `entitlements` records has
+`expires_at` in the future. Every account that existed when FEAT-29 was
+deployed (your family) got Plus with no end (`expires_at` 2099-12-31, note
+"founding family (FEAT-29)"); accounts made later start free.
+
+- **Give Plus to someone:** Actions → **Grant Plus** → Run workflow on `main`
+  with their account email; leave *until* empty for no end, or give the last
+  day (`2027-06-30`). Add a note (who and why). The email is masked in the log.
+- **Take it away:** the same workflow with *revoke* ticked. The record stays
+  with status `revoked` and `expires_at` now, so the history is kept.
+- **By hand:** admin UI → Collections → `entitlements` → edit the account's
+  `complimentary` record's `expires_at` (one record per account and source).
+- Locally: `dart run tool/grant_plus.dart --server URL --email E --forever`
+  (or `--until YYYY-MM-DD`, `--revoke`), with `PB_SUPERUSER_EMAIL` and
+  `PB_SUPERUSER_PASSWORD` set.
+
+The server bank (and its file) is only for signed-in parents with Plus; other
+tablets keep the bank they have. The store webhook
+(`POST /api/nn/billing/revenuecat`) stays off until the repo secret
+`BILLING_WEBHOOK_SECRET` is set (FEAT-35); then RevenueCat sends that value as
+its Authorization header and the server updates `google_play`/`app_store`
+records itself.
+
 ## Admin UI (through an SSH tunnel only)
 
 `ssh -L 8090:127.0.0.1:8090 deploy@<droplet IP>`, then open `http://localhost:8090/_/`

@@ -41,7 +41,8 @@ The app stays offline-first: screens read and write only the Drift database, as 
 | `attempts` | child, uuid (unique), round_uuid, question_id, answer_given, correct, time_ms, answered_at | via `child.owner`; create only |
 | `badges` | child, badge_id (unique per child), earned_at | via `child.owner` |
 | `daily_usage` | child, day, device_id (unique per child + day + device), seconds_used, extra_seconds_granted | via `child.owner` |
-| `banks` | version (unique), format, min_app_build, sha256, file, published_at | read: anyone; write: superuser (publish step) only |
+| `banks` | version (unique), format, min_app_build, sha256, file (protected, FEAT-29), published_at | read: a signed-in parent with active Plus (FEAT-29, BNK-13; was anyone); write: superuser (publish step) only |
+| `entitlements` | user → users (cascade), plan, source (complimentary, invite, google_play, app_store; unique per user), status (display only), expires_at, note, product_id, environment, last_event_id, last_event_at | read: own records; write: server only (superuser, hooks, `tool/grant_plus.dart`). Plus ⇔ some record has `expires_at > now` (FEAT-29) |
 
 Each record also has PocketBase's own `updated` time, which the sync uses as its cursor.
 
