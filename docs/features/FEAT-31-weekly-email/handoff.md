@@ -1,17 +1,13 @@
 # Handoff: FEAT-31 — Weekly progress email
-Branch: feat/FEAT-31-weekly-email · PR: https://github.com/codeforests/number-ninja/pull/38 (draft) · Updated: 2026-11-20 by design + build
-Stage done: build (T1–T5 of 5); small feature, design carried straight into the build
-Next: verify — kickoff: "Verify FEAT-31 on branch feat/FEAT-31-weekly-email. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
+Branch: feat/FEAT-31-weekly-email · PR: https://github.com/codeforests/number-ninja/pull/38 · Updated: 2026-11-20 by verify
+Stage done: verify (accepted)
+Next: merge PR #38, deploy the server (FEAT-29 + FEAT-36 + FEAT-31), release `v2.3.0` (closes M9); then M10 waits on Ken (new server, seller choice).
 
 ## What the next stage needs
-- Decisions WE-1..14 in design.md (auto mode), D26 and WEM-01..06 in 01-requirements.md; build notes in design.md.
-- Server: `lib/weekly.js` does the work; the cron and `POST /api/nn/admin/weekly-email` both call `run(app, now, user)`. Tests drive time only through that admin route.
-- `scripts/check.sh` with `server/test/run.sh` was green at the end of the build (1451 app tests; server suites incl. `weekly_email_test.dart` 9 cases, `resend_test.dart` header case).
-- No new secret or env: the turn-off link uses a per-account random token (`users.email_token`, hidden).
+- verify.md has the evidence and two non-blocking notes (no server default for `weekly_email_tz`; section doesn't invalidate the provider after a write).
 
 ## Left to CI or later
-- APK build and CI: on the PR head.
-- AC-10 live after the M9 deploy (FEAT-29 + FEAT-36 + FEAT-31 go out together): Ken's account turns the switch on and gets the Monday email; Ken can preview with the admin call (server/README "Weekly progress email").
+- AC-10 live after the deploy: Ken turns the switch on and gets the Monday email; preview with the admin call (server/README "Weekly progress email").
 
 ## Pending for Ken
-- none
+- none for the merge

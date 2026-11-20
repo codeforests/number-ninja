@@ -247,12 +247,12 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| WEM-01 | While signed in, the parent shall be able to turn a weekly progress email on or off on SCR-13; it is off by default, kept on the server per account, and can be turned on only with a verified account and Plus. (D26) | M | FEAT-31 | |
-| WEM-02 | Each week, from Monday 08:00 in the family's time zone (taken from the device), the server shall send one email covering the previous Monday to Sunday to each account with the email on, a verified address and active Plus; at most once a week, a failed send retried later until Wednesday 08:00. | M | FEAT-31 | |
-| WEM-03 | The email shall show for each child: time practised and on how many days, rounds (and how many were revision), questions answered and % right with the week before, up to three topics to practise, and badges earned; an idle child says so, and no email is sent when no child practised. | M | FEAT-31 | |
-| WEM-04 | The email shall be built only from records the app already syncs, go only to the account's own address, and hold no images, tracking pixels or tracked links. | M | FEAT-31 | |
-| WEM-05 | Every email shall carry a link and List-Unsubscribe headers that turn the email off in one click without signing in, protected by a per-account random token. | M | FEAT-31 | |
-| WEM-06 | The admin shall be able to preview an account's email and run the weekly job for a given time. | S | FEAT-31 | |
+| WEM-01 | While signed in, the parent shall be able to turn a weekly progress email on or off on SCR-13; it is off by default, kept on the server per account, and can be turned on only with a verified account and Plus. (D26) | M | FEAT-31 || FEAT-31 AC-1, AC-8: server `api_rules_test.dart` group `weekly_email`, `test/features/parent/weekly_email_test.dart` |
+| WEM-02 | Each week, from Monday 08:00 in the family's time zone (taken from the device), the server shall send one email covering the previous Monday to Sunday to each account with the email on, a verified address and active Plus; at most once a week, a failed send retried later until Wednesday 08:00. | M | FEAT-31 || FEAT-31 AC-2, AC-3: server `weekly_email_test.dart` |
+| WEM-03 | The email shall show for each child: time practised and on how many days, rounds (and how many were revision), questions answered and % right with the week before, up to three topics to practise, and badges earned; an idle child says so, and no email is sent when no child practised. | M | FEAT-31 || FEAT-31 AC-4: server `weekly_email_test.dart` |
+| WEM-04 | The email shall be built only from records the app already syncs, go only to the account's own address, and hold no images, tracking pixels or tracked links. | M | FEAT-31 || FEAT-31 AC-4: server `weekly_email_test.dart` (preview, no images); code read |
+| WEM-05 | Every email shall carry a link and List-Unsubscribe headers that turn the email off in one click without signing in, protected by a per-account random token. | M | FEAT-31 || FEAT-31 AC-5: server `weekly_email_test.dart`, `resend_test.dart` |
+| WEM-06 | The admin shall be able to preview an account's email and run the weekly job for a given time. | S | FEAT-31 || FEAT-31 AC-6: server `weekly_email_test.dart` |
 
 ## 5. Non-functional requirements
 
