@@ -18,7 +18,9 @@ void main() {
 
   Future<void> seed(String id, DateTime at) => h.db
       .into(h.db.badgesEarned)
-      .insert(BadgesEarnedCompanion.insert(badgeId: id, earnedAt: at));
+      .insert(
+        BadgesEarnedCompanion.insert(childId: 1, badgeId: id, earnedAt: at),
+      );
 
   String text(String key) =>
       (find.byKey(Key(key)).evaluate().single.widget as Text).data!;

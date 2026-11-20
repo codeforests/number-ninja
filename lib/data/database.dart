@@ -36,8 +36,44 @@ class AppSettings extends Table {
   /// Outcome of the last bank check attempt, shown on SCR-11 (BNK-12).
   TextColumn get bankCheckNote => text().nullable()();
 
+  /// The child playing now (schema v9, FEAT-25 AD-3); a `children.id`.
+  IntColumn get currentChildId => integer().withDefault(const Constant(1))();
+
+  /// "Ask for PIN to change child" (FEAT-25 AD-4); device-only, like the PIN.
+  BoolColumn get switchNeedsPin =>
+      boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column> get primaryKey => {id};
+}
+
+/// The children of the family (schema v9, FEAT-25, FAM-01). There is always
+/// at least one; an empty [nickname] means the parent hasn't filled in her
+/// profile yet (AD-2).
+@DataClassName('ChildRow')
+class Children extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get nickname => text().withDefault(const Constant(''))();
+  IntColumn get schoolYear => integer().withDefault(const Constant(1))();
+  IntColumn get schoolStartLevel => integer().nullable()();
+  IntColumn get olympiadStartLevel => integer().nullable()();
+
+  /// An avatar id from `lib/ui/avatars.dart` (AD-7).
+  TextColumn get avatar => text().withDefault(const Constant('fox'))();
+  IntColumn get dailyLimitMin => integer().withDefault(const Constant(20))();
+  BoolColumn get soundOn => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  /// The server `children` record once linked (AD-8).
+  TextColumn get remoteId => text().nullable()();
+  IntColumn get resetEpoch => integer().withDefault(const Constant(0))();
+  BoolColumn get pendingReset => boolean().withDefault(const Constant(false))();
+
+  /// Removed here while offline: hidden everywhere until the next sync
+  /// deletes the server record (AD-10).
+  BoolColumn get pendingDelete =>
+      boolean().withDefault(const Constant(false))();
 }
 
 /// Downloaded question banks (schema v8, FEAT-15 D7); the newest good one
@@ -68,6 +104,9 @@ class PlaySessions extends Table {
 class Rounds extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get sessionId => integer().references(PlaySessions, #id)();
+
+  /// The child who played it (schema v9, FEAT-25).
+  IntColumn get childId => integer()();
   TextColumn get topicId => text()();
   IntColumn get level => integer().withDefault(const Constant(1))();
   DateTimeColumn get startedAt => dateTime()();
@@ -94,6 +133,9 @@ class Rounds extends Table {
 class Attempts extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get roundId => integer().references(Rounds, #id)();
+
+  /// Same as the round's (schema v9), so per-child queries need no join.
+  IntColumn get childId => integer()();
   TextColumn get questionId => text()();
   TextColumn get answerGiven => text()();
   BoolColumn get correct => boolean()();
@@ -105,9 +147,11 @@ class Attempts extends Table {
   IntColumn get dirty => integer().withDefault(const Constant(1))();
 }
 
-/// Screen-time usage per calendar day (yyyy-MM-dd, local time) and device
-/// (schema v7): a device writes only its own rows, others come from sync.
+/// Screen-time usage per child (schema v9), calendar day (yyyy-MM-dd, local
+/// time) and device (schema v7): a device writes only its own rows, others
+/// come from sync.
 class DailyUsage extends Table {
+  IntColumn get childId => integer()();
   TextColumn get day => text()();
   TextColumn get deviceId => text()();
   IntColumn get secondsUsed => integer().withDefault(const Constant(0))();
@@ -117,35 +161,18 @@ class DailyUsage extends Table {
   TextColumn get remoteId => text().nullable()();
 
   @override
-  Set<Column> get primaryKey => {day, deviceId};
+  Set<Column> get primaryKey => {childId, day, deviceId};
 }
 
 class BadgesEarned extends Table {
+  IntColumn get childId => integer()();
   TextColumn get badgeId => text()();
   DateTimeColumn get earnedAt => dateTime()();
   IntColumn get dirty => integer().withDefault(const Constant(1))();
   TextColumn get remoteId => text().nullable()();
 
   @override
-  Set<Column> get primaryKey => {badgeId};
-}
-
-/// The child profile (single row, id is always 1), PRO-01. Absent until the
-/// parent first saves it.
-@DataClassName('ProfileRow')
-class ChildProfiles extends Table {
-  @override
-  String get tableName => 'child_profile';
-
-  IntColumn get id => integer().withDefault(const Constant(1))();
-  TextColumn get nickname => text()();
-  IntColumn get schoolYear => integer()();
-  IntColumn get schoolStartLevel => integer().nullable()();
-  IntColumn get olympiadStartLevel => integer().nullable()();
-  DateTimeColumn get updatedAt => dateTime()();
-
-  @override
-  Set<Column> get primaryKey => {id};
+  Set<Column> get primaryKey => {childId, badgeId};
 }
 
 /// Wrong-PIN counter (single row, id is always 1), PAR-03.
@@ -160,25 +187,30 @@ class PinLockout extends Table {
 
 /// Topics the parent opened by hand (PRC-14, FEAT-17); kept by the reset.
 class TopicUnlocks extends Table {
+  IntColumn get childId => integer()();
   TextColumn get topicId => text()();
   DateTimeColumn get openedAt => dateTime()();
 
   @override
-  Set<Column> get primaryKey => {topicId};
+  Set<Column> get primaryKey => {childId, topicId};
 }
 
-/// When each synced profile or settings field last changed here (FEAT-14,
-/// last change wins per field). Fields: [syncFieldNames].
+/// When each synced profile or settings field of a child last changed here
+/// (FEAT-14, last change wins per field; per child since v9). Fields:
+/// [syncFieldNames].
 class SyncFields extends Table {
+  IntColumn get childId => integer()();
   TextColumn get field => text()();
   DateTimeColumn get changedAt => dateTime()();
   IntColumn get dirty => integer().withDefault(const Constant(1))();
 
   @override
-  Set<Column> get primaryKey => {field};
+  Set<Column> get primaryKey => {childId, field};
 }
 
-/// Sync bookkeeping (single row, id is always 1), FEAT-14.
+/// Sync bookkeeping (single row, id is always 1), FEAT-14. Since v9
+/// [childId], [resetEpoch] and [pendingReset] live on `children` and are no
+/// longer read (FEAT-25 AD-12).
 class SyncState extends Table {
   IntColumn get id => integer().withDefault(const Constant(1))();
   TextColumn get accountId => text().nullable()();
@@ -202,6 +234,7 @@ const syncFieldStartOlympiad = 'start_level_olympiad';
 const syncFieldDailyLimit = 'daily_limit_min';
 const syncFieldSound = 'sound_on';
 const syncFieldTopics = 'unlocked_topics';
+const syncFieldAvatar = 'avatar'; // FEAT-25 AD-7
 const profileSyncFields = [
   syncFieldNickname,
   syncFieldSchoolYear,
@@ -213,6 +246,7 @@ const syncFieldNames = [
   syncFieldDailyLimit,
   syncFieldSound,
   syncFieldTopics,
+  syncFieldAvatar,
 ];
 
 @DriftDatabase(
@@ -224,7 +258,7 @@ const syncFieldNames = [
     DailyUsage,
     BadgesEarned,
     PinLockout,
-    ChildProfiles,
+    Children,
     TopicUnlocks,
     SyncFields,
     SyncState,
@@ -236,7 +270,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'number_ninja'));
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -244,18 +278,22 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       await into(appSettings).insert(AppSettingsCompanion.insert());
       await into(pinLockout).insert(PinLockoutCompanion.insert());
-      await _seedSync(profileTime: null);
+      await into(syncState).insert(SyncStateCompanion.insert());
+      final now = DateTime.now();
+      await into(children)
+          .insert(ChildrenCompanion.insert(createdAt: now, updatedAt: now));
+      await seedChildFields(1, profileTime: null);
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) await _from1To2(m);
       if (from < 3) await m.addColumn(appSettings, appSettings.soundOn);
       if (from < 4) {
         await m.addColumn(appSettings, appSettings.profilePending);
-        await m.createTable(childProfiles);
+        await customStatement(_v8ChildProfile);
         // An updated install keeps working without a profile (PRO-02).
         await customStatement('UPDATE app_settings SET profile_pending = 0');
       }
-      if (from < 5) await m.createTable(topicUnlocks);
+      if (from < 5) await customStatement(_v8TopicUnlocks);
       if (from < 6) await m.addColumn(rounds, rounds.kind);
       // v8 columns first: _from6To7 rebuilds app_settings with every
       // column of the current schema, so they must exist by then.
@@ -264,7 +302,10 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(appSettings, appSettings.bankCheckNote);
         await m.createTable(bankFiles);
       }
+      // v9 columns before _from6To7 too, for the same reason.
+      if (from < 9) await _v9Columns(m);
       if (from < 7) await _from6To7(m);
+      if (from < 9) await _from8To9(m);
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -328,35 +369,127 @@ class AppDatabase extends _$AppDatabase {
     );
     await m.addColumn(badgesEarned, badgesEarned.dirty);
     await m.addColumn(badgesEarned, badgesEarned.remoteId);
-    await m.createTable(syncFields);
+    await customStatement(_v8SyncFields);
     await m.createTable(syncState);
-    final profile = await (select(
-      childProfiles,
-    )..where((p) => p.id.equals(1))).getSingleOrNull();
-    await _seedSync(profileTime: profile?.updatedAt);
-  }
-
-  /// The `sync_state` row and one `sync_fields` row per field: profile
-  /// fields at [profileTime] (if any), the rest at time 0, so on a second
-  /// tablet the account's values beat untouched defaults.
-  Future<void> _seedSync({required DateTime? profileTime}) async {
     await into(syncState).insert(SyncStateCompanion.insert());
-    final zero = DateTime.fromMillisecondsSinceEpoch(0);
+    // v8 shape: no child id yet, _from8To9 adds it.
+    final profile = await customSelect(
+      'SELECT updated_at FROM child_profile WHERE id = 1',
+    ).getSingleOrNull();
+    final profileSecs = profile?.read<int>('updated_at');
     for (final f in syncFieldNames) {
-      final at = profileSyncFields.contains(f) ? profileTime ?? zero : zero;
-      await into(syncFields)
-          .insert(SyncFieldsCompanion.insert(field: f, changedAt: at));
+      final at = profileSyncFields.contains(f) ? profileSecs ?? 0 : 0;
+      await customStatement(
+        'INSERT INTO sync_fields (field, changed_at) VALUES (?, ?)',
+        [f, at],
+      );
     }
   }
 
-  /// Records that [fields] changed here at [at] (FEAT-14, last change wins).
-  Future<void> stampFields(Iterable<String> fields, DateTime at) async {
+  /// Schema v9 plain columns (FEAT-25): the two `app_settings` fields and
+  /// `child_id` = 1 on the rows that `_from6To7` may rebuild.
+  Future<void> _v9Columns(Migrator m) async {
+    await m.addColumn(appSettings, appSettings.currentChildId);
+    await m.addColumn(appSettings, appSettings.switchNeedsPin);
+    for (final t in ['rounds', 'attempts', 'daily_usage']) {
+      await customStatement(
+        'ALTER TABLE $t ADD COLUMN child_id INTEGER NOT NULL DEFAULT 1',
+      );
+    }
+  }
+
+  /// Schema v9 (FEAT-25, FAM-07): the v8 profile, limit, sound and sync
+  /// link become child 1; the per-child tables are re-keyed with child 1.
+  Future<void> _from8To9(Migrator m) async {
+    await m.createTable(children);
+    final p = await customSelect(
+      'SELECT nickname, school_year, school_start_level, '
+      'olympiad_start_level, updated_at FROM child_profile WHERE id = 1',
+    ).getSingleOrNull();
+    final s = await getSettings();
+    final sync = await customSelect(
+      'SELECT child_id, reset_epoch, pending_reset FROM sync_state '
+      'WHERE id = 1',
+    ).getSingleOrNull();
+    final now = DateTime.now();
+    final at = p == null
+        ? now
+        : DateTime.fromMillisecondsSinceEpoch(p.read<int>('updated_at') * 1000);
+    await into(children).insert(
+      ChildrenCompanion.insert(
+        id: const Value(1),
+        nickname: Value(p?.read<String>('nickname') ?? ''),
+        schoolYear: Value(p?.read<int>('school_year') ?? 1),
+        schoolStartLevel: Value(p?.readNullable<int>('school_start_level')),
+        olympiadStartLevel: Value(p?.readNullable<int>('olympiad_start_level')),
+        dailyLimitMin: Value(s.dailyLimitMin),
+        soundOn: Value(s.soundOn),
+        createdAt: at,
+        updatedAt: at,
+        remoteId: Value(sync?.readNullable<String>('child_id')),
+        resetEpoch: Value(sync?.read<int>('reset_epoch') ?? 0),
+        pendingReset: Value((sync?.read<int>('pending_reset') ?? 0) != 0),
+      ),
+    );
+    const one = Constant<int>(1);
+    // daily_usage already has child_id (from _v9Columns): rebuild for the key.
+    await m.alterTable(TableMigration(dailyUsage));
+    await m.alterTable(
+      TableMigration(
+        badgesEarned,
+        newColumns: [badgesEarned.childId],
+        columnTransformer: {badgesEarned.childId: one},
+      ),
+    );
+    await m.alterTable(
+      TableMigration(
+        topicUnlocks,
+        newColumns: [topicUnlocks.childId],
+        columnTransformer: {topicUnlocks.childId: one},
+      ),
+    );
+    await m.alterTable(
+      TableMigration(
+        syncFields,
+        newColumns: [syncFields.childId],
+        columnTransformer: {syncFields.childId: one},
+      ),
+    );
+    await customStatement('DROP TABLE child_profile');
+  }
+
+  /// One `sync_fields` row per field for child [childId]: profile fields at
+  /// [profileTime] (if any), the rest at time 0, so on a second tablet the
+  /// account's values beat untouched defaults.
+  Future<void> seedChildFields(
+    int childId, {
+    required DateTime? profileTime,
+  }) async {
+    final zero = DateTime.fromMillisecondsSinceEpoch(0);
+    for (final f in syncFieldNames) {
+      // The avatar is picked with the profile (FEAT-25 AD-7).
+      final withProfile = profileSyncFields.contains(f) || f == syncFieldAvatar;
+      final at = withProfile ? profileTime ?? zero : zero;
+      await into(syncFields).insert(
+        SyncFieldsCompanion.insert(childId: childId, field: f, changedAt: at),
+        mode: InsertMode.insertOrIgnore,
+      );
+    }
+  }
+
+  /// Records that [fields] of child [childId] changed here at [at]
+  /// (FEAT-14, last change wins).
+  Future<void> stampFields(
+    int childId,
+    Iterable<String> fields,
+    DateTime at,
+  ) async {
     for (final f in fields) {
       await customStatement(
-        'INSERT INTO sync_fields (field, changed_at, dirty) VALUES (?, ?, 1) '
-        'ON CONFLICT(field) DO UPDATE SET changed_at = excluded.changed_at, '
-        'dirty = dirty + 1',
-        [f, at.millisecondsSinceEpoch ~/ 1000],
+        'INSERT INTO sync_fields (child_id, field, changed_at, dirty) '
+        'VALUES (?, ?, ?, 1) ON CONFLICT(child_id, field) DO UPDATE SET '
+        'changed_at = excluded.changed_at, dirty = dirty + 1',
+        [childId, f, at.millisecondsSinceEpoch ~/ 1000],
       );
     }
     notifyUpdates({const TableUpdate('sync_fields')});
@@ -368,6 +501,28 @@ class AppDatabase extends _$AppDatabase {
   Future<AppSetting> getSettings() =>
       (select(appSettings)..where((s) => s.id.equals(1))).getSingle();
 
+  /// Child [id]'s row (FEAT-25).
+  Future<ChildRow> child(int id) =>
+      (select(children)..where((c) => c.id.equals(id))).getSingle();
+
+  /// The child playing now (FEAT-25 AD-3).
+  Future<int> currentChildId() async => (await getSettings()).currentChildId;
+
   Stream<AppSetting> watchSettings() =>
       (select(appSettings)..where((s) => s.id.equals(1))).watchSingle();
 }
+
+/// Tables as schema v8 created them, for the steps before v9 (FEAT-25):
+/// `_from8To9` turns them into their v9 shape.
+const _v8ChildProfile =
+    'CREATE TABLE "child_profile" ("id" INTEGER NOT NULL DEFAULT 1, '
+    '"nickname" TEXT NOT NULL, "school_year" INTEGER NOT NULL, '
+    '"school_start_level" INTEGER NULL, "olympiad_start_level" INTEGER NULL, '
+    '"updated_at" INTEGER NOT NULL, PRIMARY KEY ("id"))';
+const _v8TopicUnlocks =
+    'CREATE TABLE "topic_unlocks" ("topic_id" TEXT NOT NULL, '
+    '"opened_at" INTEGER NOT NULL, PRIMARY KEY ("topic_id"))';
+const _v8SyncFields =
+    'CREATE TABLE "sync_fields" ("field" TEXT NOT NULL, '
+    '"changed_at" INTEGER NOT NULL, "dirty" INTEGER NOT NULL DEFAULT 1, '
+    'PRIMARY KEY ("field"))';

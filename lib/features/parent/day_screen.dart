@@ -10,6 +10,7 @@ import '../../domain/screen_time.dart';
 import '../../domain/stats.dart';
 import '../../domain/topics.dart';
 import '../../providers.dart';
+import '../family/child_switcher.dart';
 import '../../ui/theme.dart';
 import 'stats_view.dart';
 
@@ -69,6 +70,7 @@ class DayScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
         ),
         title: const Text('One day'),
+        actions: const [ChildSwitcher()],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSizes.gap),

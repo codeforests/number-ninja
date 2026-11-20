@@ -91,6 +91,7 @@ void main() {
         .into(db.dailyUsage)
         .insert(
           DailyUsageCompanion.insert(
+            childId: 1,
             day: '2026-11-18',
             deviceId: 'a',
             secondsUsed: const Value(300),
@@ -100,6 +101,7 @@ void main() {
         .into(db.dailyUsage)
         .insert(
           DailyUsageCompanion.insert(
+            childId: 1,
             day: '2026-11-18',
             deviceId: 'b',
             secondsUsed: const Value(420),
@@ -109,6 +111,7 @@ void main() {
         .into(db.dailyUsage)
         .insert(
           DailyUsageCompanion.insert(
+            childId: 1,
             day: '2026-11-17',
             deviceId: 'a',
             secondsUsed: const Value(999),

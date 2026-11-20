@@ -173,6 +173,8 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(find.byKey(const Key('change-pin')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('change-pin')));
     await tester.pumpAndSettle();
 

@@ -61,10 +61,29 @@ String _periodSuffix(StatsPeriod p) => switch (p) {
   StatsPeriod.all => 'all',
 };
 
-/// `brainbubblz-report-2026-11-15-30d.pdf` (NFR-08: [now] is injected).
-String reportFileName(StatsPeriod period, DateTime now) =>
-    'brainbubblz-report-${now.year}-${_two(now.month)}-${_two(now.day)}'
-    '-${_periodSuffix(period)}.pdf';
+/// `brainbubblz-report-2026-11-15-30d.pdf`, or with the child's nickname
+/// `brainbubblz-report-mia-2026-11-15-30d.pdf` (FEAT-25 AD-13; NFR-08:
+/// [now] is injected).
+String reportFileName(
+  StatsPeriod period,
+  DateTime now, {
+  String nickname = '',
+}) {
+  final slug = nickname
+      .toLowerCase()
+      .replaceAll(RegExp('[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'^-+|-+$'), '');
+  return 'brainbubblz-report-${slug.isEmpty ? '' : '$slug-'}'
+      '${now.year}-${_two(now.month)}-${_two(now.day)}'
+      '-${_periodSuffix(period)}.pdf';
+}
+
+/// [nickname] with only the characters the PDF font draws (printable
+/// ASCII), trimmed (FEAT-25 AD-13).
+String reportName(String nickname) => nickname
+    .replaceAll(RegExp('[^\x20-\x7e]'), '')
+    .replaceAll(RegExp(' +'), ' ')
+    .trim();
 
 /// One row of the track summary.
 class ReportRow {
@@ -112,6 +131,7 @@ class ReportData {
     required this.accuracyTrend,
     required this.speedTrend,
     required this.isEmpty,
+    this.childName = '',
   });
 
   final StatsPeriod period;
@@ -138,7 +158,12 @@ class ReportData {
   /// No answers in the period.
   final bool isEmpty;
 
-  String get title => 'BrainBubblz progress report';
+  /// The child's nickname, PDF-safe ([reportName]); empty for none.
+  final String childName;
+
+  String get title => childName.isEmpty
+      ? 'BrainBubblz progress report'
+      : 'BrainBubblz progress report: $childName';
 
   String get periodLine => from == null
       ? 'All time: up to ${reportDate(now)}'
@@ -171,8 +196,9 @@ class ReportData {
   static ReportData build(
     List<AttemptRecord> all,
     StatsPeriod period,
-    DateTime now,
-  ) {
+    DateTime now, {
+    String nickname = '',
+  }) {
     final rs = [
       for (final r in all)
         if (period.includes(r.answeredAt, now)) r,
@@ -232,6 +258,7 @@ class ReportData {
           key: [for (final p in value) p.tally?.avgSeconds],
       },
       isEmpty: rs.isEmpty,
+      childName: reportName(nickname),
     );
   }
 }

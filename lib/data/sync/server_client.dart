@@ -171,6 +171,10 @@ abstract class ServerClient {
   );
   Future<ResetResult> resetChild(String id);
 
+  /// Deletes child [id]; the server deletes her records with her (FEAT-25
+  /// AD-10).
+  Future<void> deleteChild(String id);
+
   /// Sends [ops] in one batch (all or nothing) and returns each record.
   Future<List<Map<String, dynamic>>> pushBatch(List<PushOp> ops);
 
@@ -524,6 +528,10 @@ class PocketBaseServerClient implements ServerClient {
     final r = await _pb.collection('children').update(id, body: body);
     return r.toJson();
   });
+
+  @override
+  Future<void> deleteChild(String id) =>
+      _sync(() => _pb.collection('children').delete(id));
 
   @override
   Future<ResetResult> resetChild(String id) => _sync(() async {

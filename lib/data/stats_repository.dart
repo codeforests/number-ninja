@@ -12,10 +12,13 @@ import 'round_repository.dart';
 /// Reads attempts for the dashboard (PAR-05..08) and resets progress
 /// (PAR-10). Joins attempts to the bank by question id (design §4).
 class StatsRepository {
-  StatsRepository(this.db, this.bank, {required this.clock})
+  StatsRepository(this.db, this.bank, {required this.clock, this.childId = 1})
     : _topicOf = {for (final q in bank.questions) q.id: q.topic};
 
   final AppDatabase db;
+
+  /// The child whose answers these are (FEAT-25, FAM-03).
+  final int childId;
   final QuestionBank bank;
   final Clock clock;
   final Map<String, String> _topicOf;
@@ -26,7 +29,7 @@ class StatsRepository {
     DateTime? since,
     String? topicId,
   }) async {
-    final q = db.select(db.attempts);
+    final q = db.select(db.attempts)..where((a) => a.childId.equals(childId));
     if (since != null) q.where((a) => a.answeredAt.isBiggerOrEqualValue(since));
     final rows = await q.get();
     final out = withBankTopics([
@@ -61,6 +64,7 @@ class StatsRepository {
         await (db.select(db.attempts)
               ..where(
                 (a) =>
+                    a.childId.equals(childId) &
                     a.answeredAt.isBiggerOrEqualValue(b.start) &
                     a.answeredAt.isSmallerThanValue(b.end),
               )
@@ -108,7 +112,7 @@ class StatsRepository {
     ]..sort((x, y) => x.startedAt.compareTo(y.startedAt));
     final usage = await (db.select(
       db.dailyUsage,
-    )..where((u) => u.day.equals(day))).get();
+    )..where((u) => u.day.equals(day) & u.childId.equals(childId))).get();
     return DayDetail(
       day: day,
       rounds: dayRounds,
@@ -120,6 +124,7 @@ class StatsRepository {
   Future<String?> firstDay() async {
     final first =
         await (db.select(db.attempts)
+              ..where((a) => a.childId.equals(childId))
               ..orderBy([(a) => OrderingTerm.asc(a.answeredAt)])
               ..limit(1))
             .getSingleOrNull();
@@ -142,13 +147,21 @@ class StatsRepository {
     return null;
   }
 
-  /// Deletes all attempts, rounds, play sessions and badges in one
-  /// transaction (PAR-10). The PIN, daily limit, lockout and `daily_usage`
-  /// stay, so a reset never gives screen time back (TIM-05).
+  /// Deletes this child's attempts, rounds and badges in one transaction
+  /// (PAR-10, per child since FEAT-25 AD-11), and play sessions no round
+  /// uses any more. The PIN, daily limit, lockout and `daily_usage` stay,
+  /// so a reset never gives screen time back (TIM-05).
   Future<void> resetProgress() => db.transaction(() async {
-    await db.delete(db.attempts).go();
-    await db.delete(db.rounds).go();
-    await db.delete(db.playSessions).go();
-    await db.delete(db.badgesEarned).go();
+    await (db.delete(
+      db.attempts,
+    )..where((a) => a.childId.equals(childId))).go();
+    await (db.delete(db.rounds)..where((r) => r.childId.equals(childId))).go();
+    await db.customStatement(
+      'DELETE FROM play_sessions WHERE id NOT IN '
+      '(SELECT session_id FROM rounds)',
+    );
+    await (db.delete(
+      db.badgesEarned,
+    )..where((b) => b.childId.equals(childId))).go();
   });
 }

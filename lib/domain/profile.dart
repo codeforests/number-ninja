@@ -18,7 +18,11 @@ class ChildProfile {
     required this.schoolYear,
     this.schoolStartLevel,
     this.olympiadStartLevel,
+    this.avatar = defaultAvatar,
   });
+
+  /// Built-in avatar id (FEAT-25 AD-7).
+  static const defaultAvatar = 'fox';
 
   final String nickname;
 
@@ -31,17 +35,34 @@ class ChildProfile {
   /// Starting level for Olympiad topics, or null for automatic.
   final int? olympiadStartLevel;
 
+  /// Avatar id from `lib/ui/avatars.dart` (FEAT-25 AD-7).
+  final String avatar;
+
+  ChildProfile copyWith({String? avatar}) => ChildProfile(
+    nickname: nickname,
+    schoolYear: schoolYear,
+    schoolStartLevel: schoolStartLevel,
+    olympiadStartLevel: olympiadStartLevel,
+    avatar: avatar ?? this.avatar,
+  );
+
   @override
   bool operator ==(Object other) =>
       other is ChildProfile &&
       other.nickname == nickname &&
       other.schoolYear == schoolYear &&
       other.schoolStartLevel == schoolStartLevel &&
-      other.olympiadStartLevel == olympiadStartLevel;
+      other.olympiadStartLevel == olympiadStartLevel &&
+      other.avatar == avatar;
 
   @override
-  int get hashCode =>
-      Object.hash(nickname, schoolYear, schoolStartLevel, olympiadStartLevel);
+  int get hashCode => Object.hash(
+    nickname,
+    schoolYear,
+    schoolStartLevel,
+    olympiadStartLevel,
+    avatar,
+  );
 
   @override
   String toString() =>

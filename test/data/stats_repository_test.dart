@@ -113,7 +113,9 @@ void main() {
     await rounds.finishRound(id, score: 10, durationMs: 1, stars: 3);
     await db
         .into(db.badgesEarned)
-        .insert(BadgesEarnedCompanion.insert(badgeId: 'x', earnedAt: now));
+        .insert(
+          BadgesEarnedCompanion.insert(childId: 1, badgeId: 'x', earnedAt: now),
+        );
     await usage.setSoundOn(false); // FEAT-09 AC-2: reset keeps the switch
 
     await stats.resetProgress();

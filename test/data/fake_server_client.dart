@@ -180,6 +180,12 @@ class FakeServerClient implements ServerClient {
   }
 
   @override
+  Future<void> deleteChild(String id) async {
+    final o = await _owner('deleteChild');
+    server.deleteChild(id, o);
+  }
+
+  @override
   Future<ResetResult> resetChild(String id) async {
     final o = await _owner('resetChild');
     return server.reset(id, o);
@@ -394,6 +400,20 @@ class FakeSyncServer {
         ..clear()
         ..addAll(savedWrites);
       throw const SyncException(SyncError.rejected, status: 400);
+    }
+  }
+
+  /// Deletes child [childId] and, like PocketBase's cascade, her records.
+  void deleteChild(String childId, String owner) {
+    final list = of('children');
+    final c = list.where((c) => c['id'] == childId).firstOrNull;
+    if (c == null) throw const SyncException(SyncError.rejected, status: 404);
+    if (c['owner'] != owner) {
+      throw const SyncException(SyncError.rejected, status: 403);
+    }
+    list.remove(c);
+    for (final name in ['rounds', 'attempts', 'badges', 'daily_usage']) {
+      of(name).removeWhere((r) => r['child'] == childId);
     }
   }
 

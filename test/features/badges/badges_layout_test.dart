@@ -37,6 +37,7 @@ void main() {
             .into(h.db.badgesEarned)
             .insert(
               BadgesEarnedCompanion.insert(
+                childId: 1,
                 badgeId: b.id,
                 earnedAt: DateTime(2026, 11, 15 + i),
               ),
