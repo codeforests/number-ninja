@@ -9,7 +9,8 @@
 # and, optional (FEAT-13; empty leaves email or Google sign-in off):
 #   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS RESEND_API_KEY
 #   GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
-# and, optional (FEAT-24): CRASH_DIGEST_TO, the daily crash digest recipient.
+# and, optional (FEAT-24): CRASH_DIGEST_TO, the daily crash digest recipient;
+# (FEAT-29): BILLING_WEBHOOK_SECRET, empty leaves the billing webhook off.
 # Idempotent: re-running is the upgrade path.
 #
 # nginx: the droplet's nginx already serves other sites. This only ever
@@ -26,13 +27,13 @@ site_link=/etc/nginx/sites-enabled/numberninja.conf
 acme=/var/www/numberninja-acme
 
 SERVER_HOSTNAME='' SERVER_LEGACY_HOSTNAME='' PB_SUPERUSER_EMAIL='' PB_SUPERUSER_PASSWORD='' CERT_EMAIL=''
-pb_env_keys=(SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS RESEND_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET CRASH_DIGEST_TO)
+pb_env_keys=(SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS RESEND_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET CRASH_DIGEST_TO BILLING_WEBHOOK_SECRET)
 for k in "${pb_env_keys[@]}"; do printf -v "$k" '%s' ''; done
 while IFS='=' read -r key value; do
   case "$key" in
     SERVER_HOSTNAME | SERVER_LEGACY_HOSTNAME | PB_SUPERUSER_EMAIL | PB_SUPERUSER_PASSWORD | CERT_EMAIL | \
       SMTP_HOST | SMTP_PORT | SMTP_USERNAME | SMTP_PASSWORD | MAIL_SENDER_ADDRESS | RESEND_API_KEY | \
-      GOOGLE_CLIENT_ID | GOOGLE_CLIENT_SECRET | CRASH_DIGEST_TO)
+      GOOGLE_CLIENT_ID | GOOGLE_CLIENT_SECRET | CRASH_DIGEST_TO | BILLING_WEBHOOK_SECRET)
       printf -v "$key" '%s' "$value" ;;
     '') ;;
     *) echo "Unknown setting: $key" >&2; exit 2 ;;
