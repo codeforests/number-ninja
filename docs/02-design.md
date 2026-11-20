@@ -106,6 +106,8 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 | SCR-14 | Revision start (`/revise/<topic or mixed>`): mistakes count, tricky kinds, Go (FEAT-11) | REV-03, REV-04 |
 | SCR-15 | School topics: lock state of each P1/P2 topic, parent opens one (FEAT-17) | PRC-14 |
 | SCR-16 | One day (`/parent/day?d=yyyy-MM-dd`, from SCR-09's "By day" card): day totals and screen time, per topic, rounds with each answer (FEAT-18) | PAR-11 |
+| SCR-17 | Who's playing? (`/who`): one card per child, avatar and nickname (FEAT-25) | FAM-02 |
+| SCR-18 | Children (`/parent/children`, from SCR-11): list, add (up to 4), open SCR-12 to edit or remove (FEAT-25) | FAM-01 |
 
 **Look:** bright, high-contrast, rounded. Colours, radii and text sizes are defined once in `lib/ui/theme.dart` and never hard-coded in screens. Child screens use 64 dp minimum tap targets and 20 sp minimum text (NFR-03). Landscape layout first: question on the left, answer area on the right (NFR-02). On smaller screens (NFR-09) the layout adapts by width and height rather than by device: halves side by side only when the screen is landscape and at least 600 dp wide, otherwise stacked; anything that doesn't fit scrolls instead of overlapping. The 12-inch landscape tablet still never scrolls during a question.
 

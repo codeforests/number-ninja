@@ -1,0 +1,62 @@
+# FEAT-25: Siblings
+
+> Implements: FAM-01..07 (D20, ADR-12) · Touches: PRO-01..04, TIM-01..06, PAR-05..11, SYN-02..06, ACC-07 per child · Screens: SCR-17 (new), SCR-18 (new), SCR-02, SCR-07, SCR-09, SCR-11, SCR-12, SCR-16
+> Status: designed · Branch: `feat/FEAT-25-siblings` · 2026-11-20 (auto mode: decisions below taken by Claude on Ken's standing instruction)
+
+## Scope
+
+One family, up to 4 children on one tablet. Every child has her or his own levels, topic locks, badges, revision, stats, day view, PDF report, daily screen-time limit, extra time and sound setting. A "Who's playing?" picker (SCR-17) chooses the child; the parent area shows and switches the child it acts on, and manages children (SCR-18). Each child syncs as its own server `children` record; reset is per child, and removing a child deletes her data on every device. An upgrade from v2 turns the existing data into the first child.
+
+Not in scope: Plus gating of the second child (FEAT-29/30 add it: the "Add child" button is the hook); the new first-run parent setup (FEAT-26); photos or real names (ADR-07); a per-family combined report.
+
+## Design decisions (this feature)
+
+Auto mode (Ken, 2026-11-20): each takes the recommended option; the reason follows the dash.
+
+- **AD-1 Up to 4 children, at least 1** (plan §6 decision 5) — enough for a family, keeps the picker one row on a phone. Sync never drops a child: if a merge leaves more than 4, all stay and "Add child" hides until fewer than 4.
+- **AD-2 There is always a child.** `onCreate` inserts child 1 (empty nickname); first-run SCR-12 fills it in. A child with an empty nickname shows as "Player N" — no code path has to handle "no child".
+- **AD-3 One current child, held in app state** (ADR-12). `currentChildProvider` (int id), saved as `app_settings.current_child_id` so a relaunch with one child goes straight home. Every repository takes the child id; there is no separate "child the parent is viewing" — one notion of current child is simpler, and the parent switcher just changes it.
+- **AD-4 When the picker shows** (only with 2+ children): on cold launch, after leaving the parent area, and from the home child button. Switching needs no PIN (plan decision 5). The parent option **"Ask for PIN to change child"** (SCR-11, device-only like the PIN, default off): when on, no picker at launch or after the parent area (the last child plays), and the home child button asks for the PIN first — otherwise relaunching would bypass it.
+- **AD-5 Screen time per child** (FAM-04): `daily_usage` keyed child + day + device; each child has her own `daily_limit_min` and extra time. A locked child's lock screen (SCR-07) offers "Change child" (same PIN rule as AD-4) so a sibling with time left can play. "Today" for the clock-back rule (TIM-05) is the latest day recorded by any child on the device — the device clock is shared.
+- **AD-6 Sound is per child** — the server already stores `sound_on` on the `children` record; keeping one meaning avoids a second settings path.
+- **AD-7 Avatars** are 8 built-in icon + colour pairs (`lib/ui/avatars.dart`, colours in `theme.dart`), stored as an id (`fox`, `owl`, …); new children get the first unused one. No photos (ADR-07, NFR-14).
+- **AD-8 Local ids, not uuids, for children.** Local `children.id` integer + `remote_id` (server record id). The plan said "uuids"; the server id is the cross-device key, so a uuid would be a third id. Rounds and attempts keep their uuids.
+- **AD-9 Matching children on first sign-in** (SYN-03 per child): each local child without a `remote_id` matches the account's unmatched child with the same nickname (trimmed, case-insensitive); if nothing matched and each side has exactly one unmatched child, they merge (keeps the v2 two-tablet behaviour when a nickname was typed differently); otherwise the local child is created on the server. Account children with no local match are created locally (that's how a second tablet gets the sibling).
+- **AD-10 Removing a child** (SCR-12, PIN-confirmed like PAR-10, not allowed for the last child) deletes her local rows; when signed in it deletes the server `children` record (cascade removes her records). Another device that sees one of its linked children missing from the account's list deletes it locally too. If offline, the remote delete waits in `children.pending_delete` (the row is hidden everywhere) until the next sync.
+- **AD-11 Per-child reset** (PAR-10, SYN-06): resets the current child only; `reset_epoch` and `pending_reset` move from `sync_state` to `children`. Account delete (ACC-07) already removes every child by cascade.
+- **AD-12 Upgrade keeps old columns.** `app_settings.daily_limit_min`, `sound_on` and `sync_state.child_id`/`reset_epoch`/`pending_reset` are copied to child 1 and then no longer read; dropping them would rebuild tables for no gain (gotcha `_from6To7`).
+- **AD-13 PDF report and day view** are for the current child; the report header and file name carry her nickname (`brainbubblz-report-<nickname>-…`), so two children's reports aren't confused.
+
+## Design
+
+- **Schema v9** (`database.dart`): table `children` (`ChildRow`): id (auto), nickname, school_year, school_start_level, olympiad_start_level, avatar, daily_limit_min (20), sound_on (true), created_at, updated_at, remote_id, reset_epoch (0), pending_reset (false), pending_delete (false). `child_id` (int, not null) on `rounds`, `attempts`, `daily_usage` (key child + day + device), `badges_earned` (key child + badge), `topic_unlocks` (key child + topic), `sync_fields` (key child + field). `app_settings` gains `current_child_id` (1) and `switch_needs_pin` (false). `_from8To9`: create `children`, insert child 1 from `child_profile` (or empty nickname) plus `app_settings` limit/sound and `sync_state` child/epoch/pending; add `child_id DEFAULT 1` columns; rebuild the four re-keyed tables with `TableMigration`; drop `child_profile`. `profile_pending` stays app-wide (first run).
+- **Domain**: `ChildProfile` gains `id` and `avatar`; `lib/domain/family.dart`: `maxChildren = 4`, `displayName(child, index)`, `matchChildren(local, remote)` (AD-9, pure, tested).
+- **Data**: `child_repository.dart` (`ChildRepository`: `all()`, `add()`, `update()`, `remove(id)`, `setCurrent(id)`); `childrenProvider` (FutureProvider), `currentChildProvider` (Notifier<int>). Every repository provider in `providers.dart` reads `currentChildProvider` and passes `childId`; each query adds `child_id = ?`. `ProfileRepository` becomes a view of the current child row. `StatsRepository.resetProgress()` is per child; `UsageRepository` limit/extra/sound per child.
+- **Sync** (`sync_service.dart`): `_child` → `_children`: list the account's children, apply AD-9 on link, AD-10 deletes, per-child epoch/reset/field merge (`_mergeChild` per child, `sync_fields` per child); push pushes each child's dirty rows with that child's remote id; pull keeps one cursor per collection, filters `child.owner`, and maps `child` → local id (unknown child: skip, the next run's children step adds it). Server migration `1763251206_siblings.js`: `children.avatar` (text) and `avatar` in `field_times` fields; `FakeSyncServer` gains several children.
+- **SCR-17 Who's playing?** (`lib/features/family/who_screen.dart`, route `/who`, `Routes.who`): `KidBackground`, one big card per child (avatar, nickname, 64 dp+), tap → `setCurrent` → home. `AppSession.choosingChild` drives the redirect (router refreshes only on the session, gotcha). Keys `who-<id>`.
+- **SCR-02**: child chip top left (`child-chip`, avatar + nickname), only with 2+ children; opens SCR-17 (PIN first if AD-4). **SCR-07**: `lock-change-child` button with 2+ children.
+- **SCR-18 Children** (`lib/features/parent/children_screen.dart`, `/parent/children`, from SCR-11's "Children" row): rows `child-<id>` (avatar, nickname, year) → SCR-12 for that child; `add-child` (hidden at 4) → SCR-12 new. **SCR-12** takes `?child=<id>|new`, gains the avatar row (`avatar-<id>`) and, for an existing child with siblings, `remove-child` (PIN confirm, AD-10).
+- **Parent switcher** (`lib/ui/child_switcher.dart`, `ChildSwitcher`, key `parent-child-switch`): dropdown of children in the header of SCR-09, SCR-11 and SCR-16, only with 2+ children; changes the current child and reloads (invalidate data providers). SCR-11 adds "Ask for PIN to change child" (`switch-needs-pin`). Leaving the parent area with 2+ children (and AD-4 off) sets `choosingChild`.
+- **Screen time**: `ScreenTimeController` flushes the running tick and reloads status when the current child changes.
+
+## Acceptance criteria
+
+- **AC-1** (FAM-07, migration): `migration_test.dart` v8 → v9 with a profile, rounds, attempts, badges, two devices' daily usage, topic unlocks, sync fields and a linked sync state: everything belongs to child 1, nickname/limit/sound/remote id/epoch copied, nothing lost or doubled; a v8 install without a profile gets child 1 with an empty nickname; a fresh database has child 1.
+- **AC-2** (FAM-03, data): with two children seeded, rounds, levels, best stars, topic locks, badges, revision history, stats, `day()`, mix-in and reset each see only the current child's rows (`test/data/family_test.dart`).
+- **AC-3** (FAM-04): child A uses 20 min and is locked; switching to B shows B's own minutes left and lets B play; A's limit change and extra time don't touch B; switching flushes A's running seconds to A.
+- **AC-4** (FAM-02, SCR-17): with 2 children, cold launch shows SCR-17; picking B greets B; the home chip reopens it; leaving the parent area shows it; with one child none of these appear; with "Ask for PIN to change child" on, launch goes to the last child and the chip asks for the PIN.
+- **AC-5** (FAM-01, SCR-18/12): add a child (nickname, year, avatar) → appears in SCR-18 and SCR-17; "Add child" hides at 4; edit changes only that child; remove needs the PIN, is absent for the last child, deletes her rows only.
+- **AC-6** (FAM-05): the parent switcher on SCR-09 changes the dashboard, SCR-16 and the PDF (header + file name nickname) to that child; it is absent with one child.
+- **AC-7** (FAM-06, sync): `FakeSyncServer`, two devices: device 1 with Mia + Leo syncs; device 2 with Mia (typed "mia") signs in → Mia merges, Leo is added locally with his rounds; per-child field merge, reset of Leo clears only Leo on both; removing Leo on device 1 removes him on device 2 after its sync; offline remove waits for the next sync. AD-9 one-and-one merge with different nicknames. `matchChildren` unit tests.
+- **AC-8** (server): `api_rules_test.dart`: an owner creates and lists 2 children and writes records for each; can't read or write another owner's children; deleting a child removes its records; `avatar` stored.
+- **AC-9** (NFR-09, NFR-17): SCR-17, SCR-18 and SCR-12 with the avatar row pass the six FEAT-04 sizes, text scale 1.3 and the phone sizes; existing tests pass (updated only for the child id they now need, never weakened).
+- **AC-10** (live, Ken, optional): two tablets, two children: FEAT-14 AC-9 re-run per child.
+
+## Tasks
+
+- **T1** Schema v9 + `_from8To9` + migration test (AC-1); regenerate `database.g.dart`; code-map Data line.
+- **T2** Domain `family.dart`, `ChildRepository`, `currentChildProvider`, every repository scoped by child; per-child usage/limit/sound/reset (AC-2, AC-3 data part). Fix existing tests' setup only where they need the child.
+- **T3** SCR-17, `AppSession.choosingChild`, home chip, lock-screen button, PIN option, screen-time switch (AC-3, AC-4).
+- **T4** SCR-18, SCR-12 add/edit/remove + avatars, parent switcher on SCR-09/11/16, report nickname (AC-5, AC-6).
+- **T5** Server migration + api test; sync per child with AD-9/10/11 and the two-device tests (AC-7, AC-8).
+- **T6** Layout tests (AC-9), `scripts/check.sh`, docs (02-design §4/§6, 04-architecture ADR-12, requirements Feature cells), draft PR.

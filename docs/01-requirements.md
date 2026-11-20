@@ -43,6 +43,7 @@ BrainBubblz (formerly Number Ninja) is an offline Android tablet app that helps 
 | D17 | School topics unlock in order (Ken, 2026-11-15): a School topic opens only after the topic before it in its year is passed with at least 70 % correct. Olympiad topics are never locked. Rules in PRC-12..14; Ken confirmed the defaults on 2026-11-15, including that a year's topics stay locked until every topic of the year before is passed. | 2026-11-15 |
 | D18 | Phone use (Ken, 2026-11-20, after v2.0): on a phone the question screen must show Check without scrolling, and the parent pages must adapt to the phone's size (NFR-17). Tablets keep their layout. | 2026-11-20 |
 | D19 | Own domain (Ken, 2026-11-20, after buying `brainbubblz.com`): the server moves to `api.brainbubblz.com` (the old host is served until the old app is gone), email comes from `noreply@brainbubblz.com`, and the Android application id becomes `com.brainbubblz.kids` with the sign-in link `brainbubblz://signin`. The new id installs as a new app; her data comes back through sync. Replaces D16's "application id stays". | 2026-11-20 |
+| D20 | Siblings (plan §6 decision 5, auto mode 2026-11-20): up to 4 children per family on one device and account, each with own progress, settings and daily screen-time limit; a "Who's playing?" picker, switching needs no PIN unless the parent turns that on; removing a child deletes her data on every device. Details: FEAT-25 design AD-1..13. | 2026-11-20 |
 
 ## 4. Functional requirements
 
@@ -127,6 +128,18 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | PRO-02 | After first-run PIN setup (PAR-01) the app shall ask for the profile before the child can play; an existing install shall keep working and offer the profile in the parent area. | M | FEAT-10 | FEAT-10 verify.md (2026-11-15) |
 | PRO-03 | A topic with no finished round shall start at the level the profile gives (the track override if set, else a level worked out from her school year and the topic's year), instead of level 1; after that PRC-09 applies. | M | FEAT-10 | FEAT-10 verify.md (2026-11-15) |
 | PRO-04 | The home screen shall greet her by nickname. | C | FEAT-10 | FEAT-10 verify.md (2026-11-15) |
+
+### Family (FAM)
+
+| ID | Requirement | Pri | Feature | Verified by |
+|---|---|---|---|---|
+| FAM-01 | In the parent area the parent shall be able to add up to 4 children (nickname, school year, starting levels, avatar), edit each, and remove one after confirming with the PIN; at least one child stays. (D20) | M | FEAT-25 | |
+| FAM-02 | With more than one child, the app shall show "Who's playing?" (avatar and nickname) at launch, after leaving the parent area and from the home screen; changing child needs no PIN unless the parent turns on "Ask for PIN to change child". | M | FEAT-25 | |
+| FAM-03 | Each child shall have her or his own levels, topic locks, badges, revision, stats, day view, PDF report and settings (daily limit, extra time, sound, parent-opened topics); PRO, PRC, REV, BDG and PAR rules apply per child. | M | FEAT-25 | |
+| FAM-04 | Each child shall have her or his own daily screen-time allowance; one child's used time shall never count for another, and a locked child's lock screen shall let a sibling take over. | M | FEAT-25 | |
+| FAM-05 | The parent dashboard, settings and day view shall show which child they are for and let the parent switch child. | M | FEAT-25 | |
+| FAM-06 | While signed in, each child shall sync as its own record (SYN-02..05 per child); the first sign-in on a device shall merge children with the same nickname and add the rest; a reset (PAR-10, SYN-06) applies to one child; removing a child removes her data on the server and her other devices. | M | FEAT-25 | |
+| FAM-07 | Updating from a one-child version shall make the existing progress, profile and settings the first child, with nothing lost. | M | FEAT-25 | |
 
 ### Revision (REV)
 
