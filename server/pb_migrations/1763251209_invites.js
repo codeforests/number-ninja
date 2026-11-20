@@ -5,7 +5,9 @@
 // which code. Both are superuser only: parents redeem through
 // POST /api/nn/invite/redeem (invite.pb.js), which writes the family's
 // `invite` entitlement (FEAT-29). Codes are plain text on purpose (IC-2).
-const LIMIT = "/api/nn/invite/";
+// "POST " first: PocketBase takes the first matching rule, and a bare
+// "/api/nn/invite/" prefix loses to the earlier "/api/" rule (code-map).
+const LIMIT = "POST /api/nn/invite/";
 
 function setRateLimit(app, add) {
   const settings = app.settings();
