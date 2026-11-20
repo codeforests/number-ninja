@@ -25,7 +25,7 @@ Unchanged: offline-first practice (D10), the generator as the only question sour
 | Milestone | What Ken gets | Features | Release |
 |---|---|---|---|
 | **M8 Store-ready base** | Server on a supported OS with off-site backups, a website with privacy policy, terms and account deletion, a Play-ready AAB, crash reports | FEAT-21, 22, 23, 24 | `v2.2.0` (APK on GitHub + first AAB on Play internal testing) |
-| **Parallel track** | Teacher review pack, verdict sheet, "Report this question"; fixes ship as new bank versions (no app release) | FEAT-28 | bank v3+ |
+| **Parallel track** | Teacher review web page (`review.brainbubblz.com`), verdicts saved on the server, "Report this question"; fixes ship as new bank versions (no app release) | FEAT-28 | bank v3+ |
 | **M9 Family ready** | Siblings, the new parent setup, accessibility | FEAT-25, 26, 27 | `v2.3.0`; **closed test starts here** (14 days) |
 | **M10 Free and Plus** | Server entitlements, free tier and yearly subscription, weekly parent report email | FEAT-29, 30, 31 | `v2.4.0` to the closed test |
 | **M11 Android launch** | Store listing, Families declarations, production rollout | FEAT-32 | `v3.0.0` on Google Play |
@@ -48,7 +48,8 @@ flowchart LR
   F30 --> F31[31 weekly report email]
   CT --> F32[32 Android launch v3.0]
   F30 --> F32
-  F28[28 teacher review] --> F32
+  F22 --> F28[28 teacher review web page]
+  F28 --> F32
   F32 --> F33[33 iOS app]
   F33 --> F34[34 App Store launch]
 ```
@@ -81,7 +82,7 @@ Sizes: **S** = small (≤5 tasks, design and build in one thread), **M** = 6–8
 
 | Feature | What it delivers | Size | Ken's hands |
 |---|---|---|---|
-| **FEAT-28** Teacher review of the questions | `tool/review_pack.dart` builds a review pack per topic (HTML, printable to PDF): for each generator template (question type) a sample of questions drawn as the app shows them, with the answer and question id; every Olympiad template in full. A verdict sheet (CSV or Google Sheet) per question type: OK, wrong answer, unclear wording, wrong level, off-syllabus, comment. `tool/apply_review.dart` turns verdicts into a findings list; fixes go into the generator templates, bad ids are retired (BNK-10), and the publish workflow ships a new bank version. Sign-off per topic recorded in `docs/review/` (topic, reviewer, date, bank version). Also a parent-only **"Report this question"** button on the answer list in topic detail and day view, sent to a `question_reports` collection, which feeds the next review. | M | Find a teacher (MOE-trained P1/P2; ideally an Olympiad coach for those topics), agree a fee and dates |
+| **FEAT-28** Teacher review of the questions (web page) | The teacher reviews the **question bank** (not a child's answers) on a web page, so no app or tablet is needed (Ken, 2026-11-20). A small **Flutter web** build at `review.brainbubblz.com`, served by the same nginx, reuses the app's question and visual widgets so questions look exactly as the child sees them. Reviewer accounts (a `reviewer` role in PocketBase, created by Ken) sign in and go topic by topic: for each generator template (question type) a sample of questions with the answer and question id, every Olympiad template in full. Per question type: OK, wrong answer, unclear wording, wrong level, off-syllabus, plus a comment; progress per topic and "topic signed off". Verdicts are saved to a `question_reviews` collection (reviewers write only their own; nobody else reads them except Ken). `tool/apply_review.dart` exports them into a findings list; fixes go into the generator templates, bad ids are retired (BNK-10), and the publish workflow ships a new bank version. Also a parent-only **"Report this question"** button on the answer list in topic detail and day view, sent to a `question_reports` collection that shows up on the same review page. Built after FEAT-22 (website and nginx site). | M | Find a teacher (MOE-trained P1/P2; ideally an Olympiad coach for those topics), agree a fee and dates, create their reviewer account |
 
 ### M9 Family ready
 
@@ -148,7 +149,7 @@ Existing behaviour that moves behind Plus (revision, PDF, day view, server bank)
 5. **Siblings rules.** *Recommend:* up to 4 children; own screen-time limit per child; switching child needs no PIN (a parent option can require it).
 6. **Crash reports default.** *Recommend:* on by default with the switch and a line in the privacy note (no personal data is in them).
 7. **Accessibility and read-aloud.** D6 says no voice. Read-aloud of questions would help early readers and blind children but reverses D6. *Recommend:* not in phase 3; do everything else in FEAT-27 and revisit.
-8. **Teacher review.** Who, how many hours, and whether to use a printed pack or a shared Google Sheet. *Recommend:* one P1/P2 teacher for School topics first (about one question type per minute of review), Olympiad after.
+8. **Teacher review.** Who and how many hours; the format is decided: a web page (Ken, 2026-11-20). *Recommend:* one P1/P2 teacher for School topics first (about one question type per minute of review), Olympiad after.
 9. **Sign in with Apple on iOS.** Apple's rule 4.8 asks for it when Google sign-in is offered. *Recommend:* add it on iOS (and allow it on Android later).
 10. **iPhone or iPad only.** *Recommend:* both; the phone layouts from FEAT-19 already exist.
 11. **Closed-test testers.** 12 people with Android devices who stay opted in for 14 days in a row. *Recommend:* line them up now (friends, family, school parents) so the test starts the day M9 is released.
