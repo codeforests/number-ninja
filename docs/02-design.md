@@ -112,6 +112,7 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 | SCR-17 | Who's playing? (`/who`): one card per child, avatar and nickname (FEAT-25) | FAM-02 |
 | SCR-18 | Children (`/parent/children`, from SCR-11): list, add (up to 4), open SCR-12 to edit or remove (FEAT-25) | FAM-01 |
 | SCR-19 | First-run parent setup (`/setup`): welcome, PIN, account (optional, restores a family), children, daily time and sound, done; resumes at its saved step (FEAT-26) | SET-01..07, PAR-01, PRO-02 |
+| SCR-20 | Plus (`/parent/plus`, from SCR-11 and every parent-side Plus card): Plus state and end or renewal, what Plus adds, Check again, sign in, buy area (coming soon until FEAT-35) (FEAT-30) | PLS-07, PLS-08 |
 
 **Look:** bright, high-contrast, rounded. Colours, radii and text sizes are defined once in `lib/ui/theme.dart` and never hard-coded in screens. Child screens use 64 dp minimum tap targets and 20 sp minimum text (NFR-03). Landscape layout first: question on the left, answer area on the right (NFR-02). On smaller screens (NFR-09) the layout adapts by width and height rather than by device: halves side by side only when the screen is landscape and at least 600 dp wide, otherwise stacked; anything that doesn't fit scrolls instead of overlapping. The 12-inch landscape tablet still never scrolls during a question.
 

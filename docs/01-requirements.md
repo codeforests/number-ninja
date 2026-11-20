@@ -47,6 +47,7 @@ BrainBubblz (formerly Number Ninja) is an offline Android tablet app that helps 
 | D21 | Parent first-run setup (plan FEAT-26, auto mode 2026-11-20): a fresh install opens a step-by-step setup for parents (welcome, PIN, optional sign-in that brings an existing family back, children, daily time and sound, how to reach the parent area) that resumes where it stopped; installs already set up never see it. Replaces the first-run SCR-01 and SCR-12. Details: FEAT-26 design AD-1..13. | 2026-11-20 |
 | D22 | Crash reports (plan FEAT-24, ADR-11, auto mode 2026-11-20): Dart errors are sent to our own server, on by default with a parent switch, anonymous (no account, device id or child data), no third-party SDK; native crashes come from the stores' vitals. | 2026-11-20 |
 | D23 | Plus entitlement on the server (plan FEAT-29, ADR-09/10, auto mode 2026-11-20): one record per parent account and source (complimentary, invite, Google Play, App Store); Plus is active while a record's expiry is in the future; the server bank needs Plus; a RevenueCat webhook (off until FEAT-35) updates store records; complimentary grants by the admin, and every account existing at deploy (Ken's family) gets Plus with no end. Details: FEAT-29 design AD-1..11. | 2026-11-20 |
+| D24 | Free tier and Plus in the app (plan FEAT-30, §4, ADR-10, auto mode 2026-11-20): Plus = revision, PDF report, day view, trend charts, server question updates and more than one child; everything else free. Plus needs a signed-in account, is cached on the device with a 7-day offline grace, is managed on SCR-20 inside the PIN area; a child only ever sees one gentle "ask a grown-up" lock; losing Plus hides features and deletes nothing (extra children paused). Buying waits for FEAT-35. Details: FEAT-30 design PD-1..12. | 2026-11-20 |
 
 ## 4. Functional requirements
 
@@ -214,6 +215,19 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | ENT-04 | A billing webhook protected by a shared secret shall update store entitlements from billing events, refuse a wrong or missing secret, stay off while no secret is set, and ignore repeated, out-of-order, test and unknown-account events. | M | FEAT-29 | FEAT-29 verify.md (2026-11-20) |
 | ENT-05 | The admin shall be able to grant, extend and revoke complimentary Plus for an account by email from the repo, without the email appearing in logs. | M | FEAT-29 | FEAT-29 verify.md (2026-11-20) |
 | ENT-06 | Every parent account that exists when entitlements are first deployed shall get complimentary Plus with no end date. | M | FEAT-29 | FEAT-29 verify.md (2026-11-20) |
+
+### Plus in the app (PLS)
+
+| ID | Requirement | Pri | Feature | Verified by |
+|---|---|---|---|---|
+| PLS-01 | While signed in, the app shall read the account's Plus state from the server (ENT-03) at launch, after sign-in, after each sync and on request, and keep the last answer on the device; signing out or deleting the account shall clear it. (D24) | M | FEAT-30 | |
+| PLS-02 | Plus shall count as active only while the cached answer says Plus, its end (judged by the server's clock) is ahead, and the last successful check was at most 7 days ago by a device clock that has not been wound back. | M | FEAT-30 | |
+| PLS-03 | Without Plus the app shall not offer revision (REV-03..05), PDF export (PAR-09), the day view (PAR-11), weekly trend charts (PAR-06) or server question updates (BNK-08); every other feature stays free. | M | FEAT-30 | |
+| PLS-04 | Losing Plus shall hide Plus features and delete nothing; downloaded banks stay in use and the features come back when Plus does. | M | FEAT-30 | |
+| PLS-05 | Without Plus a family shall have one active child: other children are kept, still sync, are shown as paused in the parent area where the parent picks the active child, and "Who's playing?" is hidden; setup and the parent area add a second child only with Plus. | M | FEAT-30 | |
+| PLS-06 | A child meeting a Plus feature shall see at most one friendly lock (home screen, revision) that asks her to talk to a grown-up, with no price, store or parent-area link. | M | FEAT-30 | |
+| PLS-07 | The PIN-protected parent area shall have a Plus screen showing the Plus state and its end or renewal, what Plus adds, a way to check again and to sign in; parent-side locked features lead to it. | M | FEAT-30 | |
+| PLS-08 | Buying, restoring and managing Plus shall sit behind one purchase interface; until store purchases exist (FEAT-35) the Plus screen says buying is coming soon. | S | FEAT-30 | |
 
 ## 5. Non-functional requirements
 
