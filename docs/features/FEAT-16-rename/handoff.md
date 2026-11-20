@@ -6,10 +6,10 @@ Next: merge on Ken's go, then release `v2.0` (workflow_dispatch release=v2.0, as
 ## What the next stage needs
 - Kept old name on purpose (code-map Gotchas): app id, Dart package, `numberninja://` scheme, server unit/nginx file names, keystore alias, badge id `ninja-master`.
 - Server text (appName via `1763251205_rename.js`, return page) is live only after "Deploy server".
-- Minor follow-up, not rework: PDF file name still `number-ninja-report-…` (`lib/domain/report.dart:66`).
+- PDF file name renamed to `brainbubblz-report-…` on Ken's ask (2026-11-20).
 
 ## Left to CI or later
 - APK build and server job: CI on PR #27 at the verify head.
 
 ## Pending for Ken
-- Merge PR #27; OK for "Deploy server"; tablet run of `regression.md` on v2.0; whether to rename the PDF file too.
+- Merge PR #27; OK for "Deploy server"; tablet run of `regression.md` on v2.0.

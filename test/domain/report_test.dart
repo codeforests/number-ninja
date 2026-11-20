@@ -198,15 +198,15 @@ void main() {
     test('from the injected clock', () {
       expect(
         reportFileName(StatsPeriod.days30, now),
-        'number-ninja-report-2026-11-15-30d.pdf',
+        'brainbubblz-report-2026-11-15-30d.pdf',
       );
       expect(
         reportFileName(StatsPeriod.days7, now),
-        'number-ninja-report-2026-11-15-7d.pdf',
+        'brainbubblz-report-2026-11-15-7d.pdf',
       );
       expect(
         reportFileName(StatsPeriod.all, DateTime(2027, 1, 5)),
-        'number-ninja-report-2027-01-05-all.pdf',
+        'brainbubblz-report-2027-01-05-all.pdf',
       );
     });
   });

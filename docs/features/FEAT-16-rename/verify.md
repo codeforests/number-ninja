@@ -26,7 +26,7 @@ Fresh clone at `c4d7222`, Flutter 3.50.0.
 
 ## Beyond the tests
 
-- Exported PDF file name is still `number-ninja-report-<date>-<range>.pdf` (`lib/domain/report.dart:66`). Not in AC-1 or the kept list; minor, Ken sees it only when sharing the file. Left as a follow-up note, not rework.
+- Exported PDF file name was still `number-ninja-report-…`; renamed to `brainbubblz-report-<date>-<range>.pdf` on Ken's ask (2026-11-20), `report_test` and `report_export_test` updated and passing.
 - No requirement row names FEAT-16 (D16 is a decision row), so there are no Verified by cells to fill.
 
 ## Test diff review
