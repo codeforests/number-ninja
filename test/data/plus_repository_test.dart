@@ -33,6 +33,27 @@ void main() {
   tearDown(() => db.close());
 
   group('PlusRepository (AC-2)', () {
+    test('storeEntitlement caches a redeemed code (FEAT-36 IC-11)', () async {
+      fake.plus = _gift();
+      await repo.refresh('u0');
+      final until = DateTime.utc(2027, 11, 20, 9);
+      await repo.storeEntitlement(
+        'u1',
+        Entitlement(
+          plus: true,
+          until: until,
+          source: 'invite',
+          status: 'active',
+          checkedAt: _now.toUtc(),
+        ),
+      );
+      final c = (await repo.cached())!;
+      expect(c.accountId, 'u1');
+      expect(c.source, 'invite');
+      expect(c.until, until);
+      expect(c.deviceCheckedAt, _now);
+    });
+
     test('refresh stores the entitlement', () async {
       fake.plus = _gift();
       expect(await repo.refresh('u1'), PlusRefresh.updated);

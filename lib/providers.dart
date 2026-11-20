@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/services.dart' show MethodChannel, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -108,7 +110,18 @@ final bankStatusProvider = FutureProvider<(ActiveBank, BankCheckState)>(
 
 /// Runs a bank check (launch, resume, "Check now"). A download waits for
 /// the next round, unless [now] (the parent area, where no round runs).
-Future<BankCheck> checkBank(Ref ref, {bool force = false, bool now = false}) {
+Future<BankCheck> checkBank(
+  Ref ref, {
+  bool force = false,
+  bool now = false,
+}) async {
+  // FEAT-36 IC-12: at launch the Plus cache may still be loading, and
+  // `plusProvider` would read false (FEAT-30 verify follow-up).
+  try {
+    await ref.read(plusCacheProvider.future);
+  } on Object {
+    // No cache: free.
+  }
   return ref.read(bankUpdaterProvider).check(force: force).then((r) {
     if (r == BankCheck.skipped) return r;
     if (r == BankCheck.downloaded) {
@@ -294,6 +307,14 @@ final plusControllerProvider = NotifierProvider<PlusController, int>(
     sync: syncProvider,
     onChanged: (ref) => ref.invalidate(plusCacheProvider),
   ),
+);
+
+/// Whether SCR-20 offers invitation codes (FEAT-36 IC-9): never on iOS or
+/// macOS (App Store guideline 3.1.1; FEAT-34 adds Apple offer codes).
+final inviteCodesAllowedProvider = Provider<bool>(
+  (ref) =>
+      defaultTargetPlatform != TargetPlatform.iOS &&
+      defaultTargetPlatform != TargetPlatform.macOS,
 );
 
 /// Buying Plus (PD-10): nothing to buy until FEAT-35.

@@ -57,24 +57,34 @@ class PlusRepository {
       }
       return PlusRefresh.kept;
     }
-    await _db
-        .into(_db.plusState)
-        .insertOnConflictUpdate(
-          PlusStateCompanion.insert(
-            id: const Value(1),
-            plus: e.plus,
-            until: Value(e.until),
-            source: Value(e.source),
-            status: Value(e.status),
-            willRenew: Value(e.willRenew),
-            endedAt: Value(e.endedAt),
-            serverCheckedAt: e.checkedAt,
-            deviceCheckedAt: clock(),
-            accountId: accountId,
-          ),
-        );
+    await _store(accountId, e);
     return PlusRefresh.updated;
   }
+
+  /// Caches [e] for [accountId] as [refresh] would, e.g. the answer of a
+  /// redeemed invitation code (FEAT-36 IC-11).
+  Future<void> storeEntitlement(String accountId, Entitlement e) async {
+    final old = await cached();
+    if (old != null && old.accountId != accountId) await clear();
+    await _store(accountId, e);
+  }
+
+  Future<void> _store(String accountId, Entitlement e) => _db
+      .into(_db.plusState)
+      .insertOnConflictUpdate(
+        PlusStateCompanion.insert(
+          id: const Value(1),
+          plus: e.plus,
+          until: Value(e.until),
+          source: Value(e.source),
+          status: Value(e.status),
+          willRenew: Value(e.willRenew),
+          endedAt: Value(e.endedAt),
+          serverCheckedAt: e.checkedAt,
+          deviceCheckedAt: clock(),
+          accountId: accountId,
+        ),
+      );
 
   Future<void> clear() => _db.delete(_db.plusState).go();
 }

@@ -162,6 +162,35 @@ tablets keep the bank they have. The store webhook
 its Authorization header and the server updates `google_play`/`app_store`
 records itself.
 
+## Invitation codes (FEAT-36)
+
+A code like `ABCD-EFGH` gives a friend's family Plus (default 12 months). Each
+code can be used by a few families (default 5) until its last redeem day
+(default a year after making). Parents type it in the app: Parent area →
+BrainBubblz Plus → *Have an invitation code?* (Android only; iPhone and iPad
+get Apple offer codes later). Their account must be signed in and verified.
+
+- **Make codes:** Actions → **Make invitation codes** → Run workflow on
+  `main`: how many, a note (who they're for, e.g. "school friends"), months,
+  families per code, days to redeem, and *send_to* (the email that gets the
+  codes; masked in the log). Empty *send_to* uses the server's
+  `INVITE_MAIL_TO` secret, else `CRASH_DIGEST_TO`. The repo is public, so the
+  log never shows codes: they come by email.
+- **Read them in the admin:** Collections → `invite_codes`, filter
+  `note = "school friends"`; `uses`/`max_uses` shows how many families used
+  each one, and `invite_redemptions` which families.
+- **Stop a code:** tick `revoked` on it in the admin (or
+  `dart run tool/make_invites.dart --revoke ABCD-EFGH`). Families who already
+  used it keep Plus until it ends; to end one family's Plus, edit its
+  `invite` record in `entitlements`.
+- Locally: `dart run tool/make_invites.dart --server URL --count 3 --note N
+  --print` (or `--send-to EMAIL`, `--email`; `--list [--note N]`), with
+  `PB_SUPERUSER_EMAIL` and `PB_SUPERUSER_PASSWORD` set.
+
+A second code adds its months to an invitation that hasn't ended. A family
+with Plus from a gift or a store subscription is told to keep the code for
+someone else (no use is spent). Redeeming is limited to 5 tries a minute.
+
 ## Admin UI (through an SSH tunnel only)
 
 `ssh -L 8090:127.0.0.1:8090 deploy@<droplet IP>`, then open `http://localhost:8090/_/`

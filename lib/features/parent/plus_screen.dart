@@ -4,6 +4,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../app.dart';
 import '../../data/purchase_service.dart';
+import '../../data/sync/server_client.dart';
+import '../../domain/report.dart' show reportDate;
 import '../../domain/plus.dart';
 import '../../providers.dart';
 import '../../ui/theme.dart';
@@ -19,7 +21,8 @@ const plusAdds = [
 
 /// SCR-20 BrainBubblz Plus, inside the PIN-protected parent area (FEAT-30
 /// PD-9): status, what Plus adds, "Check again" and the buy area from
-/// [PurchaseService] (PD-10).
+/// [PurchaseService] (PD-10), and "Have an invitation code?" (FEAT-36
+/// IC-8).
 class PlusScreen extends ConsumerStatefulWidget {
   const PlusScreen({super.key});
 
@@ -36,6 +39,23 @@ class _PlusScreenState extends ConsumerState<PlusScreen> {
     if (mounted) setState(() => _checking = false);
   }
 
+  Future<void> _redeem() async {
+    final until = await showDialog<DateTime>(
+      context: context,
+      builder: (_) => const _InviteDialog(),
+    );
+    if (until == null || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        key: const Key('invite-done'),
+        content: Text(
+          'Plus until ${reportDate(until.toLocal())}, from an invitation. '
+          'Enjoy!',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final signedIn = ref.watch(accountProvider.select((s) => s.signedIn));
@@ -47,6 +67,11 @@ class _PlusScreenState extends ConsumerState<PlusScreen> {
     final status = plus && !plusActive(cache, now)
         ? 'You have BrainBubblz Plus.'
         : line.status;
+    // IC-8: free, or Plus from an invitation (never on top of a gift or a
+    // store subscription).
+    final invited = plusActive(cache, now) && cache!.source == 'invite';
+    final showInvite =
+        signedIn && ref.watch(inviteCodesAllowedProvider) && (!plus || invited);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -113,6 +138,33 @@ class _PlusScreenState extends ConsumerState<PlusScreen> {
               ],
             ),
           ),
+          if (showInvite) ...[
+            const SizedBox(height: AppSizes.gap),
+            StatsCard(
+              child: InkWell(
+                key: const Key('plus-invite'),
+                onTap: _redeem,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: AppSizes.minTap),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.card_giftcard, color: AppColors.sun),
+                      const SizedBox(width: AppSizes.gap / 2),
+                      Expanded(
+                        child: Text(
+                          invited
+                              ? 'Have another invitation code?'
+                              : 'Have an invitation code?',
+                          style: StatsText.body,
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: AppSizes.gap),
           const Text('What Plus adds', style: StatsText.heading),
           const SizedBox(height: AppSizes.gap / 2),
@@ -149,6 +201,120 @@ class _PlusScreenState extends ConsumerState<PlusScreen> {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// What each refusal says (IC-8).
+const inviteFailureText = {
+  InviteFailure.notFound:
+      "We couldn't find that code. Check the letters and try again.",
+  InviteFailure.expired: 'This code has expired.',
+  InviteFailure.usedUp:
+      'This code has been used by as many families as it allows.',
+  InviteFailure.alreadyUsed: "You've already used this code.",
+  InviteFailure.alreadyPlus:
+      'You already have Plus, so keep this code for another family.',
+  InviteFailure.unverified: 'Please verify your email first (see Account).',
+  InviteFailure.tooMany: 'Too many tries. Wait a minute and try again.',
+  InviteFailure.offline:
+      "Couldn't reach BrainBubblz. Check the internet and try again.",
+};
+
+/// Asks for a code and redeems it (IC-8). Pops with the new Plus end date;
+/// a refusal stays in the dialog.
+class _InviteDialog extends ConsumerStatefulWidget {
+  const _InviteDialog();
+
+  @override
+  ConsumerState<_InviteDialog> createState() => _InviteDialogState();
+}
+
+class _InviteDialogState extends ConsumerState<_InviteDialog> {
+  final _field = TextEditingController();
+  bool _sending = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _field.dispose();
+    super.dispose();
+  }
+
+  Future<void> _use() async {
+    setState(() {
+      _sending = true;
+      _error = null;
+    });
+    final code = normaliseInviteCode(_field.text);
+    final result = await ref.read(serverClientProvider).redeemInvite(code);
+    final e = result.entitlement;
+    final accountId = ref.read(accountProvider).account?.id;
+    if (e != null && accountId != null) {
+      await ref.read(plusRepositoryProvider).storeEntitlement(accountId, e);
+      await ref.read(plusControllerProvider.notifier).check();
+      if (mounted) Navigator.of(context).pop(e.until ?? DateTime.now());
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _sending = false;
+      _error = inviteFailureText[result.failure ?? InviteFailure.offline];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ready = !_sending && inviteCodeComplete(_field.text);
+    return AlertDialog(
+      title: const Text('Invitation code'),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Type the code a friend gave you. It gives your family '
+              'BrainBubblz Plus.',
+              style: StatsText.body,
+            ),
+            const SizedBox(height: AppSizes.gap / 2),
+            TextField(
+              key: const Key('invite-field'),
+              controller: _field,
+              autofocus: true,
+              enabled: !_sending,
+              textCapitalization: TextCapitalization.characters,
+              autocorrect: false,
+              enableSuggestions: false,
+              decoration: const InputDecoration(hintText: 'ABCD-EFGH'),
+              onChanged: (_) => setState(() => _error = null),
+              onSubmitted: (_) => ready ? _use() : null,
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: AppSizes.gap / 2),
+              Text(
+                _error!,
+                key: const Key('invite-error'),
+                style: StatsText.body.copyWith(color: AppColors.berry),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          key: const Key('invite-cancel'),
+          onPressed: _sending ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          key: const Key('invite-use'),
+          onPressed: ready ? _use : null,
+          child: Text(_sending ? 'Checking…' : 'Use code'),
+        ),
+      ],
     );
   }
 }

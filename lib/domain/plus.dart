@@ -28,7 +28,7 @@ class PlusCache {
   final bool plus;
   final DateTime? until;
 
-  /// `complimentary`, `google_play`, `app_store` or null.
+  /// `complimentary`, `invite`, `google_play`, `app_store` or null.
   final String? source;
 
   /// `active`, `cancelled`, `billing_issue`, ... or null.
@@ -74,13 +74,22 @@ bool plusFeature(PlusFeature feature, bool active) => active;
   DateTime now,
 ) {
   if (!plusActive(cache, now)) {
-    return (status: 'You are on the free plan.', checked: _checked(cache, now));
+    final ended = cache?.endedAt;
+    return (
+      status: ended == null
+          ? 'You are on the free plan.'
+          : 'You are on the free plan. Plus ended on '
+                '${reportDate(ended.toLocal())}.',
+      checked: _checked(cache, now),
+    );
   }
   final c = cache!;
   final date = reportDate(c.until!.toLocal());
   final String status;
   if (c.source == 'complimentary') {
     status = c.forever ? 'Plus, a gift from BrainBubblz' : 'Plus until $date';
+  } else if (c.source == 'invite') {
+    status = 'Plus until $date, from an invitation';
   } else if (c.status == 'billing_issue') {
     status = 'Plus: payment problem, check your store account';
   } else if (c.willRenew) {
@@ -97,3 +106,14 @@ String? _checked(PlusCache? cache, DateTime now) {
   if (days < 1) return null;
   return days == 1 ? 'Last checked 1 day ago' : 'Last checked $days days ago';
 }
+
+/// Invitation code characters (FEAT-36 IC-1): no 0/O, 1/I.
+const inviteAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+/// Upper-cases [raw] and drops every character outside [inviteAlphabet]
+/// (spaces, dashes, and the look-alikes 0, O, 1, I).
+String normaliseInviteCode(String raw) =>
+    raw.toUpperCase().split('').where(inviteAlphabet.contains).join();
+
+/// Whether [raw] holds a whole code (8 code characters).
+bool inviteCodeComplete(String raw) => normaliseInviteCode(raw).length == 8;
