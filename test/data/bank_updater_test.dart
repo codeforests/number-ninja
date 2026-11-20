@@ -52,6 +52,24 @@ void main() {
       expect(r.client.bankLog, hasLength(3));
     });
 
+    test(
+      'free: no server call, the current bank stays (FEAT-30 AC-8)',
+      () async {
+        r.client.publishBank(await r.bankAs(v + 1));
+        final free = BankUpdater(
+          client: r.client,
+          store: r.store,
+          clock: () => r.now,
+          plus: () => false,
+        );
+        expect(await free.check(force: true), BankCheck.noPlus);
+        expect(r.client.bankLog, isEmpty);
+        expect(await activeVersion(), v);
+        // With Plus it checks as before.
+        expect(await r.updater.check(force: true), BankCheck.downloaded);
+      },
+    );
+
     test('no server URL: no request', () async {
       final off = BankRig(configured: false);
       addTearDown(off.dispose);

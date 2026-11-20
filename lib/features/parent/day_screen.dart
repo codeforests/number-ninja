@@ -10,6 +10,8 @@ import '../../domain/screen_time.dart';
 import '../../domain/stats.dart';
 import '../../domain/topics.dart';
 import '../../providers.dart';
+import '../../domain/plus.dart';
+import 'plus_screen.dart';
 import '../family/child_switcher.dart';
 import '../../ui/theme.dart';
 import 'stats_view.dart';
@@ -72,31 +74,45 @@ class DayScreen extends ConsumerWidget {
         title: const Text('One day'),
         actions: const [ChildSwitcher()],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.gap),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppSizes.parentColumn),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _DayHeader(day: shown, today: today),
-                const SizedBox(height: AppSizes.gap),
-                ...switch (detail) {
-                  AsyncData(:final value) => _cards(value, bank),
-                  AsyncError(:final error) => [
-                    Text(
-                      'Could not load the day: $error',
-                      style: StatsText.body,
-                    ),
-                  ],
-                  _ => [const Center(child: CircularProgressIndicator())],
-                },
-              ],
+      // The day view needs Plus (FEAT-30 PD-1).
+      body: !ref.watch(plusProvider)
+          ? const Padding(
+              padding: EdgeInsets.all(AppSizes.gap),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: PlusCard(
+                  feature: PlusFeature.dayView,
+                  text: 'The day-by-day view comes with Plus',
+                ),
+              ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSizes.gap),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppSizes.parentColumn,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _DayHeader(day: shown, today: today),
+                      const SizedBox(height: AppSizes.gap),
+                      ...switch (detail) {
+                        AsyncData(:final value) => _cards(value, bank),
+                        AsyncError(:final error) => [
+                          Text(
+                            'Could not load the day: $error',
+                            style: StatsText.body,
+                          ),
+                        ],
+                        _ => [const Center(child: CircularProgressIndicator())],
+                      },
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 

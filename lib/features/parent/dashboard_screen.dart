@@ -4,12 +4,15 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../app.dart';
 import '../../domain/daily.dart';
+import '../../domain/plus.dart';
 import '../../domain/stats.dart';
 import '../../domain/topics.dart';
+import '../../providers.dart';
 import '../../ui/layout.dart';
 import '../family/child_switcher.dart';
 import '../../ui/theme.dart';
 import 'day_screen.dart';
+import 'plus_screen.dart';
 import 'report_export.dart';
 import 'stats_view.dart';
 
@@ -44,6 +47,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final data = ref.watch(statsDataProvider);
+    final plus = ref.watch(plusProvider);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -55,16 +59,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         title: const Text('Progress'),
         actions: [
           const ChildSwitcher(),
-          IconButton(
-            key: const Key('export-pdf'),
-            tooltip: 'Export PDF',
-            onPressed: _exporting || data is! AsyncData ? null : _export,
-            icon: const Icon(Icons.share),
-          ),
+          // PDF export needs Plus (FEAT-30 PD-1).
+          if (plus)
+            IconButton(
+              key: const Key('export-pdf'),
+              tooltip: 'Export PDF',
+              onPressed: _exporting || data is! AsyncData ? null : _export,
+              icon: const Icon(Icons.share),
+            ),
         ],
       ),
       body: switch (data) {
-        AsyncData(:final value) => _body(context, value),
+        AsyncData(:final value) => _body(context, value, plus),
         AsyncError(:final error) => Center(
           child: Text('Could not load stats: $error', style: StatsText.body),
         ),
@@ -73,7 +79,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _body(BuildContext context, StatsData data) {
+  Widget _body(BuildContext context, StatsData data, bool plus) {
     final picker = Align(
       alignment: Alignment.centerLeft,
       child: PeriodPicker(
@@ -112,26 +118,39 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       const SizedBox(height: AppSizes.gap),
       _TrackSummary(tracks: tracks),
       const SizedBox(height: AppSizes.gap),
-      _DailyCard(days: recentDays(data.all)),
+      // The day view and trends need Plus (FEAT-30 PD-1).
+      if (plus)
+        _DailyCard(days: recentDays(data.all))
+      else
+        const PlusCard(
+          feature: PlusFeature.dayView,
+          text: 'The day-by-day view comes with Plus',
+        ),
       const SizedBox(height: AppSizes.gap),
       _NeedsPractice(ids: needsList, tallies: topicTallies, onOpen: open),
       const SizedBox(height: AppSizes.gap),
-      StatsCard(
-        child: TrendCharts(
-          now: data.now,
-          lines: [
-            for (final t in Track.values)
-              (
-                trackNames[t]!,
-                trackColors[t]!,
-                [
-                  for (final r in data.all)
-                    if (topicsById[r.topicId]?.track == t) r,
-                ],
-              ),
-          ],
+      if (!plus)
+        const PlusCard(
+          feature: PlusFeature.trends,
+          text: 'Weekly trend charts come with Plus',
+        )
+      else
+        StatsCard(
+          child: TrendCharts(
+            now: data.now,
+            lines: [
+              for (final t in Track.values)
+                (
+                  trackNames[t]!,
+                  trackColors[t]!,
+                  [
+                    for (final r in data.all)
+                      if (topicsById[r.topicId]?.track == t) r,
+                  ],
+                ),
+            ],
+          ),
         ),
-      ),
     ];
     final table = _TopicTable(
       tallies: topicTallies,

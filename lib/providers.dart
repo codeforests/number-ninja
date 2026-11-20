@@ -74,6 +74,7 @@ final bankUpdaterProvider = Provider<BankUpdater>(
     client: ref.watch(serverClientProvider),
     store: ref.watch(bankStoreProvider),
     clock: ref.watch(clockProvider),
+    plus: () => ref.read(plusProvider),
   ),
 );
 
