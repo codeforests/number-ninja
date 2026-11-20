@@ -248,6 +248,8 @@ class _NumberNinjaAppState extends ConsumerState<NumberNinjaApp> {
     super.initState();
     // Sync runs while signed in (FEAT-14): keep it alive, and sync on resume.
     ref.listenManual(syncProvider, (_, _) {});
+    // FEAT-30 (PD-5): the Plus cache follows the account and each sync.
+    ref.listenManual(plusControllerProvider, (_, _) {});
     // FEAT-24: saved errors need the database; send them at launch/resume.
     ref
         .read(crashReporterProvider)

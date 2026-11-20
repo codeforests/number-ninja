@@ -15,6 +15,8 @@ import 'data/crash_reporter.dart';
 import 'data/crash_repository.dart';
 import 'data/database.dart';
 import 'data/pin_repository.dart';
+import 'data/plus_repository.dart';
+import 'data/purchase_service.dart';
 import 'data/profile_repository.dart';
 import 'data/revision_repository.dart';
 import 'data/round_repository.dart';
@@ -31,6 +33,7 @@ import 'data/usage_repository.dart';
 import 'domain/question.dart';
 import 'domain/clock.dart';
 import 'domain/family.dart';
+import 'domain/plus.dart';
 import 'domain/profile.dart';
 import 'domain/progress.dart';
 import 'domain/revision.dart';
@@ -257,6 +260,44 @@ final syncProvider = NotifierProvider<SyncController, SyncStatus>(
     onExpired: (ref) =>
         unawaited(ref.read(accountProvider.notifier).sessionExpired()),
   ),
+);
+
+/// The cached Plus answer (FEAT-30 PD-3).
+final plusRepositoryProvider = Provider<PlusRepository>(
+  (ref) => PlusRepository(
+    ref.watch(databaseProvider),
+    client: ref.watch(serverClientProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// The cache row; [PlusController] invalidates it after each change.
+final plusCacheProvider = FutureProvider<PlusCache?>(
+  (ref) => ref.watch(plusRepositoryProvider).cached(),
+);
+
+/// Whether Plus is on now (PD-4). Tests override it (`QuizHarness.plus`).
+final plusProvider = Provider<bool>(
+  (ref) => plusActive(
+    ref.watch(plusCacheProvider).value,
+    ref.watch(clockProvider)(),
+  ),
+);
+
+/// Refreshes and clears the cache with the account and sync (PD-5);
+/// `app.dart` keeps it alive.
+final plusControllerProvider = NotifierProvider<PlusController, int>(
+  () => PlusController(
+    repository: plusRepositoryProvider,
+    account: accountProvider,
+    sync: syncProvider,
+    onChanged: (ref) => ref.invalidate(plusCacheProvider),
+  ),
+);
+
+/// Buying Plus (PD-10): nothing to buy until FEAT-35.
+final purchaseServiceProvider = Provider<PurchaseService>(
+  (ref) => const UnavailablePurchaseService(),
 );
 
 /// The family's children (FEAT-25).
