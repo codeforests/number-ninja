@@ -2,7 +2,7 @@
 
 An offline Android tablet app that helps a Singapore primary school child practise maths: P1 revision, the P2 MOE syllabus and Olympiad-style puzzles. Every answer is timed, a PIN-protected parent dashboard shows accuracy and speed per topic (with PDF export), and a daily screen-time limit keeps sessions short.
 
-(Formerly "Number Ninja". The Android application id `com.codeforests.number_ninja`, the Dart package name and the `numberninja://` sign-in link keep the old name on purpose, so installs update in place and Google sign-in keeps working.)
+(Formerly "Number Ninja". Since v2.1.0 (FEAT-20, D19) the Android application id is `com.brainbubblz.kids` and the sign-in link `brainbubblz://signin`; the Dart package name `number_ninja` keeps the old name.)
 
 - Requirements: [docs/01-requirements.md](docs/01-requirements.md)
 - Design: [docs/02-design.md](docs/02-design.md)

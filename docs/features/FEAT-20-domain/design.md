@@ -1,7 +1,7 @@
 # FEAT-20: Own domain brainbubblz.com and new app id
 
 > Implements: D19 · Screens: none (server host, Android id, sign-in return page, emails)
-> Status: built · Branch: `claude/project-thread-wqok43` · 2026-11-20
+> Status: verified (accepted) · Branch: `claude/project-thread-wqok43` · 2026-11-20
 
 ## Scope
 
