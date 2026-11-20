@@ -1,5 +1,5 @@
 # Handoff: FEAT-18 — Progress per day
-Branch: feat/FEAT-18-daily-progress · PR: (draft, see branch) · Updated: 2026-11-20 by design+build
+Branch: feat/FEAT-18-daily-progress · PR: https://github.com/codeforests/number-ninja/pull/28 (draft) · Updated: 2026-11-20 by design+build
 Stage done: build (T1–T4 of 4)
 Next: verify — kickoff: "Verify FEAT-18 on branch feat/FEAT-18-daily-progress. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
