@@ -43,6 +43,11 @@ class AppSettings extends Table {
   BoolColumn get switchNeedsPin =>
       boolean().withDefault(const Constant(false))();
 
+  /// The first-run setup step to resume at (schema v10, FEAT-26 AD-1), a
+  /// `SetupStep` name; null = setup finished. Fresh databases start at
+  /// `welcome` (set in onCreate).
+  TextColumn get setupStep => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -270,13 +275,14 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'number_ninja'));
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
-      await into(appSettings).insert(AppSettingsCompanion.insert());
+      await into(appSettings)
+          .insert(const AppSettingsCompanion(setupStep: Value('welcome')));
       await into(pinLockout).insert(PinLockoutCompanion.insert());
       await into(syncState).insert(SyncStateCompanion.insert());
       final now = DateTime.now();
@@ -304,8 +310,11 @@ class AppDatabase extends _$AppDatabase {
       }
       // v9 columns before _from6To7 too, for the same reason.
       if (from < 9) await _v9Columns(m);
+      // v10 column before _from6To7 too (code-map gotcha).
+      if (from < 10) await m.addColumn(appSettings, appSettings.setupStep);
       if (from < 7) await _from6To7(m);
       if (from < 9) await _from8To9(m);
+      if (from < 10) await _from9To10();
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -384,6 +393,19 @@ class AppDatabase extends _$AppDatabase {
         [f, at],
       );
     }
+  }
+
+  /// Schema v10 (FEAT-26 AD-12): an install without a PIN starts setup at
+  /// Welcome, one with a PIN but no profile yet resumes at Children (behind
+  /// the PIN, AD-4); a set-up install never sees the wizard (SET-07).
+  /// `profile_pending` stays but is no longer read.
+  Future<void> _from9To10() async {
+    await customStatement('''
+      UPDATE app_settings SET setup_step = CASE
+        WHEN pin_hash IS NULL THEN 'welcome'
+        WHEN profile_pending = 1 THEN 'children'
+        ELSE NULL END
+    ''');
   }
 
   /// Schema v9 plain columns (FEAT-25): the two `app_settings` fields and

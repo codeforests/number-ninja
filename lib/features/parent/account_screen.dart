@@ -10,6 +10,7 @@ import '../../data/sync/server_client.dart';
 import '../../providers.dart';
 import '../../ui/pin_pad.dart';
 import '../../ui/theme.dart';
+import 'account_forms.dart';
 
 /// SCR-13 sync error lines (SYN-07). An expired session signs out and shows
 /// the FEAT-13 "Please sign in again." instead.
@@ -122,9 +123,6 @@ class AccountScreen extends ConsumerStatefulWidget {
 }
 
 class _AccountScreenState extends ConsumerState<AccountScreen> {
-  final _email = TextEditingController();
-  final _password = TextEditingController();
-  bool _google = false;
   bool _confirmingDelete = false;
   bool _pinBusy = false;
   String? _pinError;
@@ -133,39 +131,10 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   void initState() {
     super.initState();
     if (!ref.read(serverClientProvider).config.isConfigured) return;
-    final repo = ref.read(accountProvider.notifier);
-    repo.refreshOnOpen();
-    repo.googleOffered().then((offered) {
-      if (mounted) setState(() => _google = offered);
-    });
-  }
-
-  @override
-  void dispose() {
-    _email.dispose();
-    _password.dispose();
-    super.dispose();
+    ref.read(accountProvider.notifier).refreshOnOpen();
   }
 
   AccountRepository get _repo => ref.read(accountProvider.notifier);
-
-  Future<void> _signIn() async {
-    final password = _password.text;
-    _password.clear();
-    await _repo.signIn(_email.text, password);
-  }
-
-  Future<void> _create() async {
-    final password = _password.text;
-    await _repo.signUp(_email.text, password);
-    if (ref.read(accountProvider).error == null) _password.clear();
-  }
-
-  Future<void> _signInWithGoogle() async {
-    final browser = ref.read(signInBrowserProvider);
-    await _repo.signInWithGoogle(browser.open);
-    await browser.close();
-  }
 
   Future<void> _askDelete() async {
     final yes = await showDialog<bool>(
@@ -304,66 +273,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
         ),
       ];
     } else {
-      body = [
-        TextField(
-          key: const Key('account-email'),
-          controller: _email,
-          keyboardType: TextInputType.emailAddress,
-          autocorrect: false,
-          enableSuggestions: false,
-          autofillHints: const [AutofillHints.email],
-          decoration: const InputDecoration(labelText: 'Email'),
-        ),
-        const SizedBox(height: AppSizes.gap),
-        TextField(
-          key: const Key('account-password'),
-          controller: _password,
-          obscureText: true,
-          autocorrect: false,
-          enableSuggestions: false,
-          autofillHints: const [AutofillHints.password],
-          decoration: const InputDecoration(
-            labelText: 'Password (at least 8 characters)',
-          ),
-        ),
-        const SizedBox(height: AppSizes.gap),
-        Wrap(
-          spacing: AppSizes.gap,
-          runSpacing: AppSizes.gap,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            FilledButton(
-              key: const Key('account-signin'),
-              onPressed: state.busy ? null : _signIn,
-              child: const Text('Sign in'),
-            ),
-            OutlinedButton(
-              key: const Key('account-create'),
-              onPressed: state.busy ? null : _create,
-              child: const Text('Create account'),
-            ),
-            TextButton(
-              key: const Key('account-forgot'),
-              onPressed: state.busy
-                  ? null
-                  : () => _repo.forgotPassword(_email.text),
-              child: const Text('Forgot password?'),
-            ),
-          ],
-        ),
-        if (_google) ...[
-          const SizedBox(height: AppSizes.gap),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: OutlinedButton.icon(
-              key: const Key('account-google'),
-              onPressed: state.busy ? null : _signInWithGoogle,
-              icon: const Icon(Icons.login),
-              label: const Text('Sign in with Google'),
-            ),
-          ),
-        ],
-      ];
+      body = [const AccountForms()];
     }
 
     return Scaffold(
@@ -384,7 +294,10 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
             padding: const EdgeInsets.all(AppSizes.gap),
             children: [
               ...body,
-              if (configured && message != null && !_confirmingDelete) ...[
+              if (configured &&
+                  state.signedIn &&
+                  message != null &&
+                  !_confirmingDelete) ...[
                 const SizedBox(height: AppSizes.gap),
                 Text(
                   message,
@@ -394,22 +307,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                   ),
                 ),
               ],
-              if (configured &&
-                  !state.signedIn &&
-                  state.notice == AccountNotice.verifyFirst) ...[
-                const SizedBox(height: AppSizes.gap),
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: OutlinedButton(
-                    key: const Key('account-resend'),
-                    onPressed: state.busy
-                        ? null
-                        : () => _repo.resendVerification(_email.text),
-                    child: const Text('Send the email again'),
-                  ),
-                ),
-              ],
-              if (state.busy) ...[
+              if (state.busy && state.signedIn) ...[
                 const SizedBox(height: AppSizes.gap),
                 const LinearProgressIndicator(),
               ],

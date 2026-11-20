@@ -16,6 +16,7 @@ import 'data/pin_repository.dart';
 import 'data/profile_repository.dart';
 import 'data/revision_repository.dart';
 import 'data/round_repository.dart';
+import 'data/setup_repository.dart';
 import 'data/sound_player.dart';
 import 'data/sync/account_repository.dart';
 import 'data/sync/server_client.dart';
@@ -31,6 +32,7 @@ import 'domain/family.dart';
 import 'domain/profile.dart';
 import 'domain/progress.dart';
 import 'domain/revision.dart';
+import 'domain/setup.dart';
 import 'domain/topic_lock.dart';
 import 'domain/topics.dart';
 
@@ -260,6 +262,10 @@ final currentChildProvider = NotifierProvider<CurrentChild, int>(
   CurrentChild.new,
 );
 
+final setupRepositoryProvider = Provider<SetupRepository>(
+  (ref) => SetupRepository(ref.watch(databaseProvider)),
+);
+
 final pinRepositoryProvider = Provider<PinRepository>(
   (ref) => PinRepository(
     ref.watch(databaseProvider),
@@ -405,17 +411,18 @@ final topicLocksProvider = FutureProvider.autoDispose<Map<String, TopicLock>>((
 /// The router listens to it. Unlocking lasts 5 minutes, in memory only.
 class AppSession extends ChangeNotifier {
   AppSession({
-    required this._hasPin,
-    this._profilePending = false,
+    SetupStep? setupStep,
+    bool pinSet = false,
     required this.clock,
     this._choosingChild = false,
-  });
+  }) : _setupStep = setupStep,
+       _setupUnlocked = setupStep == null || !pinSet;
 
   static const unlockFor = Duration(minutes: 5);
 
   final Clock clock;
-  bool _hasPin;
-  bool _profilePending;
+  SetupStep? _setupStep;
+  bool _setupUnlocked;
   bool _choosingChild;
   DateTime? _unlockedAt;
 
@@ -434,23 +441,28 @@ class AppSession extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool get hasPin => _hasPin;
+  /// First-run setup isn't finished (FEAT-26 AD-1): every route is /setup.
+  bool get inSetup => _setupStep != null;
 
-  /// The child profile must be set before play (PRO-02).
-  bool get profilePending => _profilePending;
+  /// The step setup started this launch at; the wizard keeps the live one.
+  SetupStep? get setupStep => _setupStep;
+
+  /// Resuming setup once a PIN is set needs the PIN first (AD-4), so a
+  /// child who restarts the app can't finish the parent's setup.
+  bool get setupUnlocked => _setupUnlocked;
+
+  void unlockSetup() {
+    _setupUnlocked = true;
+    notifyListeners();
+  }
+
+  void setupFinished() {
+    _setupStep = null;
+    notifyListeners();
+  }
 
   bool get parentUnlocked =>
       _unlockedAt != null && clock().difference(_unlockedAt!) < unlockFor;
-
-  void pinCreated() {
-    _hasPin = true;
-    notifyListeners();
-  }
-
-  void profileSaved() {
-    _profilePending = false;
-    notifyListeners();
-  }
 
   void unlockParent() {
     _unlockedAt = clock();

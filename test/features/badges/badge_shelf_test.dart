@@ -89,7 +89,7 @@ void main() {
   });
 
   test('AC-5: /badges counts as screen time and locks', () {
-    final session = AppSession(hasPin: true, clock: () => DateTime(2027));
+    final session = AppSession(clock: () => DateTime(2027));
     expect(Routes.counts(Routes.badges), isTrue);
     expect(redirectFor(session, true, Routes.badges), Routes.locked);
     expect(redirectFor(session, false, Routes.badges), isNull);

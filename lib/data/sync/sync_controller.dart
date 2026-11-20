@@ -143,6 +143,15 @@ class SyncController extends Notifier<SyncStatus> {
     _idle = _loop();
   }
 
+  /// One sync now, awaited (FEAT-26 AD-7): starts a run (or joins the
+  /// running one) and returns the status after it; null when not signed in.
+  Future<SyncStatus?> syncOnce() async {
+    if (!ref.mounted || !state.active) return null;
+    requestSync();
+    await _idle;
+    return ref.mounted ? state : null;
+  }
+
   Future<void> _loop() async {
     _running = true;
     do {

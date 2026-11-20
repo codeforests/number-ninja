@@ -61,7 +61,7 @@ The School track shows P1 and P2 topics; the Olympiad track shows `oly.*`.
 
 | Table | Columns | Notes |
 |---|---|---|
-| `app_settings` | id = 1, pin_hash, pin_salt, daily_limit_min (20), bank_version, sound_on (true), profile_pending (true), device_id, current_child_id (1), switch_needs_pin (false) | One row, created on first open; `sound_on` schema v3 (FEAT-09); `profile_pending` schema v4, false on upgrade (FEAT-10, PRO-02); `device_id` schema v7 (FEAT-14); `current_child_id`, `switch_needs_pin` schema v9 (FEAT-25); limit and sound are per child in `children` since v9 |
+| `app_settings` | id = 1, pin_hash, pin_salt, daily_limit_min (20), bank_version, sound_on (true), profile_pending (true), device_id, current_child_id (1), switch_needs_pin (false), setup_step ('welcome' when created) | One row, created on first open; `sound_on` schema v3 (FEAT-09); `profile_pending` schema v4, false on upgrade (FEAT-10, PRO-02); `device_id` schema v7 (FEAT-14); `current_child_id`, `switch_needs_pin` schema v9 (FEAT-25); limit and sound are per child in `children` since v9; `setup_step` schema v10 (FEAT-26, `SetupStep` name, NULL = set up; replaces `profile_pending`, which is no longer read) |
 | `children` | id, nickname, school_year, school_start_level, olympiad_start_level, avatar, daily_limit_min (20), sound_on (true), created_at, updated_at, remote_id, reset_epoch, pending_reset, pending_delete | Schema v9 (FEAT-25, ADR-12): one row per child, up to 4 (AD-1), always at least one (AD-2); replaced `child_profile` (v4), whose row became child 1 together with `app_settings` limit/sound and `sync_state` child/epoch/pending (FAM-07, AD-12) |
 | `play_sessions` | id, started_at, ended_at | One per app opening |
 | `rounds` | id, session_id, topic_id, level, started_at, score, duration_ms, stars, finished_at, kind, uuid, dirty, remote_id | `finished_at` is null until the last answer is saved (schema v2, FEAT-04); `kind` `normal` or `revision` (schema v6, FEAT-11), a mixed revision round has `topic_id = 'mixed'`; `uuid`/`dirty`/`remote_id` schema v7 (FEAT-14 sync) |
@@ -92,7 +92,7 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 
 | ID | Screen | Requirements |
 |---|---|---|
-| SCR-01 | First-run PIN setup | PAR-01 |
+| SCR-01 | First-run PIN setup; replaced by SCR-19 (FEAT-26) | PAR-01 |
 | SCR-02 | Home: two track cards, minutes left, latest badge, small parent button; FEAT-25 adds the child chip (2+ children, avatar only on a phone) | PRC-01, TIM-06 |
 | SCR-03 | Topic map: tiles with stars, grouped P1 / P2 or Olympiad | PRC-01, PRC-07 |
 | SCR-04 | Quiz: question, visual, answer area, progress dots | PRC-02..05, PRC-10 |
@@ -110,6 +110,7 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 | SCR-16 | One day (`/parent/day?d=yyyy-MM-dd`, from SCR-09's "By day" card): day totals and screen time, per topic, rounds with each answer (FEAT-18) | PAR-11 |
 | SCR-17 | Who's playing? (`/who`): one card per child, avatar and nickname (FEAT-25) | FAM-02 |
 | SCR-18 | Children (`/parent/children`, from SCR-11): list, add (up to 4), open SCR-12 to edit or remove (FEAT-25) | FAM-01 |
+| SCR-19 | First-run parent setup (`/setup`): welcome, PIN, account (optional, restores a family), children, daily time and sound, done; resumes at its saved step (FEAT-26) | SET-01..07, PAR-01, PRO-02 |
 
 **Look:** bright, high-contrast, rounded. Colours, radii and text sizes are defined once in `lib/ui/theme.dart` and never hard-coded in screens. Child screens use 64 dp minimum tap targets and 20 sp minimum text (NFR-03). Landscape layout first: question on the left, answer area on the right (NFR-02). On smaller screens (NFR-09) the layout adapts by width and height rather than by device: halves side by side only when the screen is landscape and at least 600 dp wide, otherwise stacked; anything that doesn't fit scrolls instead of overlapping. The 12-inch landscape tablet still never scrolls during a question.
 
@@ -152,3 +153,5 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 | 2026-11-17 | FEAT-15: server question bank. Bank file renamed `bank.json` with `format` and `retired`; "Publish bank" workflow (`tool/publish_bank.dart`); `banks.version` a number (migration `1763251204_banks.js`); schema v8 (`bank_files`, `app_settings.bank_checked_at`/`bank_check_note`); `BankStore` + `BankUpdater` check at launch and resume at most daily, a new bank applies at launch or before the next round; SCR-11 "Question bank" row. |
 | 2026-11-20 | FEAT-18: per-day progress on new SCR-16, reached from a "By day" card on SCR-09. A day is a local calendar day of `answered_at`, as screen time's `day_key`; screen time is `daily_usage` summed over devices. Read on demand, no schema change. |
 | 2026-11-20 | FEAT-25 build (auto mode): schema v9 `children` + `child_id` (§4); SCR-17, SCR-18, SCR-12 avatar row and remove, parent switcher on SCR-09/11/16 (§6); per-child sync with nickname matching, removal and reset (design AD-9..11, AD-14..16). |
+| 2026-11-20 | FEAT-26 design: SCR-19 parent setup replaces first-run SCR-01/SCR-12; `app_settings.setup_step` (schema v10) drives the first-run redirect instead of `hasPin`/`profile_pending`; SCR-13 forms and SCR-12 fields become shared widgets (`AccountForms`, `ChildForm`). |
+| 2026-11-20 | FEAT-26 build (auto mode): schema v10 `setup_step`, `/setup/profile` and `SetupPinScreen` removed; resume asks for the PIN whenever one is set (AD-4 as built, AD-14); `SyncController.syncOnce()`; Done reuses the home `ParentButton`. |

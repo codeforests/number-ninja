@@ -157,6 +157,17 @@ class $AppSettingsTable extends AppSettings
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _setupStepMeta = const VerificationMeta(
+    'setupStep',
+  );
+  @override
+  late final GeneratedColumn<String> setupStep = GeneratedColumn<String>(
+    'setup_step',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -171,6 +182,7 @@ class $AppSettingsTable extends AppSettings
     bankCheckNote,
     currentChildId,
     switchNeedsPin,
+    setupStep,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -274,6 +286,12 @@ class $AppSettingsTable extends AppSettings
         ),
       );
     }
+    if (data.containsKey('setup_step')) {
+      context.handle(
+        _setupStepMeta,
+        setupStep.isAcceptableOrUnknown(data['setup_step']!, _setupStepMeta),
+      );
+    }
     return context;
   }
 
@@ -331,6 +349,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.bool,
         data['${effectivePrefix}switch_needs_pin'],
       )!,
+      setupStep: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}setup_step'],
+      ),
     );
   }
 
@@ -366,6 +388,11 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
 
   /// "Ask for PIN to change child" (FEAT-25 AD-4); device-only, like the PIN.
   final bool switchNeedsPin;
+
+  /// The first-run setup step to resume at (schema v10, FEAT-26 AD-1), a
+  /// `SetupStep` name; null = setup finished. Fresh databases start at
+  /// `welcome` (set in onCreate).
+  final String? setupStep;
   const AppSetting({
     required this.id,
     this.pinHash,
@@ -379,6 +406,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     this.bankCheckNote,
     required this.currentChildId,
     required this.switchNeedsPin,
+    this.setupStep,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -403,6 +431,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     }
     map['current_child_id'] = Variable<int>(currentChildId);
     map['switch_needs_pin'] = Variable<bool>(switchNeedsPin);
+    if (!nullToAbsent || setupStep != null) {
+      map['setup_step'] = Variable<String>(setupStep);
+    }
     return map;
   }
 
@@ -428,6 +459,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           : Value(bankCheckNote),
       currentChildId: Value(currentChildId),
       switchNeedsPin: Value(switchNeedsPin),
+      setupStep: setupStep == null && nullToAbsent
+          ? const Value.absent()
+          : Value(setupStep),
     );
   }
 
@@ -449,6 +483,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       bankCheckNote: serializer.fromJson<String?>(json['bankCheckNote']),
       currentChildId: serializer.fromJson<int>(json['currentChildId']),
       switchNeedsPin: serializer.fromJson<bool>(json['switchNeedsPin']),
+      setupStep: serializer.fromJson<String?>(json['setupStep']),
     );
   }
   @override
@@ -467,6 +502,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'bankCheckNote': serializer.toJson<String?>(bankCheckNote),
       'currentChildId': serializer.toJson<int>(currentChildId),
       'switchNeedsPin': serializer.toJson<bool>(switchNeedsPin),
+      'setupStep': serializer.toJson<String?>(setupStep),
     };
   }
 
@@ -483,6 +519,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     Value<String?> bankCheckNote = const Value.absent(),
     int? currentChildId,
     bool? switchNeedsPin,
+    Value<String?> setupStep = const Value.absent(),
   }) => AppSetting(
     id: id ?? this.id,
     pinHash: pinHash.present ? pinHash.value : this.pinHash,
@@ -500,6 +537,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
         : this.bankCheckNote,
     currentChildId: currentChildId ?? this.currentChildId,
     switchNeedsPin: switchNeedsPin ?? this.switchNeedsPin,
+    setupStep: setupStep.present ? setupStep.value : this.setupStep,
   );
   AppSetting copyWithCompanion(AppSettingsCompanion data) {
     return AppSetting(
@@ -529,6 +567,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       switchNeedsPin: data.switchNeedsPin.present
           ? data.switchNeedsPin.value
           : this.switchNeedsPin,
+      setupStep: data.setupStep.present ? data.setupStep.value : this.setupStep,
     );
   }
 
@@ -546,7 +585,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('bankCheckedAt: $bankCheckedAt, ')
           ..write('bankCheckNote: $bankCheckNote, ')
           ..write('currentChildId: $currentChildId, ')
-          ..write('switchNeedsPin: $switchNeedsPin')
+          ..write('switchNeedsPin: $switchNeedsPin, ')
+          ..write('setupStep: $setupStep')
           ..write(')'))
         .toString();
   }
@@ -565,6 +605,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     bankCheckNote,
     currentChildId,
     switchNeedsPin,
+    setupStep,
   );
   @override
   bool operator ==(Object other) =>
@@ -581,7 +622,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.bankCheckedAt == this.bankCheckedAt &&
           other.bankCheckNote == this.bankCheckNote &&
           other.currentChildId == this.currentChildId &&
-          other.switchNeedsPin == this.switchNeedsPin);
+          other.switchNeedsPin == this.switchNeedsPin &&
+          other.setupStep == this.setupStep);
 }
 
 class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
@@ -597,6 +639,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<String?> bankCheckNote;
   final Value<int> currentChildId;
   final Value<bool> switchNeedsPin;
+  final Value<String?> setupStep;
   const AppSettingsCompanion({
     this.id = const Value.absent(),
     this.pinHash = const Value.absent(),
@@ -610,6 +653,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.bankCheckNote = const Value.absent(),
     this.currentChildId = const Value.absent(),
     this.switchNeedsPin = const Value.absent(),
+    this.setupStep = const Value.absent(),
   });
   AppSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -624,6 +668,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.bankCheckNote = const Value.absent(),
     this.currentChildId = const Value.absent(),
     this.switchNeedsPin = const Value.absent(),
+    this.setupStep = const Value.absent(),
   });
   static Insertable<AppSetting> custom({
     Expression<int>? id,
@@ -638,6 +683,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<String>? bankCheckNote,
     Expression<int>? currentChildId,
     Expression<bool>? switchNeedsPin,
+    Expression<String>? setupStep,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -652,6 +698,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (bankCheckNote != null) 'bank_check_note': bankCheckNote,
       if (currentChildId != null) 'current_child_id': currentChildId,
       if (switchNeedsPin != null) 'switch_needs_pin': switchNeedsPin,
+      if (setupStep != null) 'setup_step': setupStep,
     });
   }
 
@@ -668,6 +715,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<String?>? bankCheckNote,
     Value<int>? currentChildId,
     Value<bool>? switchNeedsPin,
+    Value<String?>? setupStep,
   }) {
     return AppSettingsCompanion(
       id: id ?? this.id,
@@ -682,6 +730,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       bankCheckNote: bankCheckNote ?? this.bankCheckNote,
       currentChildId: currentChildId ?? this.currentChildId,
       switchNeedsPin: switchNeedsPin ?? this.switchNeedsPin,
+      setupStep: setupStep ?? this.setupStep,
     );
   }
 
@@ -724,6 +773,9 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (switchNeedsPin.present) {
       map['switch_needs_pin'] = Variable<bool>(switchNeedsPin.value);
     }
+    if (setupStep.present) {
+      map['setup_step'] = Variable<String>(setupStep.value);
+    }
     return map;
   }
 
@@ -741,7 +793,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('bankCheckedAt: $bankCheckedAt, ')
           ..write('bankCheckNote: $bankCheckNote, ')
           ..write('currentChildId: $currentChildId, ')
-          ..write('switchNeedsPin: $switchNeedsPin')
+          ..write('switchNeedsPin: $switchNeedsPin, ')
+          ..write('setupStep: $setupStep')
           ..write(')'))
         .toString();
   }
@@ -5810,6 +5863,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<String?> bankCheckNote,
       Value<int> currentChildId,
       Value<bool> switchNeedsPin,
+      Value<String?> setupStep,
     });
 typedef $$AppSettingsTableUpdateCompanionBuilder =
     AppSettingsCompanion Function({
@@ -5825,6 +5879,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<String?> bankCheckNote,
       Value<int> currentChildId,
       Value<bool> switchNeedsPin,
+      Value<String?> setupStep,
     });
 
 class $$AppSettingsTableFilterComposer
@@ -5893,6 +5948,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<bool> get switchNeedsPin => $composableBuilder(
     column: $table.switchNeedsPin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get setupStep => $composableBuilder(
+    column: $table.setupStep,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -5965,6 +6025,11 @@ class $$AppSettingsTableOrderingComposer
     column: $table.switchNeedsPin,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get setupStep => $composableBuilder(
+    column: $table.setupStep,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AppSettingsTableAnnotationComposer
@@ -6025,6 +6090,9 @@ class $$AppSettingsTableAnnotationComposer
     column: $table.switchNeedsPin,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get setupStep =>
+      $composableBuilder(column: $table.setupStep, builder: (column) => column);
 }
 
 class $$AppSettingsTableTableManager
@@ -6070,6 +6138,7 @@ class $$AppSettingsTableTableManager
                 Value<String?> bankCheckNote = const Value.absent(),
                 Value<int> currentChildId = const Value.absent(),
                 Value<bool> switchNeedsPin = const Value.absent(),
+                Value<String?> setupStep = const Value.absent(),
               }) => AppSettingsCompanion(
                 id: id,
                 pinHash: pinHash,
@@ -6083,6 +6152,7 @@ class $$AppSettingsTableTableManager
                 bankCheckNote: bankCheckNote,
                 currentChildId: currentChildId,
                 switchNeedsPin: switchNeedsPin,
+                setupStep: setupStep,
               ),
           createCompanionCallback:
               ({
@@ -6098,6 +6168,7 @@ class $$AppSettingsTableTableManager
                 Value<String?> bankCheckNote = const Value.absent(),
                 Value<int> currentChildId = const Value.absent(),
                 Value<bool> switchNeedsPin = const Value.absent(),
+                Value<String?> setupStep = const Value.absent(),
               }) => AppSettingsCompanion.insert(
                 id: id,
                 pinHash: pinHash,
@@ -6111,6 +6182,7 @@ class $$AppSettingsTableTableManager
                 bankCheckNote: bankCheckNote,
                 currentChildId: currentChildId,
                 switchNeedsPin: switchNeedsPin,
+                setupStep: setupStep,
               ),
           withReferenceMapper: (p0) => p0
               .map(

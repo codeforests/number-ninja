@@ -44,6 +44,7 @@ BrainBubblz (formerly Number Ninja) is an offline Android tablet app that helps 
 | D18 | Phone use (Ken, 2026-11-20, after v2.0): on a phone the question screen must show Check without scrolling, and the parent pages must adapt to the phone's size (NFR-17). Tablets keep their layout. | 2026-11-20 |
 | D19 | Own domain (Ken, 2026-11-20, after buying `brainbubblz.com`): the server moves to `api.brainbubblz.com` (the old host is served until the old app is gone), email comes from `noreply@brainbubblz.com`, and the Android application id becomes `com.brainbubblz.kids` with the sign-in link `brainbubblz://signin`. The new id installs as a new app; her data comes back through sync. Replaces D16's "application id stays". | 2026-11-20 |
 | D20 | Siblings (plan §6 decision 5, auto mode 2026-11-20): up to 4 children per family on one device and account, each with own progress, settings and daily screen-time limit; a "Who's playing?" picker, switching needs no PIN unless the parent turns that on; removing a child deletes her data on every device. Details: FEAT-25 design AD-1..16. | 2026-11-20 |
+| D21 | Parent first-run setup (plan FEAT-26, auto mode 2026-11-20): a fresh install opens a step-by-step setup for parents (welcome, PIN, optional sign-in that brings an existing family back, children, daily time and sound, how to reach the parent area) that resumes where it stopped; installs already set up never see it. Replaces the first-run SCR-01 and SCR-12. Details: FEAT-26 design AD-1..13. | 2026-11-20 |
 
 ## 4. Functional requirements
 
@@ -141,6 +142,18 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | FAM-06 | While signed in, each child shall sync as its own record (SYN-02..05 per child); the first sign-in on a device shall merge children with the same nickname and add the rest; a reset (PAR-10, SYN-06) applies to one child; removing a child removes her data on the server and her other devices. | M | FEAT-25 | FEAT-25 verify.md (2026-11-20; live at AC-10) |
 | FAM-07 | Updating from a one-child version shall make the existing progress, profile and settings the first child, with nothing lost. | M | FEAT-25 | FEAT-25 verify.md (2026-11-20) |
 
+### Setup (SET)
+
+| ID | Requirement | Pri | Feature | Verified by |
+|---|---|---|---|---|
+| SET-01 | On first launch the app shall show a step-by-step parent setup with progress dots and Back on every step: welcome, PIN (PAR-01), optional account, children, daily time and sound, and a last page; the child can't play until it is finished. (D21) | M | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-02 | The welcome step shall explain in three short cards what the app does, and the last page shall show how to reach the parent area. | S | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-03 | If the app is closed during setup it shall reopen at the same step with what was entered kept; past the PIN step it shall ask for the PIN first. | M | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-04 | The account step shall let the parent sign in (email or Google, ACC-02), create an account, or skip; if the account already has children they shall come back with their settings and the children and time steps are skipped. | M | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-05 | The children step shall add 1 to 4 children (nickname, school year, avatar, optional starting levels; FAM-01); the time step shall suggest 20 minutes a day per child (D5) and set sound on or off. | M | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-06 | Setup screens shall use large buttons and plain words written for parents, and fit every supported screen size (NFR-09, NFR-17). | S | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+| SET-07 | An install that is already set up (including one updated from an earlier version) shall never show the setup. | M | FEAT-26 | FEAT-26 verify.md (2026-11-20) |
+
 ### Revision (REV)
 
 | ID | Requirement | Pri | Feature | Verified by |
@@ -159,7 +172,7 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | ACC-01 | From the parent area the parent shall be able to create an account with email and password (at least 8 characters); the server sends a verification email. (D15) | M | FEAT-13 | FEAT-13 verify.md (2026-11-16; live at AC-6) |
 | ACC-02 | The parent shall be able to sign in with email and password, or with Google. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16; live at AC-6) |
 | ACC-03 | The parent shall be able to ask for a forgot-password email and set a new password from its link. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16; live at AC-6) |
-| ACC-04 | Account screens shall be reachable only inside the PIN-protected parent area; the child never sees a sign-in prompt. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16) |
+| ACC-04 | Account screens shall be reachable only inside the PIN-protected parent area (or in first-run setup after the PIN is set, SET-04); the child never sees a sign-in prompt. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16) |
 | ACC-05 | The app shall keep the sign-in session in Android's encrypted storage and never store the password. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16) |
 | ACC-06 | The parent shall be able to sign out; progress stays on the device and syncing stops. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16; live at AC-6) |
 | ACC-07 | The parent shall be able to delete the account, which deletes all of the child's data on the server after confirming with the PIN; data on the device stays. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16; live at AC-6) |
