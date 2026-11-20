@@ -54,7 +54,7 @@ void main() {
     final y = h.now.year.toString();
     final m = h.now.month.toString().padLeft(2, '0');
     final d = h.now.day.toString().padLeft(2, '0');
-    expect(shared.single.$2, 'number-ninja-report-$y-$m-$d-7d.pdf');
+    expect(shared.single.$2, 'brainbubblz-report-$y-$m-$d-7d.pdf');
     expect(find.byKey(const Key('export-sheet')), findsNothing);
     expect(find.text(reportFailedMessage), findsNothing);
   });

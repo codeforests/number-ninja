@@ -1,5 +1,5 @@
-/// Draws the Number Ninja launcher icon: a ninja face with an orange
-/// headband on deep indigo (colours from `AppColors`). Deterministic, so
+/// Draws the BrainBubblz launcher icon: orange and dark bubbles on deep
+/// indigo (colours from `AppColors`). Deterministic, so
 /// `test/tool/icon_test.dart` can compare it with `assets/icon/`.
 library;
 
@@ -17,62 +17,43 @@ const _ink = (0x1C, 0x1C, 0x28);
 img.Color _c((int, int, int) rgb, [int a = 255]) =>
     img.ColorRgba8(rgb.$1, rgb.$2, rgb.$3, a);
 
-/// The face on a transparent [size] canvas; [scale] shrinks it into the
-/// adaptive icon's safe zone.
-img.Image _face(int size, double scale, {required bool background}) {
+/// The bubbles on a transparent [size] canvas; [scale] shrinks them into
+/// the adaptive icon's safe zone.
+img.Image _bubbles(int size, double scale, {required bool background}) {
   final im = img.Image(width: size, height: size, numChannels: 4);
   img.fill(im, color: background ? _c(_ninja) : _c(_ninja, 0));
   final cx = size ~/ 2;
   int u(double f) => (f * size * scale).round();
-  // Head: an ink-dark hood.
-  img.fillCircle(im, x: cx, y: cx, radius: u(0.36), color: _c(_ink));
-  // Eye band across the face.
-  img.fillRect(
-    im,
-    x1: cx - u(0.30),
-    y1: cx - u(0.09),
-    x2: cx + u(0.30),
-    y2: cx + u(0.09),
-    radius: u(0.08),
-    color: _c(_paper),
-  );
-  // Eyes, looking slightly up: determined.
-  for (final dx in [-0.13, 0.13]) {
+  int at(double f) => cx + u(f);
+  void bubble(double x, double y, double r, (int, int, int) fill) {
+    img.fillCircle(im, x: at(x), y: at(y), radius: u(r), color: _c(_paper));
     img.fillCircle(
       im,
-      x: cx + u(dx),
-      y: cx - u(0.005),
-      radius: u(0.045),
-      color: _c(_ink),
+      x: at(x),
+      y: at(y),
+      radius: u(r * 0.86),
+      color: _c(fill),
     );
-  }
-  // Orange headband over the forehead, with two tails on the right.
-  img.fillRect(
-    im,
-    x1: cx - u(0.34),
-    y1: cx - u(0.21),
-    x2: cx + u(0.34),
-    y2: cx - u(0.14),
-    radius: u(0.03),
-    color: _c(_sun),
-  );
-  for (final (dy, len) in [(-0.20, 0.16), (-0.13, 0.12)]) {
-    img.fillRect(
+    // Shine: a small paper highlight towards the top left.
+    img.fillCircle(
       im,
-      x1: cx + u(0.30),
-      y1: cx + u(dy),
-      x2: cx + u(0.30 + len),
-      y2: cx + u(dy + 0.05),
-      radius: u(0.025),
-      color: _c(_sun),
+      x: at(x - r * 0.38),
+      y: at(y - r * 0.38),
+      radius: u(r * 0.16),
+      color: _c(_paper),
     );
   }
+
+  // One big orange bubble with two smaller ones floating up beside it.
+  bubble(-0.06, 0.08, 0.26, _sun);
+  bubble(0.22, -0.18, 0.12, _ink);
+  bubble(0.27, 0.12, 0.07, _sun);
   return im;
 }
 
 /// `icon.png` (full icon, indigo background) and `icon_fg.png` (adaptive
-/// foreground, transparent, face in the safe zone), both 1024 px.
+/// foreground, transparent, bubbles in the safe zone), both 1024 px.
 Map<String, Uint8List> buildIcons() => {
-  'icon': img.encodePng(_face(1024, 1, background: true)),
-  'icon_fg': img.encodePng(_face(1024, 0.85, background: false)),
+  'icon': img.encodePng(_bubbles(1024, 1, background: true)),
+  'icon_fg': img.encodePng(_bubbles(1024, 0.85, background: false)),
 };

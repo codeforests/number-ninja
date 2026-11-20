@@ -164,35 +164,63 @@ class _TopBar extends StatelessWidget {
             icon: const Icon(Icons.close, semanticLabel: 'Quit'),
           ),
         ),
+        const SizedBox(width: AppSizes.gap),
+        // One step per question that always fits the width (NFR-09): green
+        // right, red wrong, orange and taller for the current one (FEAT-16).
         Expanded(
           child: Row(
             key: const Key('progress-dots'),
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (q != null)
                 for (var i = 0; i < q.questions.length; i++)
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 6),
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: i < q.results.length
-                          ? (q.results[i].correct
-                                ? AppColors.leaf
-                                : AppColors.berry)
-                          : AppColors.ninjaLight,
-                      border: i == q.index && q.phase == QuizPhase.answering
-                          ? Border.all(color: AppColors.ninja, width: 3)
-                          : null,
+                  Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      height: _isCurrent(q, i)
+                          ? AppSizes.stepCurrent
+                          : AppSizes.step,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppSizes.step),
+                        color: _stepColor(q, i),
+                        border: i < q.results.length || _isCurrent(q, i)
+                            ? null
+                            : Border.all(color: AppColors.stepBorder),
+                      ),
                     ),
                   ),
             ],
           ),
         ),
-        const SizedBox(width: AppSizes.minTap),
+        const SizedBox(width: AppSizes.gap / 2),
+        SizedBox(
+          width: AppSizes.minTap,
+          child: Text(
+            q == null
+                ? ''
+                : '${(q.index + 1).clamp(1, q.questions.length)}'
+                      '/${q.questions.length}',
+            key: const Key('progress-count'),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: AppText.small,
+              fontWeight: FontWeight.w700,
+              color: AppColors.ninja,
+            ),
+          ),
+        ),
       ],
     );
+  }
+
+  static bool _isCurrent(Quiz q, int i) =>
+      i == q.index && q.phase == QuizPhase.answering;
+
+  static Color _stepColor(Quiz q, int i) {
+    if (i < q.results.length) {
+      return q.results[i].correct ? AppColors.leaf : AppColors.berry;
+    }
+    return _isCurrent(q, i) ? AppColors.sun : AppColors.stepTodo;
   }
 }
 

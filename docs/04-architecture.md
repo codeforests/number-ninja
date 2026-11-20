@@ -1,4 +1,4 @@
-# Number Ninja: Phase 2 architecture
+# BrainBubblz: Phase 2 architecture
 
 > Version 1.0 (signed off by Ken 2026-11-15) · 2026-11-15 · Implements [01-requirements.md](01-requirements.md) D10–D16 · Extends [02-design.md](02-design.md) §1 (the app's three layers are unchanged)
 > Read by section: `grep -n '^## ' docs/04-architecture.md`. ADR ids are permanent; a reversed ADR keeps its row, marked *Superseded by ADR-NN*.

@@ -61,9 +61,9 @@ String _periodSuffix(StatsPeriod p) => switch (p) {
   StatsPeriod.all => 'all',
 };
 
-/// `number-ninja-report-2026-11-15-30d.pdf` (NFR-08: [now] is injected).
+/// `brainbubblz-report-2026-11-15-30d.pdf` (NFR-08: [now] is injected).
 String reportFileName(StatsPeriod period, DateTime now) =>
-    'number-ninja-report-${now.year}-${_two(now.month)}-${_two(now.day)}'
+    'brainbubblz-report-${now.year}-${_two(now.month)}-${_two(now.day)}'
     '-${_periodSuffix(period)}.pdf';
 
 /// One row of the track summary.
@@ -138,7 +138,7 @@ class ReportData {
   /// No answers in the period.
   final bool isEmpty;
 
-  String get title => 'Number Ninja progress report';
+  String get title => 'BrainBubblz progress report';
 
   String get periodLine => from == null
       ? 'All time: up to ${reportDate(now)}'

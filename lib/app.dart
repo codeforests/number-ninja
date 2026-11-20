@@ -250,7 +250,7 @@ class _NumberNinjaAppState extends ConsumerState<NumberNinjaApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Number Ninja',
+      title: 'BrainBubblz',
       scaffoldMessengerKey: _messenger,
       theme: buildTheme(),
       routerConfig: ref.watch(routerProvider),

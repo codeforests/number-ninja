@@ -1,4 +1,4 @@
-# Number Ninja server (FEAT-12)
+# BrainBubblz server (FEAT-12)
 
 PocketBase behind the droplet's existing nginx, set up only from this folder
 (NFR-15). Never change collections or rules in the admin UI: add a migration

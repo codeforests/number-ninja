@@ -1,11 +1,11 @@
-# Number Ninja: Requirements
+# BrainBubblz: Requirements
 
 > Version 2.0 · 2026-11-15 (1.0 signed off by Ken 2026-11-14; 1.1 adds D9, PRC-11, NFR-09, NFR-10 from his M1 check; 2.0 is the phase 2 amendment, D10–D16, signed off by Ken 2026-11-15)
 > This file is also the traceability matrix: the **Feature** column is filled by planning, **Verified by** by each feature's verify step. IDs are permanent and never reused; a dropped requirement keeps its row marked *Removed*.
 
 ## 1. Purpose and scope
 
-Number Ninja is an offline Android tablet app that helps one child (Singapore primary school, entering P2 in 2027) practise maths. It covers P1 revision, the P2 MOE syllabus and Olympiad-style thinking, times every answer, and gives the parent a PIN-protected view of accuracy and speed per topic. It limits daily use to a parent-set number of minutes.
+BrainBubblz (formerly Number Ninja) is an offline Android tablet app that helps one child (Singapore primary school, entering P2 in 2027) practise maths. It covers P1 revision, the P2 MOE syllabus and Olympiad-style thinking, times every answer, and gives the parent a PIN-protected view of accuracy and speed per topic. It limits daily use to a parent-set number of minutes.
 
 **Out of scope for v1:** iOS, accounts, cloud sync or backup, more than one child, read-aloud or other languages, questions generated on the device at run time, Play Store publishing.
 
@@ -39,7 +39,7 @@ Number Ninja is an offline Android tablet app that helps one child (Singapore pr
 | D13 | Child profile set by the parent: nickname (no real name or birth date), school year, optional starting level per track. It decides only where a topic starts; PRC-09 steps take over after the first finished round. | 2026-11-15 |
 | D14 | The server runs on Ken's existing DigitalOcean droplet (self-hosted, no paid cloud service), reached over HTTPS only. Details and alternatives in [04-architecture.md](04-architecture.md) (ADR-01, ADR-02). | 2026-11-15 |
 | D15 | Sign-in with email and password (verification and forgot-password emails) and with Google. Account screens sit inside the PIN-protected parent area. | 2026-11-15 |
-| D16 | The app gets a new name because "Number Ninja" clashes on Google Play. Ken's choice (2026-11-15): **Brain Bubblz**, with the domain `brainbubblz.com` (display spelling to confirm in FEAT-16). An iOS app called "BrainBubbles" exists, so the "z" spelling matters. The Android application id stays `com.codeforests.number_ninja`, so the tablet updates in place and keeps her data. | 2026-11-15 |
+| D16 | The app gets a new name because "Number Ninja" clashes on Google Play. Ken's choice (2026-11-15): **Brain Bubblz**, with the domain `brainbubblz.com` (display spelling confirmed by Ken 2026-11-17 in FEAT-16: **BrainBubblz**, one word). An iOS app called "BrainBubbles" exists, so the "z" spelling matters. The Android application id stays `com.codeforests.number_ninja`, so the tablet updates in place and keeps her data. | 2026-11-15 |
 | D17 | School topics unlock in order (Ken, 2026-11-15): a School topic opens only after the topic before it in its year is passed with at least 70 % correct. Olympiad topics are never locked. Rules in PRC-12..14; Ken confirmed the defaults on 2026-11-15, including that a year's topics stay locked until every topic of the year before is passed. | 2026-11-15 |
 
 ## 4. Functional requirements

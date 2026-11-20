@@ -1,4 +1,4 @@
-# FEAT-12: Number Ninja API site for the droplet's existing nginx.
+# FEAT-12: BrainBubblz API site for the droplet's existing nginx.
 # install.sh fills in ${SERVER_HOSTNAME} (a sed of that variable only) and
 # writes this to /etc/nginx/sites-available/numberninja.conf. It is the only
 # nginx file the deploy touches. Certificate: certbot --webroot into
@@ -42,7 +42,7 @@ server {
     location = /_/ {
         default_type text/html;
         add_header Cache-Control "no-store" always;
-        return 200 '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Number Ninja</title></head><body style="font-family:sans-serif;text-align:center;padding:48px 16px"><h1 id="t">Signed in</h1><p id="m">Close this tab to go back to Number Ninja.</p><script>if (location.hash.indexOf("failure") >= 0) { document.getElementById("t").textContent = "Sign-in did not finish"; document.getElementById("m").textContent = "Close this tab and try again in Number Ninja."; }</script></body></html>';
+        return 200 '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BrainBubblz</title></head><body style="font-family:sans-serif;text-align:center;padding:48px 16px"><h1 id="t">Signed in</h1><p id="m">Close this tab to go back to BrainBubblz.</p><script>if (location.hash.indexOf("failure") >= 0) { document.getElementById("t").textContent = "Sign-in did not finish"; document.getElementById("m").textContent = "Close this tab and try again in BrainBubblz."; }</script></body></html>';
     }
     location = /_ {
         return 404;
@@ -57,7 +57,7 @@ server {
         default_type text/html;
         add_header Cache-Control "no-store" always;
         add_header Referrer-Policy "no-referrer" always;
-        return 200 '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Number Ninja</title></head><body style="font-family:sans-serif;text-align:center;padding:48px 16px"><h1>Back to Number Ninja</h1><p><a id="go" style="display:inline-block;padding:16px 32px;font-size:20px;background:#2f6fde;color:#fff;border-radius:12px;text-decoration:none" href="numberninja://signin/google">Open Number Ninja</a></p><script>var link = "numberninja://signin/google" + location.search; document.getElementById("go").href = link; location.replace(link);</script></body></html>';
+        return 200 '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BrainBubblz</title></head><body style="font-family:sans-serif;text-align:center;padding:48px 16px"><h1>Back to BrainBubblz</h1><p><a id="go" style="display:inline-block;padding:16px 32px;font-size:20px;background:#2f6fde;color:#fff;border-radius:12px;text-decoration:none" href="numberninja://signin/google">Open BrainBubblz</a></p><script>var link = "numberninja://signin/google" + location.search; document.getElementById("go").href = link; location.replace(link);</script></body></html>';
     }
 
     location / {

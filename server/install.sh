@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs or upgrades the Number Ninja server on the droplet (FEAT-12,
+# Installs or upgrades the BrainBubblz server on the droplet (FEAT-12,
 # NFR-15, ADR-08). deploy.sh copies server/ to a staging dir and runs this
 # as root, with settings on stdin as KEY=VALUE lines (so the password never
 # shows in a process list):

@@ -147,7 +147,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: number-ninja-apk
+          name: brainbubblz-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
@@ -158,7 +158,7 @@ jobs:
           TAG: ${{ inputs.release }}
         run: |
           set -euo pipefail
-          cp build/app/outputs/flutter-apk/app-release.apk "number-ninja-$TAG.apk"
-          gh release create "$TAG" "number-ninja-$TAG.apk" \
-            --target "$GITHUB_SHA" --title "Number Ninja $TAG" \
+          cp build/app/outputs/flutter-apk/app-release.apk "brainbubblz-$TAG.apk"
+          gh release create "$TAG" "brainbubblz-$TAG.apk" \
+            --target "$GITHUB_SHA" --title "BrainBubblz $TAG" \
             --notes "Release-signed APK from $GITHUB_SHA for the milestone check on the tablet. Open this page on the tablet, download the APK and install it."
