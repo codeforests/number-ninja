@@ -118,6 +118,25 @@ void main() {
       );
     });
 
+    test('invitation; free after Plus ended (FEAT-36 AC-9)', () {
+      expect(
+        line(_cache(source: 'invite', until: DateTime.utc(2027, 11, 20, 12))),
+        'Plus until 20 Nov 2027, from an invitation',
+      );
+      expect(
+        line(
+          PlusCache(
+            plus: false,
+            endedAt: DateTime.utc(2026, 10, 3, 12),
+            serverCheckedAt: _t,
+            deviceCheckedAt: _t,
+            accountId: 'u1',
+          ),
+        ),
+        'You are on the free plan. Plus ended on 3 Oct 2026.',
+      );
+    });
+
     test('offline grace says when it last checked', () {
       final c = _cache(until: DateTime.utc(2099, 12, 31));
       expect(plusStatusLine(c, _t).checked, isNull);
@@ -125,6 +144,17 @@ void main() {
         plusStatusLine(c, _t.add(const Duration(days: 3, hours: 1))).checked,
         'Last checked 3 days ago',
       );
+    });
+  });
+
+  group('invitation codes (FEAT-36 IC-1)', () {
+    test('normalise drops spaces, dashes and look-alikes', () {
+      expect(normaliseInviteCode(' abcd-efgh '), 'ABCDEFGH');
+      expect(normaliseInviteCode('AB0O-1IGH'), 'ABGH');
+      expect(inviteCodeComplete('abcd efgh'), isTrue);
+      expect(inviteCodeComplete('ABCD-EFG'), isFalse);
+      expect(inviteCodeComplete('ABCD-EFG0'), isFalse);
+      expect(inviteCodeComplete('ABCD-EFGHJ'), isFalse);
     });
   });
 }

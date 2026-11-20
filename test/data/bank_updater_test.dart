@@ -1,8 +1,13 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:number_ninja/data/bank_store.dart';
 import 'package:number_ninja/data/bank_updater.dart';
 import 'package:number_ninja/data/sync/server_client.dart';
+import 'package:number_ninja/domain/plus.dart';
 import 'package:number_ninja/domain/question.dart';
+import 'package:number_ninja/providers.dart';
 
 import '../../tool/bank/bank.dart';
 import 'bank_test_support.dart';
@@ -156,6 +161,53 @@ void main() {
       expect(both, [BankCheck.downloaded, BankCheck.downloaded]);
       expect(r.client.bankLog, hasLength(2));
       expect((await r.store.loadActive()).source, BankSource.downloaded);
+    });
+  });
+
+  // FEAT-36 AC-10 (IC-12): the launch check waits for the Plus cache.
+  group('checkBank at launch', () {
+    PlusCache cache() => PlusCache(
+      plus: true,
+      until: DateTime.utc(2099, 12, 31),
+      source: 'complimentary',
+      serverCheckedAt: r.now.toUtc(),
+      deviceCheckedAt: r.now,
+      accountId: 'u1',
+    );
+
+    ProviderContainer container(Completer<PlusCache?> loading) {
+      final c = ProviderContainer(
+        overrides: [
+          serverClientProvider.overrideWithValue(r.client),
+          bankStoreProvider.overrideWithValue(r.store),
+          clockProvider.overrideWithValue(() => r.now),
+          plusCacheProvider.overrideWith((ref) => loading.future),
+        ],
+      );
+      addTearDown(c.dispose);
+      return c;
+    }
+
+    test('Plus in the cache: a check started before it loads asks the '
+        'server', () async {
+      r.client.publishBank(await r.bankAs(v + 1));
+      final loading = Completer<PlusCache?>();
+      final c = container(loading);
+      final check = c.read(bankCheckProvider)(force: true);
+      await Future<void>.delayed(Duration.zero);
+      loading.complete(cache());
+      expect(await check, BankCheck.downloaded);
+      expect(r.client.bankLog, isNotEmpty);
+    });
+
+    test('free: noPlus without a server call', () async {
+      r.client.publishBank(await r.bankAs(v + 1));
+      final loading = Completer<PlusCache?>();
+      final c = container(loading);
+      final check = c.read(bankCheckProvider)(force: true);
+      loading.complete(null);
+      expect(await check, BankCheck.noPlus);
+      expect(r.client.bankLog, isEmpty);
     });
   });
 }

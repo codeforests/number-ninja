@@ -331,6 +331,34 @@ class FakeServerClient implements ServerClient {
     if (e != null) throw e;
     return plus ?? Entitlement(plus: false, checkedAt: DateTime.now().toUtc());
   }
+
+  // Invitation codes (FEAT-36).
+
+  /// What [redeemInvite] answers; null = a code worth a year from now.
+  InviteResult? inviteResult;
+
+  /// Codes sent to [redeemInvite].
+  final redeemCalls = <String>[];
+
+  @override
+  Future<InviteResult> redeemInvite(String code) async {
+    redeemCalls.add(code);
+    final r = inviteResult;
+    if (r != null) {
+      if (r.ok) plus = r.entitlement;
+      return r;
+    }
+    final now = DateTime.now().toUtc();
+    final e = Entitlement(
+      plus: true,
+      until: now.add(const Duration(days: 365)),
+      source: 'invite',
+      status: 'active',
+      checkedAt: now,
+    );
+    plus = e;
+    return InviteResult.ok(e);
+  }
 }
 
 class FakeSyncServer {

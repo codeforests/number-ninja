@@ -89,6 +89,42 @@ class Entitlement {
   static String? _text(Object? v) => v is String && v.isNotEmpty ? v : null;
 }
 
+/// Why an invitation code was refused (FEAT-36 IC-4, IC-11).
+enum InviteFailure {
+  notFound,
+  expired,
+  usedUp,
+  alreadyUsed,
+  alreadyPlus,
+  unverified,
+  tooMany,
+  offline,
+}
+
+/// What [ServerClient.redeemInvite] got: the family's new Plus, or why not.
+class InviteResult {
+  const InviteResult.ok(Entitlement this.entitlement) : failure = null;
+  const InviteResult.failed(InviteFailure this.failure) : entitlement = null;
+
+  final Entitlement? entitlement;
+  final InviteFailure? failure;
+
+  bool get ok => entitlement != null;
+
+  /// The server's `reason` (IC-4) as an [InviteFailure].
+  static InviteFailure failureOf(int status, Object? reason) =>
+      switch ((status, reason)) {
+        (429, _) => InviteFailure.tooMany,
+        (_, 'unverified') => InviteFailure.unverified,
+        (400, 'expired') => InviteFailure.expired,
+        (400, 'used_up') => InviteFailure.usedUp,
+        (400, 'already_used') => InviteFailure.alreadyUsed,
+        (400, 'already_plus') => InviteFailure.alreadyPlus,
+        (400, _) => InviteFailure.notFound,
+        _ => InviteFailure.offline,
+      };
+}
+
 /// A published question bank (FEAT-15 D10).
 class BankInfo {
   const BankInfo({
@@ -248,6 +284,11 @@ abstract class ServerClient {
   /// The signed-in family's Plus (FEAT-29 AD-5). Throws [SyncException]
   /// (`expired` with status 401 when the session is gone).
   Future<Entitlement> entitlement();
+
+  /// Redeems an invitation code for the signed-in family (FEAT-36 IC-4).
+  /// Never throws: offline, 5xx and a lost session are
+  /// [InviteFailure.offline].
+  Future<InviteResult> redeemInvite(String code);
 }
 
 /// [ServerClient] over the `pocketbase` package. The session is persisted
@@ -720,4 +761,29 @@ class PocketBaseServerClient implements ServerClient {
     final out = await _pb.send<Map<String, dynamic>>('/api/nn/entitlement');
     return Entitlement.fromJson(out);
   });
+
+  // Invitation codes (FEAT-36).
+
+  @override
+  Future<InviteResult> redeemInvite(String code) async {
+    if (!config.isConfigured) {
+      return const InviteResult.failed(InviteFailure.offline);
+    }
+    try {
+      final out = await _pb
+          .send<Map<String, dynamic>>(
+            '/api/nn/invite/redeem',
+            method: 'POST',
+            body: {'code': code},
+          )
+          .timeout(timeout);
+      return InviteResult.ok(Entitlement.fromJson(out));
+    } on ClientException catch (e) {
+      return InviteResult.failed(
+        InviteResult.failureOf(e.statusCode, e.response['reason']),
+      );
+    } on Object {
+      return const InviteResult.failed(InviteFailure.offline);
+    }
+  }
 }
