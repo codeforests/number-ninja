@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart' show Variable;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:number_ninja/data/database.dart';
+import 'package:sqlite3/sqlite3.dart' show Database;
 
 /// The schema v1 tables, as Drift created them in FEAT-01..03.
 const _v1 = [
@@ -15,6 +14,30 @@ const _v1 = [
   'CREATE TABLE "badges_earned" ("badge_id" TEXT NOT NULL, "earned_at" INTEGER NOT NULL, PRIMARY KEY ("badge_id"))',
   'CREATE TABLE "pin_lockout" ("id" INTEGER NOT NULL DEFAULT 1, "failed_count" INTEGER NOT NULL DEFAULT 0, "locked_until" INTEGER NULL, PRIMARY KEY ("id"))',
 ];
+
+/// The schema v8 tables, as Drift created them in FEAT-15..20.
+const _v8 = [
+  'CREATE TABLE "app_settings" ("id" INTEGER NOT NULL DEFAULT 1, "pin_hash" TEXT NULL, "pin_salt" TEXT NULL, "daily_limit_min" INTEGER NOT NULL DEFAULT 20, "bank_version" INTEGER NOT NULL DEFAULT 1, "sound_on" INTEGER NOT NULL DEFAULT 1 CHECK ("sound_on" IN (0, 1)), "profile_pending" INTEGER NOT NULL DEFAULT 1 CHECK ("profile_pending" IN (0, 1)), "device_id" TEXT NOT NULL, "bank_checked_at" INTEGER NULL, "bank_check_note" TEXT NULL, PRIMARY KEY ("id"))',
+  'CREATE TABLE "play_sessions" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "started_at" INTEGER NOT NULL, "ended_at" INTEGER NULL)',
+  'CREATE TABLE "rounds" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "session_id" INTEGER NOT NULL REFERENCES play_sessions (id), "topic_id" TEXT NOT NULL, "level" INTEGER NOT NULL DEFAULT 1, "started_at" INTEGER NOT NULL, "score" INTEGER NOT NULL DEFAULT 0, "duration_ms" INTEGER NOT NULL DEFAULT 0, "stars" INTEGER NOT NULL DEFAULT 0, "finished_at" INTEGER NULL, "kind" TEXT NOT NULL DEFAULT \'normal\', "uuid" TEXT NOT NULL, "dirty" INTEGER NOT NULL DEFAULT 1, "remote_id" TEXT NULL)',
+  'CREATE TABLE "attempts" ("id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "round_id" INTEGER NOT NULL REFERENCES rounds (id), "question_id" TEXT NOT NULL, "answer_given" TEXT NOT NULL, "correct" INTEGER NOT NULL CHECK ("correct" IN (0, 1)), "time_ms" INTEGER NOT NULL, "answered_at" INTEGER NOT NULL, "uuid" TEXT NOT NULL, "dirty" INTEGER NOT NULL DEFAULT 1)',
+  'CREATE TABLE "daily_usage" ("day" TEXT NOT NULL, "device_id" TEXT NOT NULL, "seconds_used" INTEGER NOT NULL DEFAULT 0, "extra_seconds_granted" INTEGER NOT NULL DEFAULT 0, "dirty" INTEGER NOT NULL DEFAULT 1, "remote_id" TEXT NULL, PRIMARY KEY ("day", "device_id"))',
+  'CREATE TABLE "badges_earned" ("badge_id" TEXT NOT NULL, "earned_at" INTEGER NOT NULL, "dirty" INTEGER NOT NULL DEFAULT 1, "remote_id" TEXT NULL, PRIMARY KEY ("badge_id"))',
+  'CREATE TABLE "pin_lockout" ("id" INTEGER NOT NULL DEFAULT 1, "failed_count" INTEGER NOT NULL DEFAULT 0, "locked_until" INTEGER NULL, PRIMARY KEY ("id"))',
+  'CREATE TABLE "child_profile" ("id" INTEGER NOT NULL DEFAULT 1, "nickname" TEXT NOT NULL, "school_year" INTEGER NOT NULL, "school_start_level" INTEGER NULL, "olympiad_start_level" INTEGER NULL, "updated_at" INTEGER NOT NULL, PRIMARY KEY ("id"))',
+  'CREATE TABLE "topic_unlocks" ("topic_id" TEXT NOT NULL, "opened_at" INTEGER NOT NULL, PRIMARY KEY ("topic_id"))',
+  'CREATE TABLE "sync_fields" ("field" TEXT NOT NULL, "changed_at" INTEGER NOT NULL, "dirty" INTEGER NOT NULL DEFAULT 1, PRIMARY KEY ("field"))',
+  'CREATE TABLE "sync_state" ("id" INTEGER NOT NULL DEFAULT 1, "account_id" TEXT NULL, "child_id" TEXT NULL, "reset_epoch" INTEGER NOT NULL DEFAULT 0, "pending_reset" INTEGER NOT NULL DEFAULT 0 CHECK ("pending_reset" IN (0, 1)), "cursors" TEXT NOT NULL DEFAULT \'{}\', "last_sync_at" INTEGER NULL, "last_error" TEXT NULL, PRIMARY KEY ("id"))',
+  'CREATE TABLE "bank_files" ("version" INTEGER NOT NULL, "format" INTEGER NOT NULL, "sha256" TEXT NOT NULL, "path" TEXT NOT NULL, "downloaded_at" INTEGER NOT NULL, PRIMARY KEY ("version"))',
+  'CREATE UNIQUE INDEX rounds_uuid ON rounds (uuid)',
+  'CREATE UNIQUE INDEX attempts_uuid ON attempts (uuid)',
+];
+
+void _createV8(Database raw) {
+  for (final sql in _v8) {
+    raw.execute(sql);
+  }
+}
 
 /// Unix seconds, as Drift v1 stored DateTimes.
 int _secs(DateTime t) => t.millisecondsSinceEpoch ~/ 1000;
@@ -144,7 +167,8 @@ void main() {
     expect(settings.profilePending, isFalse);
     expect(settings.soundOn, isFalse);
     expect(settings.pinHash, 'h');
-    expect(await db.select(db.childProfiles).get(), isEmpty);
+    // No profile yet: child 1 with an empty nickname (FEAT-25 AD-2).
+    expect((await db.select(db.children).getSingle()).nickname, '');
     expect(await db.select(db.rounds).get(), hasLength(1));
   });
 
@@ -194,7 +218,7 @@ void main() {
     final version = await db.customSelect('PRAGMA user_version').getSingle();
     expect(version.data.values.single, db.schemaVersion);
     expect(await db.select(db.topicUnlocks).get(), isEmpty);
-    expect((await db.select(db.childProfiles).getSingle()).nickname, 'Mia');
+    expect((await db.select(db.children).getSingle()).nickname, 'Mia');
     expect((await db.select(db.rounds).getSingle()).score, 8);
     expect((await db.getSettings()).pinHash, 'h');
   });
@@ -251,7 +275,7 @@ void main() {
     final round = await db.select(db.rounds).getSingle();
     expect(round.kind, 'normal');
     expect(round.score, 8);
-    expect((await db.select(db.childProfiles).getSingle()).nickname, 'Mia');
+    expect((await db.select(db.children).getSingle()).nickname, 'Mia');
   });
 
   test('v6 -> v7 adds sync ids, dirty flags, per-device usage (FEAT-14 AC-1)', () async {
@@ -381,23 +405,20 @@ void main() {
   test(
     'v7 -> v8 adds bank_files and the bank check fields (FEAT-15 AC-7)',
     () async {
-      final tmp = Directory.systemTemp.createTempSync('mig8');
-      addTearDown(() => tmp.deleteSync(recursive: true));
-      final file = File('${tmp.path}/db.sqlite');
-      final fresh = AppDatabase(NativeDatabase(file));
-      await fresh.select(fresh.appSettings).get();
-      await fresh.close();
-
-      // Take the v8 additions away again: a v7 database.
+      // A v7 database: the v8 tables without the v8 additions.
       final db = AppDatabase(
-        NativeDatabase(
-          file,
+        NativeDatabase.memory(
           setup: (raw) {
-            if (raw.userVersion != 8) return;
+            _createV8(raw);
             raw.execute('DROP TABLE bank_files');
             raw.execute('ALTER TABLE app_settings DROP COLUMN bank_checked_at');
             raw.execute('ALTER TABLE app_settings DROP COLUMN bank_check_note');
-            raw.execute("UPDATE app_settings SET pin_hash = 'h'");
+            raw.execute(
+              "INSERT INTO app_settings (id, pin_hash, device_id) "
+              "VALUES (1, 'h', 'dev1')",
+            );
+            raw.execute('INSERT INTO pin_lockout (id) VALUES (1)');
+            raw.execute('INSERT INTO sync_state (id) VALUES (1)');
             raw.userVersion = 7;
           },
         ),
@@ -409,7 +430,173 @@ void main() {
       expect(settings.bankCheckNote, isNull);
       expect(await db.select(db.bankFiles).get(), isEmpty);
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.data.values.single, 8);
+      expect(version.data.values.single, db.schemaVersion);
+    },
+  );
+  test('v8 -> v9 makes everything child 1 (FEAT-25 AC-1)', () async {
+    final db = AppDatabase(
+      NativeDatabase.memory(
+        setup: (raw) {
+          _createV8(raw);
+          raw.execute(
+            'INSERT INTO app_settings (id, pin_hash, device_id, '
+            "daily_limit_min, sound_on, profile_pending) VALUES (1, 'h', "
+            "'dev1', 35, 0, 0)",
+          );
+          raw.execute('INSERT INTO pin_lockout (id) VALUES (1)');
+          raw.execute(
+            'INSERT INTO child_profile (nickname, school_year, '
+            "school_start_level, updated_at) VALUES ('Mia', 2, 3, 1000)",
+          );
+          raw.execute(
+            "INSERT INTO sync_state (id, account_id, child_id, reset_epoch, "
+            "pending_reset) VALUES (1, 'acc', 'rc1', 2, 1)",
+          );
+          raw.execute('INSERT INTO play_sessions (started_at) VALUES (1)');
+          for (final t in ['p1.place', 'p1.money']) {
+            raw.execute(
+              'INSERT INTO rounds (session_id, topic_id, started_at, score, '
+              "finished_at, uuid, dirty, remote_id) VALUES (1, '$t', 1, 8, 2, "
+              "'u$t', 0, 'r$t')",
+            );
+          }
+          for (final r in [1, 1, 2]) {
+            raw.execute(
+              'INSERT INTO attempts (round_id, question_id, answer_given, '
+              "correct, time_ms, answered_at, uuid) VALUES ($r, 'q', '1', 1, "
+              "5, 2, 'a' || random())",
+            );
+          }
+          for (final d in ['dev1', 'dev2']) {
+            raw.execute(
+              'INSERT INTO daily_usage (day, device_id, seconds_used, '
+              "extra_seconds_granted, dirty) VALUES ('2027-01-05', '$d', 300, "
+              '60, 0)',
+            );
+          }
+          raw.execute(
+            'INSERT INTO badges_earned (badge_id, earned_at, dirty) '
+            "VALUES ('first', 2, 0)",
+          );
+          raw.execute(
+            'INSERT INTO topic_unlocks (topic_id, opened_at) '
+            "VALUES ('p2.time', 5)",
+          );
+          for (final f in syncFieldNames) {
+            raw.execute(
+              'INSERT INTO sync_fields (field, changed_at, dirty) '
+              "VALUES ('$f', 7, 0)",
+            );
+          }
+          raw.userVersion = 8;
+        },
+      ),
+    );
+    addTearDown(db.close);
+
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.data.values.single, db.schemaVersion);
+    final child = await db.select(db.children).getSingle();
+    expect(
+      [
+        child.id,
+        child.nickname,
+        child.schoolYear,
+        child.schoolStartLevel,
+        child.olympiadStartLevel,
+        child.dailyLimitMin,
+        child.soundOn,
+        child.remoteId,
+        child.resetEpoch,
+        child.pendingReset,
+        child.pendingDelete,
+      ],
+      [1, 'Mia', 2, 3, null, 35, false, 'rc1', 2, true, false],
+    );
+    expect(child.updatedAt.millisecondsSinceEpoch, 1000 * 1000);
+    final settings = await db.getSettings();
+    expect([settings.currentChildId, settings.switchNeedsPin], [1, false]);
+    expect([settings.pinHash, settings.deviceId], ['h', 'dev1']);
+    expect((await db.select(db.syncState).getSingle()).accountId, 'acc');
+
+    final rounds = await db.select(db.rounds).get();
+    expect(rounds.map((r) => [r.childId, r.uuid, r.dirty, r.remoteId]), [
+      [1, 'up1.place', 0, 'rp1.place'],
+      [1, 'up1.money', 0, 'rp1.money'],
+    ]);
+    final attempts = await db.select(db.attempts).get();
+    expect(attempts.map((a) => [a.childId, a.roundId]), [
+      [1, 1],
+      [1, 1],
+      [1, 2],
+    ]);
+    final usage = await db.select(db.dailyUsage).get();
+    expect(
+      usage.map((u) => [u.childId, u.deviceId, u.secondsUsed, u.dirty]),
+      unorderedEquals([
+        [1, 'dev1', 300, 0],
+        [1, 'dev2', 300, 0],
+      ]),
+    );
+    final badge = await db.select(db.badgesEarned).getSingle();
+    expect([badge.childId, badge.badgeId, badge.dirty], [1, 'first', 0]);
+    final unlock = await db.select(db.topicUnlocks).getSingle();
+    expect([unlock.childId, unlock.topicId], [1, 'p2.time']);
+    final fields = await db.select(db.syncFields).get();
+    expect(fields, hasLength(syncFieldNames.length));
+    expect(fields.map((f) => f.childId), everyElement(1));
+    expect(fields.map((f) => f.dirty), everyElement(0));
+    final tables = await db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE name = 'child_profile'",
+        )
+        .get();
+    expect(tables, isEmpty);
+    // The new keys hold: a second child can have the same day and badge.
+    await db.customStatement(
+      'INSERT INTO daily_usage (child_id, day, device_id) '
+      "VALUES (2, '2027-01-05', 'dev1')",
+    );
+    await db.customStatement(
+      'INSERT INTO badges_earned (child_id, badge_id, earned_at) '
+      "VALUES (2, 'first', 3)",
+    );
+  });
+
+  test('v8 -> v9 without a profile gives child 1 an empty nickname '
+      '(FEAT-25 AC-1)', () async {
+    final db = AppDatabase(
+      NativeDatabase.memory(
+        setup: (raw) {
+          _createV8(raw);
+          raw.execute(
+            "INSERT INTO app_settings (id, device_id) VALUES (1, 'dev1')",
+          );
+          raw.execute('INSERT INTO pin_lockout (id) VALUES (1)');
+          raw.execute('INSERT INTO sync_state (id) VALUES (1)');
+          raw.userVersion = 8;
+        },
+      ),
+    );
+    addTearDown(db.close);
+    final child = await db.select(db.children).getSingle();
+    expect(
+      [child.id, child.nickname, child.dailyLimitMin, child.soundOn],
+      [1, '', 20, true],
+    );
+    expect(child.remoteId, isNull);
+  });
+
+  test(
+    'a fresh v9 database has child 1 and its sync fields (FEAT-25 AC-1)',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final child = await db.select(db.children).getSingle();
+      expect([child.id, child.nickname], [1, '']);
+      expect((await db.getSettings()).currentChildId, 1);
+      final fields = await db.select(db.syncFields).get();
+      expect(fields.map((f) => f.childId), everyElement(1));
     },
   );
 }
