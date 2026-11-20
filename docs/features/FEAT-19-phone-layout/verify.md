@@ -2,6 +2,10 @@
 
 > Verified 2026-11-20 in a fresh thread that did not write the code · Commit under test: `27eff7b` · Verdict: **accepted**
 
+## Merge with FEAT-18 (2026-11-20)
+
+PR #28 merged first; main merged into this branch. Conflicts: plan rows (both kept), STATE, `parent_layout_test.dart` (kept `openParent(size:)`; FEAT-18's resize-after workaround dropped, and its code-map gotcha replaced by FEAT-19's). SCR-16 and the "By day" card now run in `parent_layout_test` at all six sizes. `scripts/check.sh` all PASS after the merge.
+
 ## Checks re-run from a clean checkout
 
 Fresh checkout of `27eff7b`, Flutter 3.50.0, the version CI pins.

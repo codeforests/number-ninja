@@ -4,7 +4,7 @@
 
 ## Entry and wiring
 
-- `lib/main.dart` → `lib/app.dart`: `NumberNinjaApp`, `routerProvider` (go_router). Routes: `/setup`, `/setup/profile` (SCR-12 first run, while `AppSession.profilePending`), `/play/:track`, `/quiz/:topicId`, `/locked`, parent area under `/parent`: `pin`, `change-pin`, `dashboard`, `topic/:topicId`, `reset`, `profile`, `topics` (SCR-15), `account` (SCR-13). `/revise/:scopeId` (SCR-14) and `/revise/:scopeId/quiz` (revision round).
+- `lib/main.dart` → `lib/app.dart`: `NumberNinjaApp`, `routerProvider` (go_router). Routes: `/setup`, `/setup/profile` (SCR-12 first run, while `AppSession.profilePending`), `/play/:track`, `/quiz/:topicId`, `/locked`, parent area under `/parent`: `pin`, `change-pin`, `dashboard`, `topic/:topicId`, `reset`, `profile`, `topics` (SCR-15), `account` (SCR-13), `day?d=yyyy-MM-dd` (SCR-16, `Routes.day`, `Routes.dayToday`). `/revise/:scopeId` (SCR-14) and `/revise/:scopeId/quiz` (revision round).
 - `lib/providers.dart`: `databaseProvider`, `bankProvider`, `clockProvider`, the repository providers, `topicProgressProvider`. Tests override these.
 
 ## Server (`server/`, FEAT-12)
@@ -20,6 +20,7 @@
 - `question.dart` (`Question`, `QuestionBank`, `QuestionFormat`, `DragSpec`), `topics.dart` (`Track`, `Topic`), `answers.dart`, `expr.dart` (answer expressions).
 - `quiz.dart` (`Quiz`, `QuizPhase`, `AnswerResult`), `round_builder.dart` (`buildRound`, `pickMixIn`), `stars.dart`, `progress.dart` (`TopicProgress`, `FinishedRound`).
 - `stats.dart` (`AttemptRecord`, `Tally`, `StatsPeriod`, `needsPractice`, `WeekPoint`), `report.dart` (PDF report rows and formatting).
+- `daily.dart` (`dayBounds`, `shiftDay`, `DayDetail`, `DayRound`, `DayAnswer`, `recentDays`; FEAT-18).
 - `profile.dart` (`ChildProfile`, `startLevel`, `nicknameError`), `topic_lock.dart` (`topicLocks`, `TopicLock`, `passScore`), `revision.dart` (`RevisionPlanner`, `RuleRevisionPlanner`, `RevisionScope`, `RevisionHistory`, `typeOf`, `mixedScopeId`), `screen_time.dart` (`ScreenTimeClock`, `ScreenTimeStatus`, `effectiveDay`), `pin.dart` (`PinHasher`, `PinLockoutPolicy`), `clock.dart` (`systemClock`), `bank_validator.dart`.
 
 ## Data (`lib/data`)
@@ -31,7 +32,7 @@
 - FEAT-13: `sync/token_store.dart` (`TokenStore`, `SecureTokenStore`, `MemoryTokenStore`); `ServerClient` auth calls throw `AuthException(AuthError)`; `sync/account_repository.dart` (`AccountRepository` notifier, `AccountState`, `AccountNotice`) = `accountProvider`; `signInBrowserProvider` (Custom Tab for Google) in `providers.dart`.
 - `revision_repository.dart` (`RevisionRepository.history()`); `revisionPlannerProvider`, `revisionHistoryProvider`, `revisionOffersProvider(scopeId)` in `providers.dart`. `round_repository.dart` has `roundKindNormal`/`roundKindRevision`; `finishedRounds()` is normal-only.
 - FEAT-15: `bank_store.dart` (`BankStore`: bundled + downloaded files under app support `banks/`, `loadActive`, `save`, check state), `bank_updater.dart` (`BankUpdater.check`, 24 h rule, `BankCheck`); providers `bankStoreProvider`, `activeBankProvider` → `bankProvider`, `bankUpdaterProvider`, `bankPendingProvider` (applied in `QuizController.start`/`startRevision`), `bankStatusProvider`, `bankCheckProvider` (launch + resume in `app.dart`, SCR-11 "Check now"). `ServerClient.latestBank`/`downloadBank`. Tests: `test/data/bank_test_support.dart` (`BankRig`); `QuizHarness.useBankStore`, `banksDir`, `MemoryBankBundle`.
-- Repositories: `topic_lock_repository.dart` (`topicLocksProvider` in `providers.dart`), `profile_repository.dart` (`childProfileProvider` is a FutureProvider; invalidate after a save), `pin_repository.dart`, `round_repository.dart`, `stats_repository.dart`, `usage_repository.dart`; `question_bank_loader.dart` (`loadBank`).
+- Repositories: `topic_lock_repository.dart` (`topicLocksProvider` in `providers.dart`), `profile_repository.dart` (`childProfileProvider` is a FutureProvider; invalidate after a save), `pin_repository.dart`, `round_repository.dart`, `stats_repository.dart` (FEAT-18: `day(day)` one local day with rounds and summed `daily_usage`, `firstDay()`), `usage_repository.dart`; `question_bank_loader.dart` (`loadBank`).
 
 ## Features (`lib/features`)
 
@@ -39,7 +40,7 @@
 - `home/home_screen.dart`, `topics/topic_map_screen.dart` (+ `topic_icons.dart`), `setup/setup_pin_screen.dart`, `profile/profile_screen.dart` (SCR-12).
 - `quiz/`: `quiz_controller.dart` (`QuizController`, `RoundState`, `RoundSummary`), `quiz_screen.dart`, `result_screen.dart`, `feedback_panel.dart`, `answers/` (`mcq_answer`, `number_answer`, `drag_answer`).
 - `screen_time/`: `screen_time_controller.dart` (`ScreenTimeController`, `screenTimeProvider`), `lock_screen.dart`.
-- `parent/`: `pin_entry_screen`, `parent_screen` (incl. screen-time section), `change_pin_screen`, `dashboard_screen`, `stats_view` (`statsDataProvider`, `StatsCard`, `TrendCharts`), `topic_detail_screen`, `reset_screen`, `report_pdf` and `report_export` (`exportReport`, `reportSharerProvider`), `topic_locks_screen` (SCR-15), `account_screen` (SCR-13, `/parent/account`; SCR-11 "Account" row).
+- `parent/`: `pin_entry_screen`, `parent_screen` (incl. screen-time section), `change_pin_screen`, `dashboard_screen`, `stats_view` (`statsDataProvider`, `StatsCard`, `TrendCharts`), `topic_detail_screen`, `reset_screen`, `report_pdf` and `report_export` (`exportReport`, `reportSharerProvider`), `topic_locks_screen` (SCR-15), `account_screen` (SCR-13, `/parent/account`; SCR-11 "Account" row), `day_screen` (SCR-16, `dayDetailProvider`, `firstDayProvider`; SCR-09's "By day" card `_DailyCard` in `dashboard_screen`).
 
 ## Shared UI (`lib/ui`)
 

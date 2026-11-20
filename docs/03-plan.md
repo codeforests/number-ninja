@@ -30,6 +30,7 @@ Each feature is a vertical slice that ends in something Ken can install and try.
 | FEAT-14 | Sync: uuids and device ids (schema bump), push and pull with the ADR-04 merge rules, first-sign-in merge, reset across devices, sync status | SYN-01..07, NFR-16 | M6 |
 | FEAT-15 | Server question bank: publish step in CI, download and checks in the app, safe switch between rounds, bank version on the parent area | BNK-07..12 | M7 |
 | FEAT-16 | New name and v2.0 release: app label, icon text, docs and README renamed (application id kept), full regression on the tablet, release APK | D16 | M7 |
+| FEAT-18 | Progress per day (asked by Ken after v2.0): SCR-16 shows one chosen day's totals, screen time, topics, rounds and answers; "By day" card on SCR-09. Small feature. | PAR-11 | after v2.0 |
 | FEAT-19 | Phone layout: compact quiz keypad and layout with Check always in view, PIN pads and parent pages fitted to phones, tablet unchanged (after v2.0) | D18, NFR-17 | after M7 |
 
 **Phase 2 milestones:** M5 = she gets the right starting level, School topics unlock in order, and revision rounds, still fully offline (FEAT-10, 17, 11; ids are permanent, so FEAT-17 is built before FEAT-11); no server needed, so it can ship while Ken sets up the droplet. M6 = parent account and sync across devices (12–14). M7 = server question bank and v2.0 under the new name (15–16). Same sign-off and `m<N>` release rule as M1–M4; the v2.0 release after FEAT-16 merges is tagged `v2.0`.

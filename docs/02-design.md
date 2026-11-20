@@ -98,13 +98,14 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 | SCR-06 | Badge shelf | BDG-03 |
 | SCR-07 | Time's up lock | TIM-02 |
 | SCR-08 | PIN entry | PAR-02, PAR-03 |
-| SCR-09 | Parent dashboard | PAR-05..07 |
+| SCR-09 | Parent dashboard; FEAT-18 adds the "By day" card | PAR-05..07, PAR-11 |
 | SCR-10 | Topic detail | PAR-08 |
 | SCR-11 | Parent settings: daily limit, extra time, change PIN, export PDF, reset; FEAT-15 adds the "Question bank" row (version in use, built in or downloaded, last check, Check now) | TIM-04, PAR-04, PAR-09, PAR-10, BNK-12 |
 | SCR-12 | Phase 2: child profile; see [04-architecture.md](04-architecture.md) §3 | PRO |
 | SCR-13 | Account (`/parent/account`, from SCR-11's "Account" row): create, sign in (email or Google), verify/resend, forgot password, sign out, delete with PIN, privacy note (FEAT-13); FEAT-14 adds the sync section (last sync, "Syncing…", error line, Sync now) | ACC-01..07, NFR-14, SYN |
 | SCR-14 | Revision start (`/revise/<topic or mixed>`): mistakes count, tricky kinds, Go (FEAT-11) | REV-03, REV-04 |
 | SCR-15 | School topics: lock state of each P1/P2 topic, parent opens one (FEAT-17) | PRC-14 |
+| SCR-16 | One day (`/parent/day?d=yyyy-MM-dd`, from SCR-09's "By day" card): day totals and screen time, per topic, rounds with each answer (FEAT-18) | PAR-11 |
 
 **Look:** bright, high-contrast, rounded. Colours, radii and text sizes are defined once in `lib/ui/theme.dart` and never hard-coded in screens. Child screens use 64 dp minimum tap targets and 20 sp minimum text (NFR-03). Landscape layout first: question on the left, answer area on the right (NFR-02). On smaller screens (NFR-09) the layout adapts by width and height rather than by device: halves side by side only when the screen is landscape and at least 600 dp wide, otherwise stacked; anything that doesn't fit scrolls instead of overlapping. The 12-inch landscape tablet still never scrolls during a question.
 
@@ -145,3 +146,4 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 | 2026-11-16 | FEAT-13: parent account on SCR-13; session (token + record, never the password) in `flutter_secure_storage`; Google through PocketBase's browser OAuth2 flow in a Custom Tab (`url_launcher`); server email and Google settings applied from env by `pb_hooks/config.pb.js` on each start; email links open `pb_public/verify.html` / `reset.html`; `children` create needs a verified account. No schema change. |
 | 2026-11-16 | FEAT-14: progress sync (`lib/data/sync/sync_service.dart`, `sync_controller.dart`, merge rules in `lib/domain/sync_merge.dart`); schema v7 (ids, dirty counters, per-device `daily_usage`, `sync_fields`, `sync_state`); server reset route `POST /api/nn/children/{id}/reset` (`pb_hooks/reset.pb.js`), migration `1763251203_sync.js` (`children.reset_at`, batch API on, create limit 5000/5 s and batch 10/s for signed-in users, sign-ups still 20/5 s); SCR-13 sync section; SCR-11 reset note while signed in. |
 | 2026-11-17 | FEAT-15: server question bank. Bank file renamed `bank.json` with `format` and `retired`; "Publish bank" workflow (`tool/publish_bank.dart`); `banks.version` a number (migration `1763251204_banks.js`); schema v8 (`bank_files`, `app_settings.bank_checked_at`/`bank_check_note`); `BankStore` + `BankUpdater` check at launch and resume at most daily, a new bank applies at launch or before the next round; SCR-11 "Question bank" row. |
+| 2026-11-20 | FEAT-18: per-day progress on new SCR-16, reached from a "By day" card on SCR-09. A day is a local calendar day of `answered_at`, as screen time's `day_key`; screen time is `daily_usage` summed over devices. Read on demand, no schema change. |
