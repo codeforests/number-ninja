@@ -1,18 +1,13 @@
 # Handoff: FEAT-24 — Crash reports
-Branch: feat/FEAT-24-crash-reports · PR: https://github.com/codeforests/number-ninja/pull/34 (draft) · Updated: 2026-11-20 by build
-Stage done: build (T1–T6 of 6)
-Next: verify — kickoff: "Verify FEAT-24 on branch feat/FEAT-24-crash-reports. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
+Branch: feat/FEAT-24-crash-reports · PR: https://github.com/codeforests/number-ninja/pull/34 · Updated: 2026-11-20 by verify
+Stage done: verify (accepted)
+Next: M9 starts with FEAT-29 — kickoff: "Design FEAT-29 on branch feat/FEAT-29-entitlements (create it from main). Read docs/STATE.md, then do the Design stage in AGENTS.md."
 
 ## What the next stage needs
-- AC → tests: AC-1/2 `test/data/crash_reporter_test.dart` + `test/features/crash/crash_app_test.dart`; AC-3 `test/data/crash_repository_test.dart`; AC-4 both reporter tests + `test/live/crash_live_test.dart` (in `server/test/run.sh`); AC-5 `migration_test.dart` group v11 + `test/features/parent/crash_switch_test.dart`; AC-6 `server/test/test/api_rules_test.dart` group `crash_reports`; AC-7 `server/test/test/crash_digest_test.dart` + last case of `resend_test.dart`.
-- Deviations (recorded in 02-design change log): `install()` chains to the previous `FlutterError.onError` (default `presentError`; in tests the test binding's); device info is loaded in `main()` before `runApp`, so no `deviceInfoProvider`; crash context reads `bankProvider` (not `activeBankProvider`).
-- Digest retention by `created`; `CRASH_KEEP_DAYS` (default 90) is a test knob, set to 0 on the main test server so the digest test proves the delete. Deploy passes optional secret `CRASH_DIGEST_TO` (workflow → deploy.sh → install.sh env file).
-- SCR-13's ListView now restarts at the top on the delete-PIN step (key on `_confirmingDelete`): the longer privacy note had scrolled the PIN message out of the lazy list.
-- `server/test/run.sh` passed locally (PocketBase 0.40.6); `scripts/check.sh` passed (full suite).
+- FEAT-24 merged; server deploy adds `crash_reports` and the `crash_digest` cron. App version 2.2.0+6, release `v2.2.0` closes M8.
 
 ## Left to CI or later
-- APK build proves the Kotlin `brainbubblz/device` channel compiles; nothing ran it on a device.
-- AC-8 live check on the tablet is Ken's, optional.
+- AC-8 live check on the tablet (Ken, optional).
 
 ## Pending for Ken
-- none (optional: add repo secret `CRASH_DIGEST_TO` and redeploy for the daily email)
+- none (optional: repo secret `CRASH_DIGEST_TO`, then rerun "Deploy server", for the daily email)

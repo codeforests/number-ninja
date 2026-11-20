@@ -194,13 +194,13 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| CRS-01 | The app shall record Flutter framework errors and uncaught async errors with error type, message, stack trace, screen (route pattern only), app version, bank version, Android version and device model. (D22) | M | FEAT-24 | |
-| CRS-02 | Before a report is stored, child nicknames and the account email shall be removed from it, and message and stack shall be size-capped. | M | FEAT-24 | |
-| CRS-03 | Repeats of the same error shall be counted on one report, and at most 30 unsent reports kept on the device. | S | FEAT-24 | |
-| CRS-04 | When online, the app shall send unsent reports at launch and on resume without signing them to an account, whether or not the parent is signed in; a failed send retries at a later launch. | M | FEAT-24 | |
-| CRS-05 | A "Send crash reports" switch in the parent settings, on by default, shall stop recording and sending and delete unsent reports when turned off; the privacy note shall say what reports hold. | M | FEAT-24 | |
-| CRS-06 | The server shall accept crash reports from anyone but let only the admin read, change or delete them, refuse oversized fields and rate-limit each IP. | M | FEAT-24 | |
-| CRS-07 | The server shall keep reports 90 days and, when a recipient is configured, email a daily digest of the last day's reports. | C | FEAT-24 | |
+| CRS-01 | The app shall record Flutter framework errors and uncaught async errors with error type, message, stack trace, screen (route pattern only), app version, bank version, Android version and device model. (D22) | M | FEAT-24 | FEAT-24 verify.md (2026-11-20) |
+| CRS-02 | Before a report is stored, child nicknames and the account email shall be removed from it, and message and stack shall be size-capped. | M | FEAT-24 | FEAT-24 verify.md (2026-11-20) |
+| CRS-03 | Repeats of the same error shall be counted on one report, and at most 30 unsent reports kept on the device. | S | FEAT-24 | FEAT-24 verify.md (2026-11-20) |
+| CRS-04 | When online, the app shall send unsent reports at launch and on resume without signing them to an account, whether or not the parent is signed in; a failed send retries at a later launch. | M | FEAT-24 | FEAT-24 verify.md (2026-11-20) |
+| CRS-05 | A "Send crash reports" switch in the parent settings, on by default, shall stop recording and sending and delete unsent reports when turned off; the privacy note shall say what reports hold. | M | FEAT-24 | FEAT-24 verify.md (2026-11-20) |
+| CRS-06 | The server shall accept crash reports from anyone but let only the admin read, change or delete them, refuse oversized fields and rate-limit each IP. | M | FEAT-24 | FEAT-24 verify.md (2026-11-20) |
+| CRS-07 | The server shall keep reports 90 days and, when a recipient is configured, email a daily digest of the last day's reports. | C | FEAT-24 | FEAT-24 verify.md (2026-11-20) |
 
 ## 5. Non-functional requirements
 
