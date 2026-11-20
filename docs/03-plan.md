@@ -41,7 +41,7 @@ Details, reasons and decisions: [05-phase3-plan.md](05-phase3-plan.md). Requirem
 | Feature | What it delivers | Requirements | Milestone |
 |---|---|---|---|
 | FEAT-25 | Siblings: up to 4 children, "Who's playing?", per-child progress, screen time, reports and sync | new (design) | M8 |
-| FEAT-26 | Parent first-run setup wizard | new (design) | M8 |
+| FEAT-26 | Parent first-run setup wizard | designed | M8 |
 | FEAT-24 | Crash reports to our own server | new (design) | M8 |
 | FEAT-29 | Entitlements on the server, complimentary grants | new (design) | M9 |
 | FEAT-30 | Free tier and Plus in the app (store connection in FEAT-35) | new (design) | M9 |
