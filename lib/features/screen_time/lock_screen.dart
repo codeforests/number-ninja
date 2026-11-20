@@ -16,7 +16,9 @@ class LockScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // A sibling with time left can play (FEAT-25 AD-5).
-    final siblings = (ref.watch(childrenProvider).value?.length ?? 0) >= 2;
+    final siblings =
+        (ref.watch(childrenProvider).value?.length ?? 0) >= 2 &&
+        ref.watch(plusProvider);
     final theme = Theme.of(context).textTheme;
     return PopScope(
       canPop: false,

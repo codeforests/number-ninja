@@ -183,6 +183,14 @@ class QuizHarness {
   /// (FEAT-26 setup tests pass their own).
   AppSession? session;
 
+  /// FEAT-30 (PD-12): whether the family has Plus at launch. True keeps the
+  /// tests from before Plus as they were; free-tier tests set false.
+  bool plus = true;
+
+  /// Turns Plus on or off in a running app.
+  void setPlus(WidgetTester tester, bool on) =>
+      container(tester).read(_plusSwitch.notifier).set(on);
+
   /// More overrides for one test, added after the defaults.
   List<Override> more = [];
 
@@ -202,6 +210,8 @@ class QuizHarness {
       session ?? AppSession(clock: clock, choosingChild: choosingChild),
     ),
     startChildProvider.overrideWithValue(startChild),
+    _plusSwitch.overrideWith(() => _PlusSwitch(plus)),
+    plusProvider.overrideWith((ref) => ref.watch(_plusSwitch)),
     if (!lockTopics)
       topicLocksProvider.overrideWith(
         (ref) async => {
@@ -294,4 +304,18 @@ class MemoryBankBundle extends CachingAssetBundle {
   @override
   Future<ByteData> load(String key) async =>
       ByteData.sublistView(Uint8List.fromList(utf8.encode(text)));
+}
+
+final _plusSwitch = NotifierProvider<_PlusSwitch, bool>(
+  () => _PlusSwitch(true),
+);
+
+class _PlusSwitch extends Notifier<bool> {
+  _PlusSwitch(this._start);
+  final bool _start;
+
+  @override
+  bool build() => _start;
+
+  void set(bool on) => state = on;
 }

@@ -41,6 +41,7 @@ int _secs(DateTime t) => t.millisecondsSinceEpoch ~/ 1000;
 void main() {
   group('v10', _v10Cases);
   group('v11', _v11Cases);
+  group('v12', _v12Cases);
 
   test('v1 -> v2 adds rounds.finished_at and backfills it (AC-2)', () async {
     final start = DateTime(2026, 11, 15, 9);
@@ -619,7 +620,8 @@ void _v10Cases() {
       NativeDatabase(
         file,
         setup: (raw) {
-          if (raw.userVersion != 11) return;
+          if (raw.userVersion != 12) return;
+          raw.execute('DROP TABLE plus_state');
           raw.execute('ALTER TABLE app_settings DROP COLUMN setup_step');
           raw.execute('ALTER TABLE app_settings DROP COLUMN crash_reports');
           raw.execute('DROP TABLE crash_reports');
@@ -636,7 +638,7 @@ void _v10Cases() {
     addTearDown(db.close);
     final s = await db.getSettings();
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 11);
+    expect(version.data.values.single, 12);
     return s.setupStep;
   }
 
@@ -677,7 +679,8 @@ void _v11Cases() {
       NativeDatabase(
         file,
         setup: (raw) {
-          if (raw.userVersion != 11) return;
+          if (raw.userVersion != 12) return;
+          raw.execute('DROP TABLE plus_state');
           raw.execute('ALTER TABLE app_settings DROP COLUMN crash_reports');
           raw.execute('DROP TABLE crash_reports');
           raw.userVersion = 10;
@@ -688,7 +691,7 @@ void _v11Cases() {
     expect((await db.getSettings()).crashReports, isTrue);
     expect(await db.select(db.crashReports).get(), isEmpty);
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 11);
+    expect(version.data.values.single, 12);
   });
 
   test('a fresh v11 database sends crash reports (AC-5)', () async {
@@ -696,4 +699,38 @@ void _v11Cases() {
     addTearDown(db.close);
     expect((await db.getSettings()).crashReports, isTrue);
   });
+}
+
+void _v12Cases() {
+  test(
+    'v11 -> v12: empty plus_state, every other table kept (FEAT-30 AC-2)',
+    () async {
+      final dir = await Directory.systemTemp.createTemp('mig12');
+      addTearDown(() => dir.delete(recursive: true));
+      final file = File('${dir.path}/db.sqlite');
+      final fresh = AppDatabase(NativeDatabase(file));
+      await fresh.getSettings();
+      final childrenBefore = await fresh.select(fresh.children).get();
+      await fresh.close();
+      final db = AppDatabase(
+        NativeDatabase(
+          file,
+          setup: (raw) {
+            if (raw.userVersion != 12) return;
+            raw.execute('DROP TABLE plus_state');
+            raw.userVersion = 11;
+          },
+        ),
+      );
+      addTearDown(db.close);
+      expect(await db.select(db.plusState).get(), isEmpty);
+      expect(
+        (await db.select(db.children).get()).length,
+        childrenBefore.length,
+      );
+      expect((await db.getSettings()).setupStep, 'welcome');
+      final version = await db.customSelect('PRAGMA user_version').getSingle();
+      expect(version.data.values.single, 12);
+    },
+  );
 }

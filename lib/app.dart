@@ -14,6 +14,7 @@ import 'features/topics/topic_map_screen.dart';
 import 'features/quiz/result_screen.dart';
 import 'domain/stats.dart';
 import 'features/parent/account_screen.dart';
+import 'features/parent/plus_screen.dart';
 import 'features/parent/change_pin_screen.dart';
 import 'features/parent/dashboard_screen.dart';
 import 'features/parent/day_screen.dart';
@@ -40,6 +41,7 @@ abstract final class Routes {
       '/parent/remove-child?child=$id'; // SCR-12 remove, PIN confirm
   static const topicLocks = '/parent/topics'; // SCR-15
   static const account = '/parent/account'; // SCR-13
+  static const plus = '/parent/plus'; // SCR-20, FEAT-30
   static const home = '/'; // SCR-02
   static const pinEntry = '/parent/pin'; // SCR-08
   static const parent = '/parent'; // SCR-11
@@ -123,6 +125,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/revise/:scopeId',
+        // Revision needs Plus (FEAT-30 PD-1); read, not watched (gotcha).
+        redirect: (context, state) =>
+            ref.read(plusProvider) ? null : Routes.home,
         builder: (context, state) =>
             RevisionStartScreen(scopeId: state.pathParameters['scopeId']!),
         routes: [
@@ -184,6 +189,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'account',
             builder: (context, state) => const AccountScreen(),
+          ),
+          GoRoute(
+            path: 'plus',
+            builder: (context, state) => const PlusScreen(),
           ),
           GoRoute(
             path: 'change-pin',
@@ -248,6 +257,8 @@ class _NumberNinjaAppState extends ConsumerState<NumberNinjaApp> {
     super.initState();
     // Sync runs while signed in (FEAT-14): keep it alive, and sync on resume.
     ref.listenManual(syncProvider, (_, _) {});
+    // FEAT-30 (PD-5): the Plus cache follows the account and each sync.
+    ref.listenManual(plusControllerProvider, (_, _) {});
     // FEAT-24: saved errors need the database; send them at launch/resume.
     ref
         .read(crashReporterProvider)

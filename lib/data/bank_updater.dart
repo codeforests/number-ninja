@@ -8,16 +8,25 @@ import '../domain/question.dart';
 import 'bank_store.dart';
 import 'sync/server_client.dart';
 
-enum BankCheck { skipped, upToDate, downloaded, failed }
+/// [noPlus]: the family has no Plus, so no server call (FEAT-30 PD-11).
+enum BankCheck { skipped, upToDate, downloaded, failed, noPlus }
 
 /// Checks the server for a newer bank and keeps it (FEAT-15 D9, BNK-08,
 /// BNK-11). Any failure keeps the current bank.
 class BankUpdater {
-  BankUpdater({required this.client, required this.store, required this.clock});
+  BankUpdater({
+    required this.client,
+    required this.store,
+    required this.clock,
+    bool Function()? plus,
+  }) : plus = plus ?? (() => true);
 
   final ServerClient client;
   final BankStore store;
   final Clock clock;
+
+  /// Whether the family has Plus now (BNK-13: bank updates need it).
+  final bool Function() plus;
 
   /// Checks at most this often unless forced.
   static const interval = Duration(hours: 24);
@@ -32,6 +41,8 @@ class BankUpdater {
 
   Future<BankCheck> _check(bool force) async {
     if (!client.config.isConfigured) return BankCheck.skipped;
+    // Free keeps the bank it has and asks nothing (FEAT-30 PD-11).
+    if (!plus()) return BankCheck.noPlus;
     final last = (await store.checkState()).checkedAt;
     final now = clock();
     if (!force && last != null && now.difference(last) < interval) {

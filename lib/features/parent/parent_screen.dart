@@ -48,6 +48,7 @@ class ParentScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.gap),
         children: [
+          const _PlusTile(),
           const _ProfileTile(),
           const _ChildrenTile(),
           const _TopicLocksTile(),
@@ -61,15 +62,7 @@ class ParentScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.go(Routes.dashboard),
           ),
-          ListTile(
-            key: const Key('export-report'),
-            minTileHeight: AppSizes.minTap,
-            leading: const Icon(Icons.picture_as_pdf),
-            title: const Text('Export PDF report'),
-            subtitle: const Text('Share or save a summary'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => showExportSheet(context),
-          ),
+          const _ExportTile(),
           const Divider(height: AppSizes.gap * 2),
           const _ScreenTimeSection(),
           const Divider(height: AppSizes.gap * 2),
@@ -341,6 +334,50 @@ class _ProfileTile extends ConsumerWidget {
 
 /// Opens SCR-18, where the parent adds, edits and removes children
 /// (FEAT-25, FAM-01).
+/// PDF export (FEAT-07); needs Plus, else opens SCR-20 (FEAT-30 PD-1).
+class _ExportTile extends ConsumerWidget {
+  const _ExportTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final plus = ref.watch(plusProvider);
+    return ListTile(
+      key: const Key('export-report'),
+      minTileHeight: AppSizes.minTap,
+      leading: const Icon(Icons.picture_as_pdf),
+      title: const Text('Export PDF report'),
+      subtitle: Text(
+        plus ? 'Share or save a summary' : 'PDF reports come with Plus',
+        key: const Key('export-subtitle'),
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => plus ? showExportSheet(context) : context.go(Routes.plus),
+    );
+  }
+}
+
+/// Opens SCR-20 (FEAT-30 PD-9).
+class _PlusTile extends ConsumerWidget {
+  const _PlusTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final plus = ref.watch(plusProvider);
+    return ListTile(
+      key: const Key('open-plus'),
+      minTileHeight: AppSizes.minTap,
+      leading: const Icon(Icons.workspace_premium, color: AppColors.sun),
+      title: const Text('BrainBubblz Plus'),
+      subtitle: Text(
+        plus ? 'Plus is on' : 'Free plan: see what Plus adds',
+        key: const Key('plus-subtitle'),
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.go(Routes.plus),
+    );
+  }
+}
+
 class _ChildrenTile extends ConsumerWidget {
   const _ChildrenTile();
 
@@ -523,6 +560,7 @@ class _BankTileState extends ConsumerState<_BankTile> {
   @override
   Widget build(BuildContext context) {
     final configured = ref.watch(serverClientProvider).config.isConfigured;
+    final plus = ref.watch(plusProvider);
     final status = ref.watch(bankStatusProvider);
     final text = switch (status) {
       AsyncData(value: (final active, final check)) => bankStatusText(
@@ -538,8 +576,13 @@ class _BankTileState extends ConsumerState<_BankTile> {
       minTileHeight: AppSizes.minTap,
       leading: const Icon(Icons.library_books_outlined),
       title: const Text('Question bank'),
-      subtitle: Text(text, key: const Key('bank-status')),
-      trailing: configured
+      subtitle: Text(
+        plus ? text : '$text. Question updates come with Plus',
+        key: const Key('bank-status'),
+      ),
+      // Bank updates need Plus (FEAT-30 PD-11): free opens SCR-20.
+      onTap: plus ? null : () => context.go(Routes.plus),
+      trailing: configured && plus
           ? OutlinedButton(
               key: const Key('bank-check-now'),
               onPressed: _checking ? null : _check,

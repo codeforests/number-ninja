@@ -20,6 +20,12 @@ void main() {
   ) async {
     await h.openParent(tester, Routes.parent);
     final finder = find.byKey(const Key('sound-switch'));
+    // SCR-11 is a lazy list; FEAT-30's Plus row pushed this one down.
+    await tester.scrollUntilVisible(
+      finder,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(tester.widget<SwitchListTile>(finder).value, isTrue);
 
     await h.tapKey(tester, 'sound-switch');

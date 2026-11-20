@@ -7,9 +7,10 @@ import '../../data/child_repository.dart';
 import '../../providers.dart';
 
 /// Whether SCR-17 shows by itself (cold launch, leaving the parent area):
-/// with 2+ children, unless "Ask for PIN to change child" is on (AD-4).
-Future<bool> pickerShows(ChildRepository repo) async =>
-    (await repo.all()).length >= 2 && !await repo.switchNeedsPin();
+/// with 2+ children and Plus (FEAT-30 PD-6), unless "Ask for PIN to change
+/// child" is on (AD-4).
+Future<bool> pickerShows(ChildRepository repo, {required bool plus}) async =>
+    plus && (await repo.all()).length >= 2 && !await repo.switchNeedsPin();
 
 /// The home chip and SCR-07's "Change child" (FEAT-25 AD-4): SCR-17, after
 /// the PIN when the parent asked for it.
@@ -28,7 +29,10 @@ Future<void> changeChild(BuildContext context, WidgetRef ref) async {
 /// it shows by itself (AD-4).
 Future<void> leaveParentArea(BuildContext context, WidgetRef ref) async {
   final session = ref.read(appSessionProvider);
-  final choose = await pickerShows(ref.read(childRepositoryProvider));
+  final choose = await pickerShows(
+    ref.read(childRepositoryProvider),
+    plus: ref.read(plusProvider),
+  );
   session.lockParent();
   if (choose) session.chooseChild();
   if (context.mounted) context.go(choose ? Routes.who : Routes.home);

@@ -312,6 +312,25 @@ class FakeServerClient implements ServerClient {
     if (e != null) throw e;
     crashReports.add(body);
   }
+
+  // Plus (FEAT-30).
+
+  /// What [entitlement] answers; null = free.
+  Entitlement? plus;
+
+  /// While set, [entitlement] throws it.
+  SyncException? entitlementFail;
+
+  /// How often [entitlement] was called.
+  int entitlementCalls = 0;
+
+  @override
+  Future<Entitlement> entitlement() async {
+    entitlementCalls++;
+    final e = entitlementFail;
+    if (e != null) throw e;
+    return plus ?? Entitlement(plus: false, checkedAt: DateTime.now().toUtc());
+  }
 }
 
 class FakeSyncServer {

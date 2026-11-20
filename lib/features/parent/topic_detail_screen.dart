@@ -8,6 +8,8 @@ import '../../domain/revision.dart';
 import '../../domain/stats.dart';
 import '../../domain/topics.dart';
 import '../../providers.dart';
+import 'plus_screen.dart';
+import '../../domain/plus.dart';
 import '../../ui/theme.dart';
 import 'stats_view.dart';
 
@@ -43,6 +45,7 @@ class TopicDetailScreen extends ConsumerWidget {
           d,
           b,
           topic,
+          ref.watch(plusProvider),
         ),
         (AsyncError(:final error), _) ||
         (_, AsyncError(:final error)) => Center(
@@ -53,7 +56,7 @@ class TopicDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _body(StatsData data, QuestionBank bank, Topic? topic) {
+  Widget _body(StatsData data, QuestionBank bank, Topic? topic, bool plus) {
     final rs = data.inPeriod(period, topicId: topicId);
     final tally = overall(rs);
     // Retired questions too, so her history still shows them (BNK-10).
@@ -80,23 +83,31 @@ class TopicDetailScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSizes.gap),
-          _WeakTypesCard(topicId: topicId, byId: byId),
-          const SizedBox(height: AppSizes.gap),
-          StatsCard(
-            child: TrendCharts(
-              now: data.now,
-              lines: [
-                (
-                  topic?.name ?? topicId,
-                  trackColors[track]!,
-                  [
-                    for (final r in data.all)
-                      if (r.topicId == topicId) r,
-                  ],
-                ),
-              ],
+          // Weak types and trends need Plus (FEAT-30 PD-1).
+          if (!plus)
+            const PlusCard(
+              feature: PlusFeature.trends,
+              text: 'Weak question types and trends come with Plus',
+            )
+          else ...[
+            _WeakTypesCard(topicId: topicId, byId: byId),
+            const SizedBox(height: AppSizes.gap),
+            StatsCard(
+              child: TrendCharts(
+                now: data.now,
+                lines: [
+                  (
+                    topic?.name ?? topicId,
+                    trackColors[track]!,
+                    [
+                      for (final r in data.all)
+                        if (r.topicId == topicId) r,
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: AppSizes.gap),
           _QuestionList(
             key: const Key('most-missed'),

@@ -15,6 +15,8 @@ import 'data/crash_reporter.dart';
 import 'data/crash_repository.dart';
 import 'data/database.dart';
 import 'data/pin_repository.dart';
+import 'data/plus_repository.dart';
+import 'data/purchase_service.dart';
 import 'data/profile_repository.dart';
 import 'data/revision_repository.dart';
 import 'data/round_repository.dart';
@@ -31,6 +33,7 @@ import 'data/usage_repository.dart';
 import 'domain/question.dart';
 import 'domain/clock.dart';
 import 'domain/family.dart';
+import 'domain/plus.dart';
 import 'domain/profile.dart';
 import 'domain/progress.dart';
 import 'domain/revision.dart';
@@ -71,6 +74,7 @@ final bankUpdaterProvider = Provider<BankUpdater>(
     client: ref.watch(serverClientProvider),
     store: ref.watch(bankStoreProvider),
     clock: ref.watch(clockProvider),
+    plus: () => ref.read(plusProvider),
   ),
 );
 
@@ -259,6 +263,44 @@ final syncProvider = NotifierProvider<SyncController, SyncStatus>(
   ),
 );
 
+/// The cached Plus answer (FEAT-30 PD-3).
+final plusRepositoryProvider = Provider<PlusRepository>(
+  (ref) => PlusRepository(
+    ref.watch(databaseProvider),
+    client: ref.watch(serverClientProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+/// The cache row; [PlusController] invalidates it after each change.
+final plusCacheProvider = FutureProvider<PlusCache?>(
+  (ref) => ref.watch(plusRepositoryProvider).cached(),
+);
+
+/// Whether Plus is on now (PD-4). Tests override it (`QuizHarness.plus`).
+final plusProvider = Provider<bool>(
+  (ref) => plusActive(
+    ref.watch(plusCacheProvider).value,
+    ref.watch(clockProvider)(),
+  ),
+);
+
+/// Refreshes and clears the cache with the account and sync (PD-5);
+/// `app.dart` keeps it alive.
+final plusControllerProvider = NotifierProvider<PlusController, int>(
+  () => PlusController(
+    repository: plusRepositoryProvider,
+    account: accountProvider,
+    sync: syncProvider,
+    onChanged: (ref) => ref.invalidate(plusCacheProvider),
+  ),
+);
+
+/// Buying Plus (PD-10): nothing to buy until FEAT-35.
+final purchaseServiceProvider = Provider<PurchaseService>(
+  (ref) => const UnavailablePurchaseService(),
+);
+
 /// The family's children (FEAT-25).
 final childRepositoryProvider = Provider<ChildRepository>(
   (ref) => ChildRepository(
@@ -414,9 +456,9 @@ final revisionHistoryProvider = FutureProvider.autoDispose<RevisionHistory>((
   return (await ref.watch(revisionRepositoryProvider.future)).history();
 });
 
-/// Whether to offer a revision round of a scope id (REV-03): a topic id
-/// on SCR-05, [mixedScopeId] on SCR-02. False until the history is read.
-final revisionOffersProvider = FutureProvider.autoDispose.family<bool, String>(
+/// Whether the planner would offer a revision round of a scope id
+/// (REV-03), Plus or not; SCR-02's lock card uses it (FEAT-30 PD-8).
+final revisionDueProvider = FutureProvider.autoDispose.family<bool, String>(
   (ref, scopeId) async => ref
       .watch(revisionPlannerProvider)
       .offers(
@@ -424,6 +466,17 @@ final revisionOffersProvider = FutureProvider.autoDispose.family<bool, String>(
         RevisionScope.fromId(scopeId),
       ),
 );
+
+/// Whether to offer a revision round of a scope id (REV-03): a topic id
+/// on SCR-05, [mixedScopeId] on SCR-02. False until the history is read,
+/// and always on free (FEAT-30 PD-1).
+final revisionOffersProvider = FutureProvider.autoDispose.family<bool, String>((
+  ref,
+  scopeId,
+) async {
+  if (!ref.watch(plusProvider)) return false;
+  return ref.watch(revisionDueProvider(scopeId).future);
+});
 
 /// Topics the parent opened by hand (PRC-14).
 final topicLockRepositoryProvider = Provider<TopicLockRepository>(

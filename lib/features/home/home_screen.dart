@@ -47,6 +47,10 @@ class HomeScreen extends ConsumerWidget {
     final nickname = ref.watch(childProfileProvider).value?.nickname;
     final revise =
         ref.watch(revisionOffersProvider(mixedScopeId)).value ?? false;
+    // FEAT-30 PD-8: free shows one quiet lock where revision would be.
+    final reviseLocked =
+        !ref.watch(plusProvider) &&
+        (ref.watch(revisionDueProvider(mixedScopeId)).value ?? false);
     final size = MediaQuery.sizeOf(context);
     final portrait = size.width < size.height;
     final cards = [
@@ -122,6 +126,7 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                       if (revise) ...[gap, const _ReviseCard()],
+                      if (reviseLocked) ...[gap, const _ReviseLockCard()],
                     ],
                   ),
                 ),
@@ -142,7 +147,10 @@ class _ChildChip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final children = ref.watch(childrenProvider).value ?? const [];
-    if (children.length < 2) return const SizedBox.shrink();
+    // Siblings take turns only with Plus (FEAT-30 PD-6).
+    if (children.length < 2 || !ref.watch(plusProvider)) {
+      return const SizedBox.shrink();
+    }
     final current = ref.watch(currentChildProvider);
     final i = children.indexWhere((c) => c.id == current);
     final child = children[i < 0 ? 0 : i];
@@ -221,6 +229,76 @@ class _ReviseCard extends StatelessWidget {
                 ),
               ),
               const Icon(Icons.chevron_right, color: AppColors.revision),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Where revision would be on free (FEAT-30 PD-8): a padlock and, on tap,
+/// one "ask a grown-up" sheet. No price, store or parent-area link.
+class _ReviseLockCard extends StatelessWidget {
+  const _ReviseLockCard();
+
+  static Future<void> _explain(BuildContext context) =>
+      showModalBottomSheet<void>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Padding(
+            key: const Key('revise-ask-sheet'),
+            padding: const EdgeInsets.all(AppSizes.gap * 2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Revision is part of BrainBubblz Plus. '
+                  'Ask a grown-up to have a look.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: AppSizes.gap * 2),
+                FilledButton(
+                  key: const Key('revise-ask-ok'),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: AppColors.locked,
+    borderRadius: BorderRadius.circular(AppRadii.card),
+    child: InkWell(
+      key: const Key('home-revise-locked'),
+      borderRadius: BorderRadius.circular(AppRadii.card),
+      onTap: () => _explain(context),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: AppSizes.minTap),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.gap * 2,
+            vertical: AppSizes.gap,
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.lock, size: 36, color: AppColors.lockedText),
+              const SizedBox(width: AppSizes.gap),
+              Expanded(
+                child: Text(
+                  'Revision',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.lockedText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ],
           ),
         ),

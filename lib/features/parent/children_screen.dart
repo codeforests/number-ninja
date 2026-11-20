@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../app.dart';
 import '../../data/pin_repository.dart';
 import '../../domain/family.dart';
+import '../../domain/plus.dart';
 import '../../providers.dart';
 import '../../ui/avatars.dart';
 import '../../ui/pin_pad.dart';
@@ -21,6 +22,8 @@ class ChildrenScreen extends ConsumerWidget {
     final theme = Theme.of(context).textTheme;
     final kids = ref.watch(childrenProvider).value;
     final current = ref.watch(currentChildProvider);
+    final plus = ref.watch(plusProvider);
+    final limit = childLimit(plus);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -40,8 +43,12 @@ class ChildrenScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSizes.gap),
                   child: Text(
-                    'Up to $maxChildren children. Each has her or his own '
-                    'levels, badges, progress and screen time.',
+                    plus
+                        ? 'Up to $maxChildren children. Each has her or his '
+                              'own levels, badges, progress and screen time.'
+                        : 'On the free plan one child plays at a time. The '
+                              'others keep all their progress and play again '
+                              'with Plus.',
                     style: theme.bodyLarge,
                   ),
                 ),
@@ -53,9 +60,20 @@ class ChildrenScreen extends ConsumerWidget {
                     title: Text(displayName(c.nickname, i)),
                     subtitle: Text(
                       'P${c.schoolYear}'
-                      '${c.id == current ? ' · playing now' : ''}',
+                      '${c.id == current ? ' · playing now' : ''}'
+                      '${!plus && c.id != current ? ' · Paused – needs Plus' : ''}',
+                      key: Key('child-${c.id}-status'),
                     ),
-                    trailing: const Icon(Icons.chevron_right),
+                    // FEAT-30 PD-6: on free the parent picks who plays.
+                    trailing: !plus && c.id != current
+                        ? OutlinedButton(
+                            key: Key('make-active-${c.id}'),
+                            onPressed: () => ref
+                                .read(currentChildProvider.notifier)
+                                .select(c.id),
+                            child: const Text('Make active'),
+                          )
+                        : const Icon(Icons.chevron_right),
                     onTap: () => context.go(Routes.childProfile(c.id)),
                   ),
                 if (kids.length < maxChildren)
@@ -67,7 +85,10 @@ class ChildrenScreen extends ConsumerWidget {
                         height: AppSizes.minTap,
                         child: FilledButton.icon(
                           key: const Key('add-child'),
-                          onPressed: () => context.go(Routes.newChild),
+                          // More children come with Plus (FEAT-30 PD-7).
+                          onPressed: () => context.go(
+                            kids.length < limit ? Routes.newChild : Routes.plus,
+                          ),
                           icon: const Icon(Icons.person_add),
                           label: const Text('Add child'),
                         ),

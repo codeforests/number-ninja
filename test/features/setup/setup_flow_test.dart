@@ -287,6 +287,22 @@ void main() {
     expect(find.byType(AccountStep), findsOneWidget);
   });
 
+  testWidgets('FEAT-30 AC-4: one child on free, more with Plus', (
+    tester,
+  ) async {
+    h.plus = false;
+    await h.pastPin(SetupStep.children);
+    await h.start(tester);
+    await h.enter(tester, '2468');
+    await h.addChild(tester, 'Mia');
+    expect(find.byKey(const Key('setup-add-child')), findsNothing);
+    expect(find.byKey(const Key('setup-more-with-plus')), findsOneWidget);
+    h.setPlus(tester, true);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('setup-add-child')), findsOneWidget);
+    expect(find.byKey(const Key('setup-more-with-plus')), findsNothing);
+  });
+
   testWidgets('AC-4: add up to 4, edit, remove; Next needs a child', (
     tester,
   ) async {
