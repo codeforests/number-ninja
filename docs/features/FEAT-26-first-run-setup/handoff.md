@@ -1,5 +1,5 @@
 # Handoff: FEAT-26 — Parent first-run setup
-Branch: feat/FEAT-26-first-run-setup · PR: PRLINK · Updated: 2026-11-20 by build
+Branch: feat/FEAT-26-first-run-setup · PR: https://github.com/codeforests/number-ninja/pull/33 · Updated: 2026-11-20 by build
 Stage done: build (T1–T6 of 6)
 Next: verify — kickoff: "Verify FEAT-26 on branch feat/FEAT-26-first-run-setup. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
