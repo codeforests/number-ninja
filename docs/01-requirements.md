@@ -49,6 +49,7 @@ BrainBubblz (formerly Number Ninja) is an offline Android tablet app that helps 
 | D23 | Plus entitlement on the server (plan FEAT-29, ADR-09/10, auto mode 2026-11-20): one record per parent account and source (complimentary, invite, Google Play, App Store); Plus is active while a record's expiry is in the future; the server bank needs Plus; a RevenueCat webhook (off until FEAT-35) updates store records; complimentary grants by the admin, and every account existing at deploy (Ken's family) gets Plus with no end. Details: FEAT-29 design AD-1..11. | 2026-11-20 |
 | D24 | Free tier and Plus in the app (plan FEAT-30, §4, ADR-10, auto mode 2026-11-20): Plus = revision, PDF report, day view, trend charts, server question updates and more than one child; everything else free. Plus needs a signed-in account, is cached on the device with a 7-day offline grace, is managed on SCR-20 inside the PIN area; a child only ever sees one gentle "ask a grown-up" lock; losing Plus hides features and deletes nothing (extra children paused). Buying waits for FEAT-35. Details: FEAT-30 design PD-1..12. | 2026-11-20 |
 | D25 | Invitation codes (plan FEAT-36, auto mode 2026-11-20): Ken makes 8-character codes (no 0/O, 1/I; default 12 months of Plus, 5 families, redeemable for a year) with a repo tool or workflow that emails them, never printing them in the public CI log; a signed-in, verified parent enters one on SCR-20; the server counts uses and writes the family's `invite` entitlement, which extends another invitation but never stacks on a gift or a store subscription; afterwards the family is free again with nothing deleted; hidden on iOS (Apple offer codes in FEAT-34). Details: FEAT-36 design IC-1..12. | 2026-11-20 |
+| D26 | Weekly progress email (plan FEAT-31, auto mode 2026-11-20): one email per family each Monday 08:00 in the family's time zone, a section per child for the week before; opt-in on SCR-13, only for a verified account with Plus; built only from data the app already syncs; every email has a one-click turn-off link. Details: FEAT-31 design WE-1..14. | 2026-11-20 |
 
 ## 4. Functional requirements
 
@@ -241,6 +242,17 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | INV-05 | The admin shall be able to make a batch of easy-to-type codes (no 0/O, 1/I), list and revoke them from the repo, and receive a new batch by email, without codes appearing in CI logs. | M | FEAT-36 || FEAT-36 AC-6: server `invite_test.dart`, `make_invites_test.dart` |
 | INV-06 | The Plus screen shall let a signed-in parent enter a code, show the new Plus end after redeeming, and explain each refusal in plain words. | M | FEAT-36 || FEAT-36 AC-7: `invite_code_test.dart`, `domain/plus_test.dart` |
 | INV-07 | The app shall not offer invitation codes on iOS. | M | FEAT-36 || FEAT-36 AC-8: `invite_code_test.dart` |
+
+### Weekly email (WEM)
+
+| ID | Requirement | Pri | Feature | Verified by |
+|---|---|---|---|---|
+| WEM-01 | While signed in, the parent shall be able to turn a weekly progress email on or off on SCR-13; it is off by default, kept on the server per account, and can be turned on only with a verified account and Plus. (D26) | M | FEAT-31 | |
+| WEM-02 | Each week, from Monday 08:00 in the family's time zone (taken from the device), the server shall send one email covering the previous Monday to Sunday to each account with the email on, a verified address and active Plus; at most once a week, a failed send retried later until Wednesday 08:00. | M | FEAT-31 | |
+| WEM-03 | The email shall show for each child: time practised and on how many days, rounds (and how many were revision), questions answered and % right with the week before, up to three topics to practise, and badges earned; an idle child says so, and no email is sent when no child practised. | M | FEAT-31 | |
+| WEM-04 | The email shall be built only from records the app already syncs, go only to the account's own address, and hold no images, tracking pixels or tracked links. | M | FEAT-31 | |
+| WEM-05 | Every email shall carry a link and List-Unsubscribe headers that turn the email off in one click without signing in, protected by a per-account random token. | M | FEAT-31 | |
+| WEM-06 | The admin shall be able to preview an account's email and run the weekly job for a given time. | S | FEAT-31 | |
 
 ## 5. Non-functional requirements
 

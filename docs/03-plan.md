@@ -46,7 +46,7 @@ Details, reasons and decisions: [05-phase3-plan.md](05-phase3-plan.md). Requirem
 | FEAT-29 | Entitlements on the server, complimentary grants | designed | M9 |
 | FEAT-30 | Free tier and Plus in the app (store connection in FEAT-35) | new (design) | M9 |
 | FEAT-36 | Invitation codes that unlock Plus for friends | designed | M9 |
-| FEAT-31 | Weekly parent report email (Plus) | new (design) | M9 |
+| FEAT-31 | Weekly parent report email (Plus) | designed | M9 |
 | FEAT-28 | Teacher review of the question bank on a web page, "Report this question" | new (design) | parallel |
 | FEAT-21 | Server move to Ubuntu 24.04, off-site backups | NFR-15 | M10 |
 | FEAT-22 | Website: privacy policy, terms, account deletion page | new (design) | M10 |
