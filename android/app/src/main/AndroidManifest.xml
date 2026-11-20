@@ -28,7 +28,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <!-- Google sign-in returns here from the Custom Tab (numberninja://signin/google).
+        <!-- Google sign-in returns here from the Custom Tab (brainbubblz://signin/google).
              MainActivity keeps the default task affinity (no taskAffinity=""): with an
              empty affinity, the return opened a second copy of the app on its home
              page, signed out, instead of bringing back the one waiting for Google. -->
@@ -42,7 +42,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="numberninja" android:host="signin" />
+                <data android:scheme="brainbubblz" android:host="signin" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

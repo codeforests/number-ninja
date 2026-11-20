@@ -4,6 +4,8 @@
 # as root, with settings on stdin as KEY=VALUE lines (so the password never
 # shows in a process list):
 #   SERVER_HOSTNAME  PB_SUPERUSER_EMAIL  PB_SUPERUSER_PASSWORD  CERT_EMAIL
+# and, optional (FEAT-20): SERVER_LEGACY_HOSTNAME, an older host served too
+# (same site, one certificate for both names) so installed apps keep working;
 # and, optional (FEAT-13; empty leaves email or Google sign-in off):
 #   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS RESEND_API_KEY
 #   GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
@@ -22,12 +24,12 @@ site_avail=/etc/nginx/sites-available/numberninja.conf
 site_link=/etc/nginx/sites-enabled/numberninja.conf
 acme=/var/www/numberninja-acme
 
-SERVER_HOSTNAME='' PB_SUPERUSER_EMAIL='' PB_SUPERUSER_PASSWORD='' CERT_EMAIL=''
+SERVER_HOSTNAME='' SERVER_LEGACY_HOSTNAME='' PB_SUPERUSER_EMAIL='' PB_SUPERUSER_PASSWORD='' CERT_EMAIL=''
 pb_env_keys=(SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS RESEND_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET)
 for k in "${pb_env_keys[@]}"; do printf -v "$k" '%s' ''; done
 while IFS='=' read -r key value; do
   case "$key" in
-    SERVER_HOSTNAME | PB_SUPERUSER_EMAIL | PB_SUPERUSER_PASSWORD | CERT_EMAIL | \
+    SERVER_HOSTNAME | SERVER_LEGACY_HOSTNAME | PB_SUPERUSER_EMAIL | PB_SUPERUSER_PASSWORD | CERT_EMAIL | \
       SMTP_HOST | SMTP_PORT | SMTP_USERNAME | SMTP_PASSWORD | MAIL_SENDER_ADDRESS | RESEND_API_KEY | \
       GOOGLE_CLIENT_ID | GOOGLE_CLIENT_SECRET)
       printf -v "$key" '%s' "$value" ;;
@@ -36,8 +38,16 @@ while IFS='=' read -r key value; do
   esac
 done
 host="$SERVER_HOSTNAME"
+legacy="$SERVER_LEGACY_HOSTNAME"
 CERT_EMAIL="${CERT_EMAIL:-$PB_SUPERUSER_EMAIL}"
-[[ "$host" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ && "$host" == *.* ]] || { echo "Bad SERVER_HOSTNAME: '$host'" >&2; exit 2; }
+good_host() { [[ "$1" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ && "$1" == *.* ]]; }
+good_host "$host" || { echo "Bad SERVER_HOSTNAME: '$host'" >&2; exit 2; }
+if [ -n "$legacy" ]; then
+  good_host "$legacy" || { echo "Bad SERVER_LEGACY_HOSTNAME: '$legacy'" >&2; exit 2; }
+  [ "$legacy" != "$host" ] || { echo "SERVER_LEGACY_HOSTNAME is the same as SERVER_HOSTNAME" >&2; exit 2; }
+fi
+names=("$host")
+[ -z "$legacy" ] || names+=("$legacy")
 if [ -z "$PB_SUPERUSER_EMAIL" ] || [ -z "$PB_SUPERUSER_PASSWORD" ]; then
   echo "PB_SUPERUSER_EMAIL and PB_SUPERUSER_PASSWORD are required" >&2; exit 2
 fi
@@ -131,25 +141,58 @@ apply_site() {
   systemctl reload nginx
 }
 
-render() { sed "s|\${SERVER_HOSTNAME}|$host|g" "$here/nginx/numberninja.conf.template"; }
+# CERT_NAME: which certificate folder the 443 block points at.
+render() {
+  SERVER_HOSTNAME="$host" SERVER_LEGACY_HOSTNAME="$legacy" CERT_NAME="${1:-$host}" \
+    bash "$here/nginx/render.sh"
+}
 
-host_re="${host//./\\.}"
-others="$(grep -RlE "server_name[^;]*[[:space:]]${host_re}[[:space:];]" /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null | grep -v "numberninja.conf" || true)"
-if [ -n "$others" ]; then
-  echo "Another nginx site already uses $host: $others. Remove it there first." >&2
-  exit 1
+for name in "${names[@]}"; do
+  name_re="${name//./\\.}"
+  others="$(grep -RlE "server_name[^;]*[[:space:]]${name_re}[[:space:];]" /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null | grep -v "numberninja.conf" || true)"
+  if [ -n "$others" ]; then
+    echo "Another nginx site already uses $name: $others. Remove it there first." >&2
+    exit 1
+  fi
+done
+
+# One certificate (folder named after $host) for every name. It is (re)issued
+# only when it is missing or its names differ, e.g. on the move to a new host.
+cert_dir="/etc/letsencrypt/live/$host"
+want="$(printf '%s\n' "${names[@]}" | sort | tr '\n' ' ')"
+have=''
+if [ -f "$cert_dir/fullchain.pem" ]; then
+  have="$(openssl x509 -in "$cert_dir/fullchain.pem" -noout -ext subjectAltName 2>/dev/null |
+    grep -o 'DNS:[^,[:space:]]*' | sed 's/^DNS://' | sort | tr '\n' ' ' || true)"
 fi
-
-step "Certificate for $host"
-if [ ! -f "/etc/letsencrypt/live/$host/fullchain.pem" ]; then
-  # Port 80 only until the certificate exists.
-  bootstrap="$(mktemp)"
-  render | awk '/^server \{/{n++} n<2' >"$bootstrap"
-  apply_site "$bootstrap"
-  rm -f "$bootstrap"
-  certbot certonly --webroot -w "$acme" -d "$host" \
+step "Certificate for ${names[*]}"
+if [ "$have" != "$want" ]; then
+  prev_site="$(mktemp)"
+  if [ -f "$site_avail" ]; then cp "$site_avail" "$prev_site"; else : >"$prev_site"; fi
+  # Serve the ACME challenge for every name first, without dropping HTTPS for
+  # the apps already using the site: point 443 at a certificate that exists
+  # (this host's, or the legacy host's on the move); with neither, port 80 only.
+  interim="$(mktemp)"
+  if [ -f "$cert_dir/fullchain.pem" ]; then render >"$interim"
+  elif [ -n "$legacy" ] && [ -f "/etc/letsencrypt/live/$legacy/fullchain.pem" ]; then render "$legacy" >"$interim"
+  else render | awk '/^server \{/{n++} n<2' >"$interim"; fi
+  apply_site "$interim"
+  rm -f "$interim"
+  domains=()
+  for name in "${names[@]}"; do domains+=(-d "$name"); done
+  if ! certbot certonly --webroot -w "$acme" --cert-name "$host" "${domains[@]}" \
     --non-interactive --agree-tos -m "$CERT_EMAIL" \
-    --deploy-hook "systemctl reload nginx"
+    --deploy-hook "systemctl reload nginx"; then
+    echo "certbot failed: check that the A record of each of ${names[*]} points at this droplet" >&2
+    if [ -s "$prev_site" ]; then
+      echo "Putting back the previous nginx site" >&2
+      install -m 0644 "$prev_site" "$site_avail"
+      nginx -t && systemctl reload nginx
+    fi
+    rm -f "$prev_site"
+    exit 1
+  fi
+  rm -f "$prev_site"
 fi
 
 step "nginx site"

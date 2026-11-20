@@ -1,4 +1,4 @@
-package com.codeforests.number_ninja
+package com.brainbubblz.kids
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -8,7 +8,7 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         signInChannel =
-            MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "number_ninja/sign_in")
+            MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "brainbubblz/sign_in")
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {

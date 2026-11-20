@@ -1,13 +1,25 @@
 # FEAT-12: BrainBubblz API site for the droplet's existing nginx.
-# install.sh fills in ${SERVER_HOSTNAME} (a sed of that variable only) and
-# writes this to /etc/nginx/sites-available/numberninja.conf. It is the only
-# nginx file the deploy touches. Certificate: certbot --webroot into
-# /var/www/numberninja-acme (install.sh, first run; renewals reload nginx).
+# nginx/render.sh fills in the host, the certificate name and the optional
+# legacy host (FEAT-20: the old host, kept for installed apps; lines naming
+# it are dropped when it is empty), and install.sh writes the
+# result to /etc/nginx/sites-available/numberninja.conf. It is the only
+# nginx file the deploy touches. Certificate: one certbot --webroot
+# certificate for both names into /var/www/numberninja-acme (install.sh;
+# renewals reload nginx).
+
+# FEAT-20: the Google return page opens the app that asked. Apps built for the
+# old host are the old app id with numberninja://; the new host gets
+# brainbubblz://.
+map $host $brainbubblz_app_scheme {
+    default brainbubblz;
+    ${SERVER_LEGACY_HOSTNAME} numberninja;
+}
 
 server {
     listen 80;
     listen [::]:80;
     server_name ${SERVER_HOSTNAME};
+    server_name ${SERVER_LEGACY_HOSTNAME};
 
     location /.well-known/acme-challenge/ {
         root /var/www/numberninja-acme;
@@ -24,9 +36,10 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
     server_name ${SERVER_HOSTNAME};
+    server_name ${SERVER_LEGACY_HOSTNAME};
 
-    ssl_certificate /etc/letsencrypt/live/${SERVER_HOSTNAME}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${SERVER_HOSTNAME}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${CERT_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${CERT_NAME}/privkey.pem;
 
     # Bank files (FEAT-15) are up to 20 MB.
     client_max_body_size 25m;
@@ -49,15 +62,16 @@ server {
     }
 
     # Google sign-in returns here (the app's redirect URL, FEAT-13). The page
-    # hands state and code back to the app through numberninja://signin/google,
-    # which closes the tab; the app finishes with auth-with-oauth2. A button
-    # covers a browser that won't open the app without a tap. No dollar signs
-    # in the body (nginx variables).
+    # hands state and code back to the app through brainbubblz://signin/google
+    # (numberninja:// on the legacy host, map above), which closes the tab; the
+    # app finishes with auth-with-oauth2. A button covers a browser that won't
+    # open the app without a tap. The only dollar sign in the body is the
+    # scheme variable (nginx fills it in).
     location = /signin/google {
         default_type text/html;
         add_header Cache-Control "no-store" always;
         add_header Referrer-Policy "no-referrer" always;
-        return 200 '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BrainBubblz</title></head><body style="font-family:sans-serif;text-align:center;padding:48px 16px"><h1>Back to BrainBubblz</h1><p><a id="go" style="display:inline-block;padding:16px 32px;font-size:20px;background:#2f6fde;color:#fff;border-radius:12px;text-decoration:none" href="numberninja://signin/google">Open BrainBubblz</a></p><script>var link = "numberninja://signin/google" + location.search; document.getElementById("go").href = link; location.replace(link);</script></body></html>';
+        return 200 '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BrainBubblz</title></head><body style="font-family:sans-serif;text-align:center;padding:48px 16px"><h1>Back to BrainBubblz</h1><p><a id="go" style="display:inline-block;padding:16px 32px;font-size:20px;background:#2f6fde;color:#fff;border-radius:12px;text-decoration:none" href="$brainbubblz_app_scheme://signin/google">Open BrainBubblz</a></p><script>var link = "$brainbubblz_app_scheme://signin/google" + location.search; document.getElementById("go").href = link; location.replace(link);</script></body></html>';
     }
 
     location / {

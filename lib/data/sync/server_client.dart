@@ -117,7 +117,7 @@ class AuthMethods {
 
 /// Opens Google's sign-in page in a browser tab and completes with the link
 /// the server sends back into the app when Google is done
-/// (`numberninja://signin/google?state=…&code=…`).
+/// (`brainbubblz://signin/google?state=…&code=…`).
 typedef SignInLauncher = Future<Uri> Function(Uri url);
 
 /// Where Google returns to: an nginx page that hands the result back to the

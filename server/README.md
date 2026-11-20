@@ -17,13 +17,21 @@ in `pb_migrations/` and redeploy.
 | `restore.sh` | Restores a backup zip |
 | `test/` | API rule and backup tests; `test/run.sh` (CI job `server`) |
 
-The hostname lives only in the repo variable `SERVER_HOSTNAME`. Short term
-`api.brainbubblz.audiodenoiser.com`; to move to `api.brainbubblz.com` later,
-change the variable, add its A record, run the deploy and rebuild the APK.
+The hostname lives only in the repo variable `SERVER_HOSTNAME`:
+`api.brainbubblz.com` since FEAT-20. The optional variable
+`SERVER_LEGACY_HOSTNAME` (`api.brainbubblz.audiodenoiser.com`) keeps an older
+host answering on the same site, with one certificate for both names, so apps
+built for it keep working; its Google return page opens the old app
+(`numberninja://`), the main host's opens `brainbubblz://`. To drop the old
+host, delete the variable and its A record, run the deploy, then on the droplet
+`sudo certbot delete --cert-name api.brainbubblz.audiodenoiser.com`. To move
+hosts again: add the A record, set the old host as legacy and the new one as
+`SERVER_HOSTNAME`, run the deploy and rebuild the APK. Ken's console steps for
+the move to brainbubblz.com: `docs/features/FEAT-20-domain/ken-steps.md`.
 
 ## One-time setup (Ken, about 15 minutes)
 
-The A record for `api.brainbubblz.audiodenoiser.com` is done. On your computer:
+The A records for `api.brainbubblz.audiodenoiser.com` and `api.brainbubblz.com` point at the droplet. On your computer:
 
 1. Make a deploy key (no passphrase):
    `ssh-keygen -t ed25519 -f numberninja_deploy -N "" -C numberninja-deploy`
@@ -43,7 +51,8 @@ The A record for `api.brainbubblz.audiodenoiser.com` is done. On your computer:
      `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD` (a new, long password; at least 10
      characters), optionally `CERT_EMAIL` (Let's Encrypt notices; defaults to the
      superuser email).
-   - Variable: `SERVER_HOSTNAME` = `api.brainbubblz.audiodenoiser.com`.
+   - Variables: `SERVER_HOSTNAME` = `api.brainbubblz.com`, optionally
+     `SERVER_LEGACY_HOSTNAME` = `api.brainbubblz.audiodenoiser.com`.
 
 Ports 80 and 443 are already open for audiodenoiser.com, so the firewall needs nothing.
 
@@ -59,12 +68,13 @@ through Resend's web API on port 443 (`pb_hooks/mail.pb.js`). It wins over the
 SMTP settings below when both are set.
 
 1. Sign up at resend.com and create an API key (sending access).
-2. Domains → add `audiodenoiser.com` (or the domain you send from) and add the
-   DNS records it shows. Until a domain is verified, Resend only sends from
-   `onboarding@resend.dev` and only to your own account's email.
+2. Domains → add `brainbubblz.com` and add the DNS records it shows (DKIM
+   `resend._domainkey`, and MX + SPF on `send`) at DigitalOcean. Until a domain
+   is verified, Resend only sends from `onboarding@resend.dev` and only to your
+   own account's email.
 3. Repo secrets: `RESEND_API_KEY` = the key, `MAIL_SENDER_ADDRESS` = an address
-   on the verified domain (e.g. `noreply@audiodenoiser.com`). Run "Deploy server";
-   the log says `Email: on-resend`.
+   on the verified domain (`noreply@brainbubblz.com`). Run "Deploy server";
+   the log says `Email: on-resend`. The sender name is the app name, BrainBubblz.
 
 **Email (Brevo SMTP, the alternative, free plan, 300 emails/day).** This uses
 Brevo's port 2525, which DigitalOcean doesn't block.
@@ -85,9 +95,12 @@ Brevo's port 2525, which DigitalOcean doesn't block.
    and developer contact; scopes `email` and `profile` only. Publish it (or add your
    own Google account as a test user while it's in testing).
 3. APIs & Services → Credentials → Create credentials → OAuth client ID →
-   **Web application** (not Android). Authorized redirect URI:
-   `https://api.brainbubblz.audiodenoiser.com/signin/google` (use the
-   `SERVER_HOSTNAME` value; add the new one if the hostname changes). That nginx
+   **Web application** (not Android: the app signs in through a browser tab, so
+   its package name and signing key aren't registered with Google). Authorized
+   redirect URIs: `https://api.brainbubblz.com/signin/google` and, while the
+   legacy host is served, `https://api.brainbubblz.audiodenoiser.com/signin/google`
+   (one per host the apps use). On the consent screen, add `brainbubblz.com` to
+   the authorized domains. That nginx
    page hands the result back to the app. PocketBase's own
    `/api/oauth2-redirect` isn't used: it needs the app's realtime connection to
    stay open while the parent is in the browser, and some networks cut quiet
@@ -106,10 +119,13 @@ GitHub → Actions → "Deploy server" → Run workflow. It:
 - adds `/etc/nginx/sites-available/numberninja.conf` (and its `sites-enabled` link) and
   nothing else in nginx. It runs `nginx -t` before every reload; if the test fails it
   undoes its own change, so audiodenoiser.com keeps working;
-- on the first run, gets a Let's Encrypt certificate (webroot, renewed by certbot's timer,
-  which reloads nginx);
+- gets a Let's Encrypt certificate for `SERVER_HOSTNAME` and the legacy host when
+  it is missing or its names changed (webroot, renewed by certbot's timer, which
+  reloads nginx). While it does, HTTPS keeps working on the host apps already use;
+  if certbot fails (an A record not pointing at the droplet yet), the previous
+  nginx site is put back;
 - applies the migrations, sets the superuser, restarts PocketBase, and checks that
-  `https://$SERVER_HOSTNAME/api/health` is 200, `/_/` is the Google sign-in result page and the admin UI's files under `/_/` are 404.
+  `https://$SERVER_HOSTNAME/api/health` is 200, `/_/` is the Google sign-in result page, the admin UI's files under `/_/` are 404, `/signin/google` opens `brainbubblz://`, and the legacy host (if set) answers and opens `numberninja://`.
 
 ## Publishing a bank (FEAT-15)
 

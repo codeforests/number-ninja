@@ -263,7 +263,7 @@ void main() {
       Uri? opened;
       final account = await client().signInWithGoogle((url) async {
         opened = url;
-        return Uri.parse('numberninja://signin/google?state=st1&code=4%2F0Ab');
+        return Uri.parse('brainbubblz://signin/google?state=st1&code=4%2F0Ab');
       });
       expect(account.viaGoogle, isTrue);
       expect(opened!.host, 'accounts.google.com');
@@ -289,9 +289,9 @@ void main() {
     });
 
     for (final (name, link) in [
-      ('another state', 'numberninja://signin/google?state=other&code=x'),
-      ('an error', 'numberninja://signin/google?state=st1&error=access_denied'),
-      ('no code', 'numberninja://signin/google?state=st1'),
+      ('another state', 'brainbubblz://signin/google?state=other&code=x'),
+      ('an error', 'brainbubblz://signin/google?state=st1&error=access_denied'),
+      ('no code', 'brainbubblz://signin/google?state=st1'),
     ]) {
       test('$name: cancelled, nothing kept', () async {
         await expectLater(

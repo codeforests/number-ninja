@@ -1,11 +1,11 @@
-package com.codeforests.number_ninja
+package com.brainbubblz.kids
 
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 
 /**
- * Receives numberninja://signin/... when Google sign-in finishes in the
+ * Receives brainbubblz://signin/... when Google sign-in finishes in the
  * Custom Tab (the server's /signin/google page opens it). It hands the link
  * to Dart and brings the app back in front of the tab, then closes.
  */
@@ -13,7 +13,7 @@ class SignInReturnActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val link = intent?.data
-        if (link != null && link.scheme == "numberninja" && link.host == "signin") {
+        if (link != null && link.scheme == "brainbubblz" && link.host == "signin") {
             MainActivity.signInChannel?.invokeMethod("returned", link.toString())
         }
         // Back to the app's own task and its existing MainActivity (CLEAR_TOP also
