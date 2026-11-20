@@ -1,5 +1,5 @@
 # Handoff: FEAT-30 — Free tier and Plus in the app
-Branch: feat/FEAT-30-plus-in-app · PR: see STATE / draft PR · Updated: 2026-11-20 by build
+Branch: feat/FEAT-30-plus-in-app · PR: https://github.com/codeforests/number-ninja/pull/36 (draft) · Updated: 2026-11-20 by build
 Stage done: build (T1–T7 of 7)
 Next: verify — kickoff: "Verify FEAT-30 on branch feat/FEAT-30-plus-in-app. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
