@@ -660,4 +660,84 @@ void main() {
       expect(kept.get<int>('uses'), 1);
     });
   });
+
+  group('weekly_email', () {
+    test('a parent reads and changes only their own switch; the token '
+        'never shows; the send log is closed to parents', () async {
+      await a.pb
+          .collection('users')
+          .update(a.id, body: {'weekly_email': true, 'weekly_email_tz': 480});
+      final own = await a.pb.collection('users').getOne(a.id);
+      expect(own.get<bool>('weekly_email'), isTrue);
+      expect(own.get<int>('weekly_email_tz'), 480);
+      expect(own.data.containsKey('email_token'), isFalse);
+      expect(
+        await statusOf(
+          () => b.pb
+              .collection('users')
+              .update(a.id, body: {'weekly_email': false}),
+        ),
+        404,
+      );
+      expect(
+        await statusOf(
+          () => a.pb
+              .collection('users')
+              .update(a.id, body: {'weekly_email_tz': 900}),
+        ),
+        400,
+        reason: 'offset range',
+      );
+      final su = await superuser();
+      await su
+          .collection('users')
+          .update(a.id, body: {'email_token': 'x' * 32});
+      final again = await a.pb.collection('users').getOne(a.id);
+      expect(again.data.containsKey('email_token'), isFalse);
+      for (final pb in [a.pb, b.pb]) {
+        final list = await pb.collection('users').getFullList();
+        expect(list.every((r) => !r.data.containsKey('email_token')), isTrue);
+      }
+      final row = await su
+          .collection('weekly_emails')
+          .create(
+            body: {
+              'user': a.id,
+              'week': '2026-11-16',
+              'status': 'sent',
+              'children': 1,
+            },
+          );
+      for (final pb in [a.pb, b.pb, anon]) {
+        final c = pb.collection('weekly_emails');
+        final listed = await c.getFullList().catchError((_) => <RecordModel>[]);
+        expect(listed, isEmpty);
+        expect(await statusOf(() => c.getOne(row.id)), anyOf(403, 404));
+        expect(
+          await statusOf(
+            () => c.create(
+              body: {'user': a.id, 'week': '2026-11-23', 'status': 'sent'},
+            ),
+          ),
+          403,
+        );
+        expect(
+          await statusOf(() => c.update(row.id, body: {'children': 2})),
+          anyOf(403, 404),
+        );
+        expect(await statusOf(() => c.delete(row.id)), anyOf(403, 404));
+      }
+      expect(
+        await statusOf(
+          () => su
+              .collection('weekly_emails')
+              .create(
+                body: {'user': a.id, 'week': '2026-11-16', 'status': 'sent'},
+              ),
+        ),
+        400,
+        reason: 'one row per account and week',
+      );
+    });
+  });
 }
