@@ -9,6 +9,8 @@ import '../../data/sync/server_client.dart';
 import '../../domain/screen_time.dart';
 import '../../providers.dart';
 import '../family/change_child.dart';
+import '../family/child_switcher.dart';
+import '../../domain/family.dart';
 import '../../ui/layout.dart';
 import '../../ui/theme.dart';
 import '../screen_time/screen_time_controller.dart';
@@ -25,6 +27,7 @@ class ParentScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Parent area'),
         actions: [
+          const ChildSwitcher(),
           Padding(
             padding: const EdgeInsets.only(right: AppSizes.gap),
             child: FilledButton(
@@ -46,6 +49,7 @@ class ParentScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSizes.gap),
         children: [
           const _ProfileTile(),
+          const _ChildrenTile(),
           const _TopicLocksTile(),
           const Divider(height: AppSizes.gap * 2),
           ListTile(
@@ -292,6 +296,32 @@ class _ProfileTile extends ConsumerWidget {
       ),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.go(Routes.profile),
+    );
+  }
+}
+
+/// Opens SCR-18, where the parent adds, edits and removes children
+/// (FEAT-25, FAM-01).
+class _ChildrenTile extends ConsumerWidget {
+  const _ChildrenTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final kids = ref.watch(childrenProvider).value ?? const <FamilyChild>[];
+    return ListTile(
+      key: const Key('open-children'),
+      minTileHeight: AppSizes.minTap,
+      leading: const Icon(Icons.groups),
+      title: const Text('Children'),
+      subtitle: Text(
+        kids.length < 2
+            ? 'Add a brother or sister'
+            : [for (final (i, c) in kids.indexed) displayName(c.nickname, i)]
+                  .join(', '),
+        key: const Key('children-subtitle'),
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.go(Routes.children),
     );
   }
 }

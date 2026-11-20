@@ -7,6 +7,7 @@ import '../../domain/daily.dart';
 import '../../domain/stats.dart';
 import '../../domain/topics.dart';
 import '../../ui/layout.dart';
+import '../family/child_switcher.dart';
 import '../../ui/theme.dart';
 import 'day_screen.dart';
 import 'report_export.dart';
@@ -53,6 +54,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         title: const Text('Progress'),
         actions: [
+          const ChildSwitcher(),
           IconButton(
             key: const Key('export-pdf'),
             tooltip: 'Export PDF',

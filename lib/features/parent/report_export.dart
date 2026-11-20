@@ -6,6 +6,7 @@ import 'package:printing/printing.dart';
 
 import '../../domain/report.dart';
 import '../../domain/stats.dart';
+import '../../providers.dart';
 import '../../ui/theme.dart';
 import 'report_pdf.dart';
 import 'stats_view.dart';
@@ -28,11 +29,19 @@ const reportFailedMessage = "Couldn't create the report";
 Future<bool> exportReport(WidgetRef ref, StatsPeriod period) async {
   final share = ref.read(reportSharerProvider);
   final stats = ref.read(statsDataProvider.future);
+  final profile = ref.read(profileRepositoryProvider);
   try {
     final data = await stats;
-    final report = ReportData.build(data.all, period, data.now);
+    // The current child's report carries her nickname (FEAT-25 AD-13).
+    final nickname = (await profile.load())?.nickname ?? '';
+    final report = ReportData.build(
+      data.all,
+      period,
+      data.now,
+      nickname: nickname,
+    );
     final bytes = await buildReportPdf(report);
-    await share(bytes, reportFileName(period, data.now));
+    await share(bytes, reportFileName(period, data.now, nickname: nickname));
     return true;
   } catch (e, s) {
     debugPrint('Report export failed: $e\n$s');

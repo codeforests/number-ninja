@@ -22,6 +22,7 @@ import 'features/parent/pin_entry_screen.dart';
 import 'features/parent/reset_screen.dart';
 import 'features/parent/topic_detail_screen.dart';
 import 'features/parent/topic_locks_screen.dart';
+import 'features/parent/children_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/screen_time/lock_screen.dart';
 import 'features/screen_time/screen_time_controller.dart';
@@ -33,6 +34,11 @@ abstract final class Routes {
   static const setup = '/setup'; // SCR-01
   static const setupProfile = '/setup/profile'; // SCR-12, first run
   static const profile = '/parent/profile'; // SCR-12 from SCR-11
+  static const children = '/parent/children'; // SCR-18, FEAT-25
+  static const newChild = '$profile?child=new'; // SCR-12, add a child
+  static String childProfile(int id) => '$profile?child=$id'; // SCR-12
+  static String removeChild(int id) =>
+      '/parent/remove-child?child=$id'; // SCR-12 remove, PIN confirm
   static const topicLocks = '/parent/topics'; // SCR-15
   static const account = '/parent/account'; // SCR-13
   static const home = '/'; // SCR-02
@@ -169,7 +175,21 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'profile',
-            builder: (context, state) => const ProfileScreen(firstRun: false),
+            builder: (context, state) => ProfileScreen(
+              firstRun: false,
+              child: state.uri.queryParameters['child'],
+            ),
+          ),
+          GoRoute(
+            path: 'children',
+            builder: (context, state) => const ChildrenScreen(),
+          ),
+          GoRoute(
+            path: 'remove-child',
+            builder: (context, state) => RemoveChildScreen(
+              childId:
+                  int.tryParse(state.uri.queryParameters['child'] ?? '') ?? 0,
+            ),
           ),
           GoRoute(
             path: 'topics',

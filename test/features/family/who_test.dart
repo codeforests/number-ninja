@@ -40,6 +40,14 @@ void main() {
       tester.widget<Text>(find.byKey(const Key('minutes-left'))).data!;
 
   Future<void> tap(WidgetTester tester, String key) async {
+    // SCR-11 is a lazy ListView: a far-down tile may not be built yet.
+    if (find.byKey(Key(key)).evaluate().isEmpty) {
+      await tester.scrollUntilVisible(
+        find.byKey(Key(key)),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+    }
     await tester.ensureVisible(find.byKey(Key(key)));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(Key(key)));

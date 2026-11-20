@@ -4,7 +4,7 @@
 
 ## Entry and wiring
 
-- `lib/main.dart` → `lib/app.dart`: `NumberNinjaApp`, `routerProvider` (go_router). Routes: `/setup`, `/setup/profile` (SCR-12 first run, while `AppSession.profilePending`), `/play/:track`, `/quiz/:topicId`, `/locked`, parent area under `/parent`: `pin`, `change-pin`, `dashboard`, `topic/:topicId`, `reset`, `profile`, `topics` (SCR-15), `account` (SCR-13), `day?d=yyyy-MM-dd` (SCR-16, `Routes.day`, `Routes.dayToday`). `/revise/:scopeId` (SCR-14) and `/revise/:scopeId/quiz` (revision round). `/who` (SCR-17, `Routes.who`, while `AppSession.choosingChild`; FEAT-25) and `Routes.pinForChild` (`/parent/pin?next=who`: the PIN opens SCR-17, not the parent area).
+- `lib/main.dart` → `lib/app.dart`: `NumberNinjaApp`, `routerProvider` (go_router). Routes: `/setup`, `/setup/profile` (SCR-12 first run, while `AppSession.profilePending`), `/play/:track`, `/quiz/:topicId`, `/locked`, parent area under `/parent`: `pin`, `change-pin`, `dashboard`, `topic/:topicId`, `reset`, `profile`, `topics` (SCR-15), `account` (SCR-13), `day?d=yyyy-MM-dd` (SCR-16, `Routes.day`, `Routes.dayToday`). `/revise/:scopeId` (SCR-14) and `/revise/:scopeId/quiz` (revision round). `/parent/children` (SCR-18, `Routes.children`), `/parent/profile?child=<id>|new` (`Routes.childProfile`, `Routes.newChild`), `/parent/remove-child?child=<id>` (`Routes.removeChild`). `/who` (SCR-17, `Routes.who`, while `AppSession.choosingChild`; FEAT-25) and `Routes.pinForChild` (`/parent/pin?next=who`: the PIN opens SCR-17, not the parent area).
 - `lib/providers.dart`: `databaseProvider`, `bankProvider`, `clockProvider`, the repository providers, `topicProgressProvider`. Tests override these.
 
 ## Server (`server/`, FEAT-12)
@@ -38,7 +38,7 @@
 ## Features (`lib/features`)
 
 - `revision/revision_start_screen.dart` (SCR-14, `revisionPreviewProvider`).
-- `family/who_screen.dart` (SCR-17), `family/change_child.dart` (`changeChild` for the home `child-chip` and SCR-07 `lock-change-child`, `leaveParentArea` for SCR-11 Done, `pickerShows`; FEAT-25). SCR-11 `_SwitchPinSection` (`switch-needs-pin`).
+- `family/who_screen.dart` (SCR-17), `family/change_child.dart` (`changeChild` for the home `child-chip` and SCR-07 `lock-change-child`, `leaveParentArea` for SCR-11 Done, `pickerShows`; FEAT-25). SCR-11 `_SwitchPinSection` (`switch-needs-pin`), `_ChildrenTile` (`open-children`). `family/child_switcher.dart` (`ChildSwitcher`, `parent-child-switch`, in the app bar of SCR-09/11/16). `parent/children_screen.dart` (SCR-18 `ChildrenScreen`, `RemoveChildScreen`, `familyChanged` after add/remove/edit).
 - `home/home_screen.dart`, `topics/topic_map_screen.dart` (+ `topic_icons.dart`), `setup/setup_pin_screen.dart`, `profile/profile_screen.dart` (SCR-12).
 - `quiz/`: `quiz_controller.dart` (`QuizController`, `RoundState`, `RoundSummary`), `quiz_screen.dart`, `result_screen.dart`, `feedback_panel.dart`, `answers/` (`mcq_answer`, `number_answer`, `drag_answer`).
 - `screen_time/`: `screen_time_controller.dart` (`ScreenTimeController`, `screenTimeProvider`), `lock_screen.dart`.

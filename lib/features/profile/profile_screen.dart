@@ -3,17 +3,25 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../app.dart';
+import '../../data/profile_repository.dart';
+import '../../domain/family.dart';
 import '../../domain/profile.dart';
 import '../../domain/topics.dart';
 import '../../providers.dart';
+import '../../ui/avatars.dart';
+import '../parent/children_screen.dart';
 import '../../ui/theme.dart';
 
 /// SCR-12: child profile (PRO-01). [firstRun] is the step after SCR-01
 /// (PRO-02); otherwise it is opened from SCR-11 and goes back there.
+/// FEAT-25: [child] is `?child=` from SCR-18, a child id or `new` (add a
+/// child, FAM-01), and the screen goes back to SCR-18; null edits the
+/// current child.
 class ProfileScreen extends ConsumerStatefulWidget {
-  const ProfileScreen({super.key, required this.firstRun});
+  const ProfileScreen({super.key, required this.firstRun, this.child});
 
   final bool firstRun;
+  final String? child;
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -24,6 +32,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   int? _year;
   int? _schoolStart;
   int? _olympiadStart;
+  String _avatar = ChildProfile.defaultAvatar;
+
+  /// The child edited, or null while adding one.
+  int? _childId;
+  int _siblings = 0;
   bool _loaded = false;
   bool _busy = false;
   String? _error;
@@ -35,10 +48,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _load();
   }
 
+  bool get _adding => widget.child == 'new';
+
+  String get _back => widget.child == null ? Routes.parent : Routes.children;
+
+  ProfileRepository _repo(int id) => ProfileRepository(
+    ref.read(databaseProvider),
+    clock: ref.read(clockProvider),
+    childId: id,
+  );
+
   Future<void> _load() async {
-    final p = await ref.read(profileRepositoryProvider).load();
+    final kids = await ref.read(childRepositoryProvider).all();
+    final asked = int.tryParse(widget.child ?? '');
+    final id = _adding
+        ? null
+        : kids.any((c) => c.id == asked)
+        ? asked
+        : ref.read(currentChildProvider);
+    final p = id == null ? null : await _repo(id).load();
     if (!mounted) return;
     setState(() {
+      _childId = id;
+      _siblings = kids.length;
+      _avatar = id == null
+          ? nextAvatar(kids.map((c) => c.avatar))
+          : kids
+                .firstWhere(
+                  (c) => c.id == id,
+                  orElse: () => const FamilyChild(
+                    id: 0,
+                    nickname: '',
+                    schoolYear: 1,
+                    avatar: ChildProfile.defaultAvatar,
+                  ),
+                )
+                .avatar;
       if (p != null) {
         _nickname.text = p.nickname;
         _year = p.schoolYear;
@@ -62,17 +107,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _busy = true;
       _error = null;
     });
+    final profile = ChildProfile(
+      nickname: _nickname.text.trim(),
+      schoolYear: _year!,
+      schoolStartLevel: _schoolStart,
+      olympiadStartLevel: _olympiadStart,
+      avatar: _avatar,
+    );
     try {
-      await ref
-          .read(profileRepositoryProvider)
-          .save(
-            ChildProfile(
-              nickname: _nickname.text.trim(),
-              schoolYear: _year!,
-              schoolStartLevel: _schoolStart,
-              olympiadStartLevel: _olympiadStart,
-            ),
-          );
+      final id = _childId;
+      if (id == null) {
+        await ref.read(childRepositoryProvider).add(profile);
+      } else {
+        await _repo(id).save(profile);
+      }
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -83,9 +131,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return;
     }
     if (!mounted) return;
-    ref.invalidate(childProfileProvider);
+    await familyChanged(ref);
+    if (!mounted) return;
     ref.read(appSessionProvider).profileSaved();
-    context.go(widget.firstRun ? Routes.home : Routes.parent);
+    context.go(widget.firstRun ? Routes.home : _back);
   }
 
   @override
@@ -110,10 +159,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             : IconButton(
                 key: const Key('back-parent'),
                 tooltip: 'Back',
-                onPressed: () => context.go(Routes.parent),
+                onPressed: () => context.go(_back),
                 icon: const Icon(Icons.arrow_back),
               ),
-        title: const Text('Child profile'),
+        title: Text(_adding ? 'Add a child' : 'Child profile'),
       ),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
@@ -140,6 +189,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     helperText: 'A nickname, not her real name',
                     errorText: nickError,
                   ),
+                ),
+                const SizedBox(height: AppSizes.gap),
+                Text('Picture', style: theme.titleMedium),
+                const SizedBox(height: AppSizes.gap / 2),
+                Wrap(
+                  spacing: AppSizes.gap / 2,
+                  runSpacing: AppSizes.gap / 2,
+                  children: [
+                    for (final a in avatarIds)
+                      _AvatarChoice(
+                        id: a,
+                        selected: _avatar == a,
+                        onTap: () => setState(() => _avatar = a),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: AppSizes.gap),
                 Text('School year', style: theme.titleMedium),
@@ -207,6 +271,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                 ),
+                if (!widget.firstRun && _childId != null && _siblings > 1)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSizes.gap * 2),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: SizedBox(
+                        height: AppSizes.minTap,
+                        child: OutlinedButton.icon(
+                          key: const Key('remove-child'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(context)
+                                .colorScheme
+                                .error,
+                          ),
+                          onPressed: () =>
+                              context.go(Routes.removeChild(_childId!)),
+                          icon: const Icon(Icons.person_remove),
+                          label: const Text('Remove this child'),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
     );
@@ -268,6 +354,47 @@ class _StartRow extends StatelessWidget {
             onTap: () => onChanged(l),
           ),
       ],
+    );
+  }
+}
+
+/// One built-in avatar to pick (FEAT-25 AD-7), ringed when chosen.
+class _AvatarChoice extends StatelessWidget {
+  const _AvatarChoice({
+    required this.id,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String id;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ring = Theme.of(context).colorScheme.primary;
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: 'Picture $id',
+      child: InkWell(
+        key: Key('avatar-$id'),
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Container(
+          width: AppSizes.minTap,
+          height: AppSizes.minTap,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: selected ? ring : Colors.transparent,
+              width: 4,
+            ),
+          ),
+          child: AvatarCircle(id, size: AppSizes.minTap - 14),
+        ),
+      ),
     );
   }
 }

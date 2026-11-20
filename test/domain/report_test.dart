@@ -209,5 +209,38 @@ void main() {
         'brainbubblz-report-2027-01-05-all.pdf',
       );
     });
+
+    test("FEAT-25 AD-13: the child's nickname, as a file-safe slug", () {
+      expect(
+        reportFileName(StatsPeriod.days30, now, nickname: 'Mia'),
+        'brainbubblz-report-mia-2026-11-15-30d.pdf',
+      );
+      expect(
+        reportFileName(StatsPeriod.days7, now, nickname: ' Big Leo! '),
+        'brainbubblz-report-big-leo-2026-11-15-7d.pdf',
+      );
+      expect(
+        reportFileName(StatsPeriod.days7, now, nickname: '小明'),
+        'brainbubblz-report-2026-11-15-7d.pdf',
+      );
+    });
+  });
+
+  test('FEAT-25 AD-13: the title carries the nickname, ASCII only', () {
+    final d = ReportData.build(
+      const [],
+      StatsPeriod.days7,
+      now,
+      nickname: 'Mia',
+    );
+    expect(d.title, 'BrainBubblz progress report: Mia');
+    final odd = ReportData.build(
+      const [],
+      StatsPeriod.days7,
+      now,
+      nickname: 'Zoë 小',
+    );
+    expect(odd.title, 'BrainBubblz progress report: Zo');
+    expect(odd.allText.every(isAscii), isTrue);
   });
 }
