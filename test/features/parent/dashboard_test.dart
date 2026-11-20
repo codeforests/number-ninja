@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:number_ninja/features/parent/dashboard_screen.dart';
+import 'package:number_ninja/features/parent/day_screen.dart';
 import 'package:number_ninja/features/parent/parent_screen.dart';
 import 'package:number_ninja/features/parent/pin_entry_screen.dart';
 
@@ -71,6 +72,45 @@ void main() {
     // all time equals 30 days here
     await h.tapKey(tester, 'period-all');
     expect(textIn('track-p2', '71 %'), findsOneWidget);
+  });
+
+  testWidgets('FEAT-18 AC-4: "By day" lists the 7 latest days and opens '
+      'SCR-16', (tester) async {
+    for (var d = 0; d <= 8; d++) {
+      await h.seed(mcqTopic, [(1, true), (2, d.isEven)], daysAgo: d);
+    }
+    await h.openParent(tester, '/parent/dashboard');
+    for (final d in [
+      '2027-01-05',
+      '2027-01-04',
+      '2027-01-03',
+      '2027-01-02',
+      '2027-01-01',
+      '2026-12-31',
+      '2026-12-30',
+    ]) {
+      expect(find.byKey(Key('daily-$d')), findsOneWidget);
+    }
+    expect(find.byKey(const Key('daily-2026-12-29')), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('daily-2027-01-04')),
+        matching: find.textContaining('2 answers · 50 % right'),
+      ),
+      findsOneWidget,
+    );
+    // Newest first.
+    final y5 = tester.getTopLeft(find.byKey(const Key('daily-2027-01-05'))).dy;
+    final y4 = tester.getTopLeft(find.byKey(const Key('daily-2027-01-04'))).dy;
+    expect(y5, lessThan(y4));
+
+    await h.tapKey(tester, 'daily-2027-01-04');
+    expect(find.byType(DayScreen), findsOneWidget);
+    expect(find.text('Mon 4 Jan 2027'), findsOneWidget);
+    await h.tapKey(tester, 'back-dashboard');
+    expect(find.byType(DashboardScreen), findsOneWidget);
+    await h.tapKey(tester, 'open-day');
+    expect(find.textContaining('Today, Tue 5 Jan 2027'), findsOneWidget);
   });
 
   testWidgets('no needs practice below 10 answers', (tester) async {

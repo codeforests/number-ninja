@@ -40,7 +40,8 @@ abstract final class Routes {
   static const changePin = '/parent/change-pin'; // SCR-11 (change PIN)
   static const dashboard = '/parent/dashboard'; // SCR-09, `?p=7|30|all`
   static const reset = '/parent/reset'; // SCR-11 (reset progress, PAR-10)
-  static String day(String day) => '/parent/day?d=$day'; // SCR-16
+  static const dayToday = '/parent/day'; // SCR-16, today
+  static String day(String day) => '$dayToday?d=$day'; // SCR-16
   static String dashboardFor(StatsPeriod p) => '$dashboard?p=${p.query}';
   static String topicDetail(String topicId, StatsPeriod p) =>
       '/parent/topic/$topicId?p=${p.query}'; // SCR-10
