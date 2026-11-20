@@ -46,17 +46,26 @@ jobs:
       - name: nginx -t on the rendered site file (stock Ubuntu nginx)
         run: |
           host=api.example.test
+          legacy=api.old.example.test
           sudo apt-get update -q && sudo apt-get install -y -q nginx
           nginx -v
           sudo mkdir -p "/etc/letsencrypt/live/$host"
           sudo openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj "/CN=$host" \
             -keyout "/etc/letsencrypt/live/$host/privkey.pem" \
             -out "/etc/letsencrypt/live/$host/fullchain.pem"
-          # Same render as install.sh.
-          sed "s|\${SERVER_HOSTNAME}|$host|g" server/nginx/numberninja.conf.template \
-            | sudo tee /etc/nginx/sites-available/numberninja.conf >/dev/null
-          sudo ln -sf /etc/nginx/sites-available/numberninja.conf /etc/nginx/sites-enabled/numberninja.conf
+          site=/etc/nginx/sites-available/numberninja.conf
+          sudo ln -sf "$site" /etc/nginx/sites-enabled/numberninja.conf
+          # Same render as install.sh: without, then with a legacy host (FEAT-20).
+          SERVER_HOSTNAME=$host server/nginx/render.sh | sudo tee "$site" >/dev/null
+          ! grep -q 'LEGACY' "$site"
           sudo nginx -t
+          SERVER_HOSTNAME=$host SERVER_LEGACY_HOSTNAME=$legacy server/nginx/render.sh | sudo tee "$site" >/dev/null
+          sudo nginx -t
+          # The return page opens brainbubblz:// on the host, numberninja:// on the legacy host.
+          sudo systemctl restart nginx
+          page() { curl -sk --resolve "$1:443:127.0.0.1" "https://$1/signin/google"; }
+          page "$host" | grep -q 'href="brainbubblz://signin/google"'
+          page "$legacy" | grep -q 'href="numberninja://signin/google"'
 
   build:
     runs-on: ubuntu-latest

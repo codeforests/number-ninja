@@ -6,7 +6,9 @@
 #   DEPLOY_USER            SSH user with sudo without a password
 #   SSH_KEY                path to the private deploy key
 #   SSH_KNOWN_HOSTS        known_hosts file holding the droplet's key (default ~/.ssh/known_hosts)
-#   SERVER_HOSTNAME        e.g. api.brainbubblz.audiodenoiser.com
+#   SERVER_HOSTNAME        e.g. api.brainbubblz.com
+#   SERVER_LEGACY_HOSTNAME optional older host still served (FEAT-20), e.g.
+#                          api.brainbubblz.audiodenoiser.com
 #   PB_SUPERUSER_EMAIL     PocketBase admin login
 #   PB_SUPERUSER_PASSWORD
 #   CERT_EMAIL             Let's Encrypt notices (default PB_SUPERUSER_EMAIL)
@@ -33,6 +35,7 @@ echo "==> Installing"
 status=0
 printf '%s\n' \
   "SERVER_HOSTNAME=$SERVER_HOSTNAME" \
+  "SERVER_LEGACY_HOSTNAME=${SERVER_LEGACY_HOSTNAME:-}" \
   "PB_SUPERUSER_EMAIL=$PB_SUPERUSER_EMAIL" \
   "PB_SUPERUSER_PASSWORD=$PB_SUPERUSER_PASSWORD" \
   "CERT_EMAIL=${CERT_EMAIL:-}" \
@@ -59,8 +62,19 @@ for _ in $(seq 1 30); do
     if ! curl -fsS "https://$SERVER_HOSTNAME/_/" | grep -q 'Close this tab'; then
       echo "/_/ is not the sign-in result page" >&2; exit 1
     fi
-    if ! curl -fsS "https://$SERVER_HOSTNAME/signin/google" | grep -q 'numberninja://signin/google'; then
+    if ! curl -fsS "https://$SERVER_HOSTNAME/signin/google" | grep -q 'brainbubblz://signin/google'; then
       echo "/signin/google is not the Google return page" >&2; exit 1
+    fi
+    # Apps built for the legacy host are the old app id with numberninja://.
+    if [ -n "${SERVER_LEGACY_HOSTNAME:-}" ]; then
+      legacy="https://$SERVER_LEGACY_HOSTNAME"
+      if ! curl -fsS "$legacy/api/health" >/dev/null; then
+        echo "$legacy/api/health did not answer 200" >&2; exit 1
+      fi
+      if ! curl -fsS "$legacy/signin/google" | grep -q 'numberninja://signin/google'; then
+        echo "$legacy/signin/google does not hand back to the old app" >&2; exit 1
+      fi
+      echo "Legacy host $SERVER_LEGACY_HOSTNAME answers too and hands back to the old app"
     fi
     echo "Deployed: https://$SERVER_HOSTNAME/api/health is 200, /_/ is the sign-in page, /signin/google hands back to the app, /_/images/ is 404"
     exit 0

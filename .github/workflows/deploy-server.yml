@@ -6,7 +6,7 @@ name: Deploy server
 # Optional (FEAT-13): SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD,
 # MAIL_SENDER_ADDRESS, RESEND_API_KEY (email over HTTPS; wins over SMTP),
 # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
-# Variable: SERVER_HOSTNAME. Steps: server/README.md.
+# Variables: SERVER_HOSTNAME, optional SERVER_LEGACY_HOSTNAME (FEAT-20). Steps: server/README.md.
 on:
   workflow_dispatch:
 
@@ -39,6 +39,7 @@ jobs:
           SSH_KEY: /home/runner/.ssh/deploy_key
           SSH_KNOWN_HOSTS: /home/runner/.ssh/known_hosts
           SERVER_HOSTNAME: ${{ vars.SERVER_HOSTNAME }}
+          SERVER_LEGACY_HOSTNAME: ${{ vars.SERVER_LEGACY_HOSTNAME }}
           PB_SUPERUSER_EMAIL: ${{ secrets.PB_SUPERUSER_EMAIL }}
           PB_SUPERUSER_PASSWORD: ${{ secrets.PB_SUPERUSER_PASSWORD }}
           CERT_EMAIL: ${{ secrets.CERT_EMAIL }}
