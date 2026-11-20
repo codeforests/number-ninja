@@ -68,7 +68,7 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | BNK-10 | A newer bank shall keep every question id of the previous one (BNK-05); a question that should no longer be served is marked retired, so old results stay readable. | M | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
 | BNK-11 | The app shall ignore a published bank whose format needs a newer app version. | S | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
 | BNK-12 | The parent area shall show the bank version in use and when the app last checked for a new one. | C | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
-| BNK-13 | Listing and downloading a published server bank shall need a signed-in parent with active Plus (ENT-01); without it the app keeps the bundled or last downloaded bank. (D23; amends BNK-08) | M | FEAT-29 | |
+| BNK-13 | Listing and downloading a published server bank shall need a signed-in parent with active Plus (ENT-01); without it the app keeps the bundled or last downloaded bank. (D23; amends BNK-08) | M | FEAT-29 | FEAT-29 verify.md (2026-11-20) |
 
 ### Practice (PRC)
 
@@ -208,12 +208,12 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| ENT-01 | The server shall keep Plus entitlement records per parent account, each with source (complimentary, invite, Google Play, App Store), status and expiry; Plus is active while any of the account's records expires in the future. (D23) | M | FEAT-29 | |
-| ENT-02 | A parent shall be able to read only their own entitlement records; only the admin and the server shall create, change or delete them; deleting the account deletes them. | M | FEAT-29 | |
-| ENT-03 | The server shall tell a signed-in parent whether Plus is active, until when, from which source, whether it renews, when it last ended, and the server time. | M | FEAT-29 | |
-| ENT-04 | A billing webhook protected by a shared secret shall update store entitlements from billing events, refuse a wrong or missing secret, stay off while no secret is set, and ignore repeated, out-of-order, test and unknown-account events. | M | FEAT-29 | |
-| ENT-05 | The admin shall be able to grant, extend and revoke complimentary Plus for an account by email from the repo, without the email appearing in logs. | M | FEAT-29 | |
-| ENT-06 | Every parent account that exists when entitlements are first deployed shall get complimentary Plus with no end date. | M | FEAT-29 | |
+| ENT-01 | The server shall keep Plus entitlement records per parent account, each with source (complimentary, invite, Google Play, App Store), status and expiry; Plus is active while any of the account's records expires in the future. (D23) | M | FEAT-29 | FEAT-29 verify.md (2026-11-20) |
+| ENT-02 | A parent shall be able to read only their own entitlement records; only the admin and the server shall create, change or delete them; deleting the account deletes them. | M | FEAT-29 | FEAT-29 verify.md (2026-11-20) |
+| ENT-03 | The server shall tell a signed-in parent whether Plus is active, until when, from which source, whether it renews, when it last ended, and the server time. | M | FEAT-29 | FEAT-29 verify.md (2026-11-20) |
+| ENT-04 | A billing webhook protected by a shared secret shall update store entitlements from billing events, refuse a wrong or missing secret, stay off while no secret is set, and ignore repeated, out-of-order, test and unknown-account events. | M | FEAT-29 | FEAT-29 verify.md (2026-11-20) |
+| ENT-05 | The admin shall be able to grant, extend and revoke complimentary Plus for an account by email from the repo, without the email appearing in logs. | M | FEAT-29 | FEAT-29 verify.md (2026-11-20) |
+| ENT-06 | Every parent account that exists when entitlements are first deployed shall get complimentary Plus with no end date. | M | FEAT-29 | FEAT-29 verify.md (2026-11-20) |
 
 ## 5. Non-functional requirements
 
