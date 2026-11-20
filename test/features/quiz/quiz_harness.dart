@@ -187,6 +187,10 @@ class QuizHarness {
   /// tests from before Plus as they were; free-tier tests set false.
   bool plus = true;
 
+  /// FEAT-36: true leaves `plusProvider` to the real Plus cache (a test
+  /// that redeems a code and checks Plus features open); [plus] is ignored.
+  bool realPlus = false;
+
   /// Turns Plus on or off in a running app.
   void setPlus(WidgetTester tester, bool on) =>
       container(tester).read(_plusSwitch.notifier).set(on);
@@ -211,7 +215,7 @@ class QuizHarness {
     ),
     startChildProvider.overrideWithValue(startChild),
     _plusSwitch.overrideWith(() => _PlusSwitch(plus)),
-    plusProvider.overrideWith((ref) => ref.watch(_plusSwitch)),
+    if (!realPlus) plusProvider.overrideWith((ref) => ref.watch(_plusSwitch)),
     if (!lockTopics)
       topicLocksProvider.overrideWith(
         (ref) async => {

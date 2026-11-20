@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/services.dart' show MethodChannel, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -305,6 +307,14 @@ final plusControllerProvider = NotifierProvider<PlusController, int>(
     sync: syncProvider,
     onChanged: (ref) => ref.invalidate(plusCacheProvider),
   ),
+);
+
+/// Whether SCR-20 offers invitation codes (FEAT-36 IC-9): never on iOS or
+/// macOS (App Store guideline 3.1.1; FEAT-34 adds Apple offer codes).
+final inviteCodesAllowedProvider = Provider<bool>(
+  (ref) =>
+      defaultTargetPlatform != TargetPlatform.iOS &&
+      defaultTargetPlatform != TargetPlatform.macOS,
 );
 
 /// Buying Plus (PD-10): nothing to buy until FEAT-35.
