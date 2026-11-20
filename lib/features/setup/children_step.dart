@@ -242,7 +242,11 @@ class _ChildrenStepState extends ConsumerState<ChildrenStep> {
       subtitle:
           'Add each child who will play (up to $maxChildren). '
           'You can change this later in the parent area.',
-      onBack: _busy || editing ? null : controller.back,
+      // With no child yet the form is the whole step, so Back stays on
+      // (verify R1); with children, Cancel returns to the list first.
+      onBack: _busy || (editing && (kids?.isNotEmpty ?? false))
+          ? null
+          : controller.back,
       onNext: !editing && !_busy && (kids?.isNotEmpty ?? false)
           ? () => controller.next()
           : null,
