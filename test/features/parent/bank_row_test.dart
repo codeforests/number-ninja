@@ -36,10 +36,14 @@ void main() {
     tmp.deleteSync(recursive: true);
   });
 
-  Future<void> open(WidgetTester tester, ServerConfig config) async {
+  Future<void> open(
+    WidgetTester tester,
+    ServerConfig config, {
+    Size? size,
+  }) async {
     client = FakeServerClient(config);
     h.more = [...h.more, serverClientProvider.overrideWithValue(client)];
-    await h.openParent(tester, Routes.parent);
+    await h.openParent(tester, Routes.parent, size: size);
     await tester.scrollUntilVisible(
       find.byKey(const Key('bank-tile')),
       200,
@@ -92,9 +96,11 @@ void main() {
 
   testWidgets('layout at text scale $scaledText', (tester) async {
     setTextScale(tester, scaledText);
-    tester.view.physicalSize = physical(scaledSize);
-    tester.view.devicePixelRatio = 2;
-    await open(tester, ServerConfig.parse('https://api.example.test'));
+    await open(
+      tester,
+      ServerConfig.parse('https://api.example.test'),
+      size: physical(scaledSize),
+    );
     expect(tester.takeException(), isNull);
     expectNoOverlap(tester, ['bank-status', 'bank-check-now']);
   });

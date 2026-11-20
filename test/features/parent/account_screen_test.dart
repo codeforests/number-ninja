@@ -43,6 +43,7 @@ void main() {
     ServerConfig? config,
     Account? stored,
     bool google = false,
+    Size? size,
   }) async {
     client = FakeServerClient(
       config ?? configured,
@@ -55,7 +56,7 @@ void main() {
       serverClientProvider.overrideWithValue(client),
       signInBrowserProvider.overrideWithValue(browser),
     ];
-    await h.openParent(tester, Routes.account);
+    await h.openParent(tester, Routes.account, size: size);
   }
 
   Future<void> fill(WidgetTester tester, String e, String p) async {
@@ -313,10 +314,9 @@ void main() {
         '$scale, ${signedIn ? 'signed in' : 'signed out'}',
         (tester) async {
           if (scale != 1) setTextScale(tester, scale);
-          tester.view.physicalSize = physical(dp);
-          tester.view.devicePixelRatio = 2;
           await open(
             tester,
+            size: physical(dp),
             google: true,
             stored: signedIn ? const Account(id: 'u1', email: email) : null,
           );

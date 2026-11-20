@@ -49,6 +49,9 @@ String secs(Tally? t) {
   return s == null ? '–' : '${s.toStringAsFixed(1)} s';
 }
 
+/// A bank answer as text: a list (drag & drop order) joins with commas.
+String answerText(Object a) => a is List ? a.join(', ') : '$a';
+
 String count(Tally? t) => t == null || t.attempts == 0 ? '–' : '${t.attempts}';
 
 final _weekLabel = DateFormat('d MMM');

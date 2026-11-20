@@ -17,10 +17,14 @@ void main() {
   late ParentHarness h;
   late FakeServerClient client;
 
-  Future<void> open(WidgetTester tester, ServerConfig config) async {
+  Future<void> open(
+    WidgetTester tester,
+    ServerConfig config, {
+    Size? size,
+  }) async {
     client = FakeServerClient(config);
     h.more = [...h.more, serverClientProvider.overrideWithValue(client)];
-    await h.openParent(tester, Routes.parent);
+    await h.openParent(tester, Routes.parent, size: size);
     await tester.scrollUntilVisible(
       find.byKey(const Key('server-row')),
       200,
@@ -73,9 +77,7 @@ void main() {
       'layout ${dp.width.toInt()} × ${dp.height.toInt()} at text scale $scale',
       (tester) async {
         if (scale != 1) setTextScale(tester, scale);
-        tester.view.physicalSize = physical(dp);
-        tester.view.devicePixelRatio = 2;
-        await open(tester, configured);
+        await open(tester, configured, size: physical(dp));
         client.result = ServerHealth.unreachable;
         await h.tapKey(tester, 'server-check');
         expect(tester.takeException(), isNull);

@@ -5,6 +5,7 @@ import 'package:number_ninja/data/topic_lock_repository.dart';
 import 'package:number_ninja/features/parent/topic_locks_screen.dart';
 import 'package:number_ninja/domain/stats.dart';
 import 'package:number_ninja/features/parent/dashboard_screen.dart';
+import 'package:number_ninja/features/parent/day_screen.dart';
 import 'package:number_ninja/features/parent/reset_screen.dart';
 import 'package:number_ninja/features/parent/topic_detail_screen.dart';
 
@@ -12,7 +13,7 @@ import '../../ui/layout_checks.dart';
 import '../quiz/quiz_harness.dart';
 import 'parent_harness.dart';
 
-/// AC-8 (NFR-09): SCR-09, SCR-10, the reset screen and the FEAT-07 export
+/// AC-8 (NFR-09): SCR-09, SCR-10, SCR-16 (FEAT-18), the reset screen and the FEAT-07 export
 /// sheet at the six sizes and
 /// at text scale 1.3: no layout exception or overflow anywhere on the page.
 /// The child-screen 64 dp / 20 sp checks don't apply to parent screens.
@@ -80,6 +81,20 @@ void main() {
           'weak-types',
           'trend-accuracy',
         ]);
+        await scrollAll(tester);
+      });
+
+      testWidgets('SCR-16 one day, a round open (FEAT-18 AC-5)', (
+        tester,
+      ) async {
+        await open(tester, Routes.day('2027-01-05'));
+        expect(find.byType(DayScreen), findsOneWidget);
+        expectNoOverlap(tester, ['day-pick', 'day-summary', 'day-topics']);
+        final round = find.byType(ExpansionTile).first;
+        await tester.ensureVisible(round);
+        await tester.tap(round);
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('day-answer-11')), findsOneWidget);
         await scrollAll(tester);
       });
 
