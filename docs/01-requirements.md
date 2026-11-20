@@ -45,6 +45,7 @@ BrainBubblz (formerly Number Ninja) is an offline Android tablet app that helps 
 | D19 | Own domain (Ken, 2026-11-20, after buying `brainbubblz.com`): the server moves to `api.brainbubblz.com` (the old host is served until the old app is gone), email comes from `noreply@brainbubblz.com`, and the Android application id becomes `com.brainbubblz.kids` with the sign-in link `brainbubblz://signin`. The new id installs as a new app; her data comes back through sync. Replaces D16's "application id stays". | 2026-11-20 |
 | D20 | Siblings (plan §6 decision 5, auto mode 2026-11-20): up to 4 children per family on one device and account, each with own progress, settings and daily screen-time limit; a "Who's playing?" picker, switching needs no PIN unless the parent turns that on; removing a child deletes her data on every device. Details: FEAT-25 design AD-1..16. | 2026-11-20 |
 | D21 | Parent first-run setup (plan FEAT-26, auto mode 2026-11-20): a fresh install opens a step-by-step setup for parents (welcome, PIN, optional sign-in that brings an existing family back, children, daily time and sound, how to reach the parent area) that resumes where it stopped; installs already set up never see it. Replaces the first-run SCR-01 and SCR-12. Details: FEAT-26 design AD-1..13. | 2026-11-20 |
+| D22 | Crash reports (plan FEAT-24, ADR-11, auto mode 2026-11-20): Dart errors are sent to our own server, on by default with a parent switch, anonymous (no account, device id or child data), no third-party SDK; native crashes come from the stores' vitals. | 2026-11-20 |
 
 ## 4. Functional requirements
 
@@ -188,6 +189,18 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | SYN-05 | The app shall sync at launch, on resume, after each finished round, every 5 minutes while online, and on "Sync now" in the parent area; failures retry with growing delays. | M | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |
 | SYN-06 | A PAR-10 reset on a signed-in device shall also clear the account's progress on the server and on her other devices at their next sync. | M | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |
 | SYN-07 | The parent area shall show the signed-in email, the last successful sync time and any sync error in plain words. | S | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |
+
+### Crash reports (CRS)
+
+| ID | Requirement | Pri | Feature | Verified by |
+|---|---|---|---|---|
+| CRS-01 | The app shall record Flutter framework errors and uncaught async errors with error type, message, stack trace, screen (route pattern only), app version, bank version, Android version and device model. (D22) | M | FEAT-24 | |
+| CRS-02 | Before a report is stored, child nicknames and the account email shall be removed from it, and message and stack shall be size-capped. | M | FEAT-24 | |
+| CRS-03 | Repeats of the same error shall be counted on one report, and at most 30 unsent reports kept on the device. | S | FEAT-24 | |
+| CRS-04 | When online, the app shall send unsent reports at launch and on resume without signing them to an account, whether or not the parent is signed in; a failed send retries at a later launch. | M | FEAT-24 | |
+| CRS-05 | A "Send crash reports" switch in the parent settings, on by default, shall stop recording and sending and delete unsent reports when turned off; the privacy note shall say what reports hold. | M | FEAT-24 | |
+| CRS-06 | The server shall accept crash reports from anyone but let only the admin read, change or delete them, refuse oversized fields and rate-limit each IP. | M | FEAT-24 | |
+| CRS-07 | The server shall keep reports 90 days and, when a recipient is configured, email a daily digest of the last day's reports. | C | FEAT-24 | |
 
 ## 5. Non-functional requirements
 
