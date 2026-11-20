@@ -347,4 +347,76 @@ void main() {
       await su.collection('banks').delete(bank.id);
     });
   });
+
+  // FEAT-24 AC-6 (CRS-06, NFR-13): create-only crash reports.
+  group('crash_reports', () {
+    Map<String, dynamic> report([Map<String, dynamic> over = const {}]) => {
+      'signature': uniq('sig'),
+      'app_version': '2.2.0+22',
+      'bank_version': 3,
+      'os': 'Android 14 (SDK 34)',
+      'device': 'samsung SM-X200',
+      'screen': '/quiz/:topicId',
+      'error_type': 'StateError',
+      'message': 'Bad state: x',
+      'stack': '#0 f (a.dart:1)',
+      'count': 1,
+      ...over,
+    };
+
+    test('a guest and a signed-in parent create; only a superuser reads, '
+        'changes or deletes', () async {
+      final mine = await anon
+          .collection('crash_reports')
+          .create(body: report());
+      await a.pb.collection('crash_reports').create(body: report());
+      for (final pb in [anon, a.pb, b.pb]) {
+        final col = pb.collection('crash_reports');
+        expect(await statusOf(() => col.getList()), 403);
+        expect(await statusOf(() => col.getOne(mine.id)), anyOf(403, 404));
+        expect(
+          await statusOf(() => col.update(mine.id, body: {'count': 2})),
+          anyOf(403, 404),
+        );
+        expect(await statusOf(() => col.delete(mine.id)), anyOf(403, 404));
+      }
+      final su = await superuser();
+      expect(
+        (await su.collection('crash_reports').getOne(mine.id)).id,
+        mine.id,
+      );
+      await su.collection('crash_reports').delete(mine.id);
+    });
+
+    test('oversized or malformed fields are refused', () async {
+      final su = await superuser();
+      final col = su.collection('crash_reports');
+      for (final bad in <Map<String, dynamic>>[
+        {'message': 'm' * 1001},
+        {'stack': 's' * 8001},
+        {'device': 'd' * 129},
+        {'count': 0},
+        {'count': 100001},
+        {'signature': ''},
+      ]) {
+        expect(
+          await statusOf(() => col.create(body: report(bad))),
+          400,
+          reason: '$bad',
+        );
+      }
+    });
+
+    test('the 11th create in 60 s from one IP gets 429', () async {
+      final col = anonymous().collection('crash_reports');
+      final codes = <int>[];
+      for (var i = 0; i < 11; i++) {
+        codes.add(await statusOf(() => col.create(body: report())));
+      }
+      // The earlier tests in this group spent part of the 10.
+      expect(codes, contains(429));
+      expect(codes.where((c) => c != 200 && c != 429), isEmpty);
+      expect(codes.first, 200);
+    });
+  });
 }

@@ -22,15 +22,19 @@ dart pub get >/dev/null
 # FEAT-15: bank_publish_test.dart runs tool/publish_bank.dart from the root.
 (cd "$root" && flutter pub get >/dev/null)
 
+# FEAT-24: the crash digest mails CRASH_DIGEST_TO through the same sink and,
+# with CRASH_KEEP_DAYS=0, deletes every report it has read.
 # FEAT-13: mail goes to the sink that auth_test.dart opens on PB_SMTP_PORT;
 # Google secrets are dummies (auth-methods only lists the provider).
 export PB_SMTP_PORT=2526 PB_TEST_HOST=api.example.test
 SERVER_HOSTNAME=$PB_TEST_HOST SMTP_HOST=127.0.0.1 SMTP_PORT=$PB_SMTP_PORT \
   MAIL_SENDER_ADDRESS=noreply@example.test \
   GOOGLE_CLIENT_ID=dummy-id GOOGLE_CLIENT_SECRET=dummy-secret \
+  CRASH_DIGEST_TO=crashes@example.test CRASH_KEEP_DAYS=0 \
   PB_PORT=8090 "$root/scripts/server-local.sh" start "$work/main"
 PB_URL=http://127.0.0.1:8090 PB_BACKUP_OUT="$work/backup.zip" \
-  dart test --concurrency=1 test/api_rules_test.dart test/auth_test.dart test/sync_test.dart test/bank_publish_test.dart test/backup_test.dart
+  CRASH_DIGEST_TO=crashes@example.test \
+  dart test --concurrency=1 test/api_rules_test.dart test/auth_test.dart test/sync_test.dart test/bank_publish_test.dart test/backup_test.dart test/crash_digest_test.dart
 
 # Email through Resend's HTTPS API (mail.pb.js): a second PocketBase with
 # RESEND_API_KEY and the API URL on resend_test.dart's sink. The SMTP host
@@ -45,7 +49,7 @@ PB_URL=http://127.0.0.1:8092 dart test test/resend_test.dart
 # FEAT-14 AC-7 (NFR-16): the app's sync against this server; FEAT-15 AC-6:
 # a published bank reaches the app.
 (cd "$root" && flutter pub get >/dev/null &&
-  SYNC_LIVE_URL=http://127.0.0.1:8090 flutter test test/live/sync_live_test.dart test/live/bank_live_test.dart)
+  SYNC_LIVE_URL=http://127.0.0.1:8090 flutter test test/live/sync_live_test.dart test/live/bank_live_test.dart test/live/crash_live_test.dart)
 
 PB_HOME="$work/restored" PB_SERVICE='' PB_OWNER='' \
   "$root/server/restore.sh" "$work/backup.zip"

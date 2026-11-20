@@ -15,6 +15,7 @@
 # Optional (FEAT-13; unset leaves the feature off):
 #   SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_SENDER_ADDRESS RESEND_API_KEY
 #   GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
+#   CRASH_DIGEST_TO        daily crash digest recipient (FEAT-24)
 # Remote paths expand locally on purpose (stage is a path we created).
 # shellcheck disable=SC2029
 set -euo pipefail
@@ -46,7 +47,8 @@ printf '%s\n' \
   "MAIL_SENDER_ADDRESS=${MAIL_SENDER_ADDRESS:-}" \
   "RESEND_API_KEY=${RESEND_API_KEY:-}" \
   "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}" \
-  "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}" |
+  "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}" \
+  "CRASH_DIGEST_TO=${CRASH_DIGEST_TO:-}" |
   ssh "${ssh_opts[@]}" "$target" "sudo bash '$stage/install.sh'" || status=$?
 ssh "${ssh_opts[@]}" "$target" "rm -rf '$stage'" || true
 [ "$status" -eq 0 ] || exit "$status"
