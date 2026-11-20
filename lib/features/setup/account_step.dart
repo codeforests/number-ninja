@@ -96,6 +96,13 @@ class _AccountStepState extends ConsumerState<AccountStep> {
               ),
             ),
           const AccountForms(),
+          const SizedBox(height: AppSizes.gap),
+          const Text(
+            'No account? Tap Skip for now: you can sign in later in the '
+            'parent area.',
+            key: Key('setup-skip-note'),
+            style: setupBodyStyle,
+          ),
         ],
       );
     }
@@ -111,9 +118,7 @@ class _AccountStepState extends ConsumerState<AccountStep> {
       showActions: !_restoring,
       onBack: state.busy ? null : controller.back,
       nextKey: Key(skip ? 'setup-skip-account' : 'setup-next'),
-      nextLabel: skip
-          ? 'Skip for now (you can do this later in the parent area)'
-          : 'Next',
+      nextLabel: skip ? 'Skip for now' : 'Next',
       onNext: state.busy ? null : () => controller.next(),
       body: body,
     );

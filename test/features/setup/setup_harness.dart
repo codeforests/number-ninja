@@ -50,11 +50,12 @@ class SetupHarness extends QuizHarness {
   Future<void> start(
     WidgetTester tester, {
     Size size = const Size(2560, 1600),
+    bool unlocked = false,
   }) async {
     await tester.pumpWidget(const SizedBox());
     session = AppSession(
       setupStep: await setup.step(),
-      pinSet: await pins().hasPin(),
+      pinSet: await pins().hasPin() && !unlocked,
       clock: clock,
     );
     await pumpApp(tester, size: size);

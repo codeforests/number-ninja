@@ -1,7 +1,7 @@
 # FEAT-26: Parent first-run setup
 
 > Implements: SET-01..07 (D21) · Touches: PAR-01, PRO-02 (replaces their first-run screens), FAM-01, TIM-04, PRC-11, ACC-02/04, SYN-03 · Screens: SCR-19 (new, replaces SCR-01 and first-run SCR-12), SCR-13 forms reused
-> Status: designed · Branch: `feat/FEAT-26-first-run-setup` · 2026-11-20 (auto mode: decisions below taken by Claude on Ken's standing instruction)
+> Status: built (T1–T6) · Branch: `feat/FEAT-26-first-run-setup` · 2026-11-20 (auto mode: decisions below taken by Claude on Ken's standing instruction)
 
 ## Scope
 
@@ -26,6 +26,8 @@ Auto mode (Ken, 2026-11-20): each takes the recommended option; the reason follo
 - **AD-11 Done page** shows a picture of the real home-screen parent button (the same widget, not tappable) and "To change settings or see progress, tap this button on the home screen and enter your PIN." "Start playing" finishes: `setup_step` = NULL, then the usual launch path (SCR-17 with 2+ children, else home).
 - **AD-12 Upgrade (schema v10)**: `setup_step` is added; an install with no PIN gets `welcome`, one with a PIN but `profile_pending` gets `children` (it resumes behind the PIN, AD-4), everything else NULL — set-up installs never see the wizard (SET-07). `profile_pending` stays in the table, no longer read (FEAT-25 AD-12 pattern). Fresh databases start at `welcome`.
 - **AD-13 Look**: a parent screen (`ScreenFrame` look, parent text sizes) but larger: step title `AppText` headline, body ≥ 18 sp, primary button full width ≥ 56 dp pinned at the bottom (`PinnedAction`), Back as a text button beside it. Copy says "your child" (no gendered words). Landscape tablet: illustration/heading on the left, content on the right (`sideBySide`); phone: stacked (NFR-09, NFR-17).
+- **AD-14 (build) Resume asks for the PIN whenever one is set**, not only at the steps after PIN: Back can save the Welcome or PIN step after the PIN exists, and a child restarting there must not reach "Change PIN". `AppSession(setupStep, pinSet)` from `main()`; Back moves are saved too, so a kill reopens at the step shown.
+- **AD-15 (build) Small deviations.** `syncOnce()` returns the `SyncStatus` after the run (null when signed out) instead of the `SyncOutcome`: the restore only needs "did children come back", read from the database. Skip's button says "Skip for now" with "you can sign in later in the parent area" as a line under the forms (the long label wrapped on phones). Removing the only child during setup empties child 1 (`ChildRepository.blank`) since the last child row can't go (FEAT-25 AD-2). `ProfileScreen` loses `firstRun` and the first-run tests of SCR-12 now run on the Children step; the home Parent button is the shared `ParentButton` widget.
 
 ## Design
 
