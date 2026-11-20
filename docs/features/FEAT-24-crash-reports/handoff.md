@@ -1,5 +1,5 @@
 # Handoff: FEAT-24 — Crash reports
-Branch: feat/FEAT-24-crash-reports · PR: draft (see STATE) · Updated: 2026-11-20 by build
+Branch: feat/FEAT-24-crash-reports · PR: https://github.com/codeforests/number-ninja/pull/34 (draft) · Updated: 2026-11-20 by build
 Stage done: build (T1–T6 of 6)
 Next: verify — kickoff: "Verify FEAT-24 on branch feat/FEAT-24-crash-reports. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
