@@ -53,9 +53,7 @@ void main() {
     group(name, () {
       Future<void> open(WidgetTester tester, String location) async {
         if (scale != 1) setTextScale(tester, scale);
-        tester.view.physicalSize = physical(dp);
-        tester.view.devicePixelRatio = 2;
-        await h.openParent(tester, location);
+        await h.openParent(tester, location, size: physical(dp));
       }
 
       testWidgets('SCR-09 dashboard', (tester) async {

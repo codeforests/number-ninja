@@ -38,10 +38,10 @@ void main() {
     expect(adaptive, contains('ic_launcher_foreground'));
   });
 
-  test('version is 2.0.0+3', () {
+  test('version is 2.0.1+4', () {
     expect(
       File('pubspec.yaml').readAsStringSync(),
-      contains('\nversion: 2.0.0+3\n'),
+      contains('\nversion: 2.0.1+4\n'),
     );
   });
 }

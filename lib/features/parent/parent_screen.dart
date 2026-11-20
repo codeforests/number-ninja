@@ -8,6 +8,7 @@ import '../../data/bank_store.dart';
 import '../../data/sync/server_client.dart';
 import '../../domain/screen_time.dart';
 import '../../providers.dart';
+import '../../ui/layout.dart';
 import '../../ui/theme.dart';
 import '../screen_time/screen_time_controller.dart';
 import 'report_export.dart';
@@ -27,6 +28,13 @@ class ParentScreen extends ConsumerWidget {
             padding: const EdgeInsets.only(right: AppSizes.gap),
             child: FilledButton(
               key: const Key('parent-done'),
+              // The child-sized default is too big for a phone's app bar
+              // (FEAT-19).
+              style: compact(MediaQuery.sizeOf(context))
+                  ? FilledButton.styleFrom(
+                      minimumSize: const Size(AppSizes.minTap * 1.5, 48),
+                    )
+                  : null,
               onPressed: () {
                 ref.read(appSessionProvider).lockParent();
                 context.go(Routes.home);

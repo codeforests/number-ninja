@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../app.dart';
 import '../../domain/stats.dart';
 import '../../domain/topics.dart';
+import '../../ui/layout.dart';
 import '../../ui/theme.dart';
 import 'report_export.dart';
 import 'stats_view.dart';
@@ -175,14 +176,31 @@ class _TrackSummary extends StatelessWidget {
 
   final Map<Track, Tally> tracks;
 
+  /// A card's width when the three fit in a row.
+  static const cardWidth = AppSizes.minTap * 3;
+
   @override
-  Widget build(BuildContext context) => Wrap(
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, c) {
+      // Too narrow for three (a phone): two to a row, filling the width
+      // (FEAT-19).
+      const gap = AppSizes.gap;
+      final width =
+          c.maxWidth >= cardWidth * 3 + gap * 2 ||
+              !compact(MediaQuery.sizeOf(context))
+          ? cardWidth
+          : (c.maxWidth - gap) / 2;
+      return _cards(width);
+    },
+  );
+
+  Widget _cards(double width) => Wrap(
     spacing: AppSizes.gap,
     runSpacing: AppSizes.gap,
     children: [
       for (final t in Track.values)
         SizedBox(
-          width: AppSizes.minTap * 3,
+          width: width,
           child: StatsCard(
             key: Key('track-${t.name}'),
             child: Column(

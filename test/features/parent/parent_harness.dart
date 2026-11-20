@@ -48,8 +48,14 @@ class ParentHarness extends QuizHarness {
   }
 
   /// Unlocks the parent area and goes to [location].
-  Future<void> openParent(WidgetTester tester, String location) async {
-    await pumpApp(tester);
+  /// [size] is physical pixels, as [pumpApp] takes it (pumpApp sets the
+  /// view's size, so a size set on the view before this call is lost).
+  Future<void> openParent(
+    WidgetTester tester,
+    String location, {
+    Size? size,
+  }) async {
+    await pumpApp(tester, size: size ?? const Size(2560, 1600));
     container(tester).read(appSessionProvider).unlockParent();
     container(tester).read(routerProvider).go(location);
     await tester.pumpAndSettle();

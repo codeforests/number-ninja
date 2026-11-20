@@ -41,6 +41,7 @@ BrainBubblz (formerly Number Ninja) is an offline Android tablet app that helps 
 | D15 | Sign-in with email and password (verification and forgot-password emails) and with Google. Account screens sit inside the PIN-protected parent area. | 2026-11-15 |
 | D16 | The app gets a new name because "Number Ninja" clashes on Google Play. Ken's choice (2026-11-15): **Brain Bubblz**, with the domain `brainbubblz.com` (display spelling confirmed by Ken 2026-11-17 in FEAT-16: **BrainBubblz**, one word). An iOS app called "BrainBubbles" exists, so the "z" spelling matters. The Android application id stays `com.codeforests.number_ninja`, so the tablet updates in place and keeps her data. | 2026-11-15 |
 | D17 | School topics unlock in order (Ken, 2026-11-15): a School topic opens only after the topic before it in its year is passed with at least 70 % correct. Olympiad topics are never locked. Rules in PRC-12..14; Ken confirmed the defaults on 2026-11-15, including that a year's topics stay locked until every topic of the year before is passed. | 2026-11-15 |
+| D18 | Phone use (Ken, 2026-11-20, after v2.0): on a phone the question screen must show Check without scrolling, and the parent pages must adapt to the phone's size (NFR-17). Tablets keep their layout. | 2026-11-20 |
 
 ## 4. Functional requirements
 
@@ -180,3 +181,4 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | NFR-14 | Child data shall be kept to the minimum (nickname, school year, practice data); no ads, analytics or tracking SDKs; the parent area shall carry a short privacy note on what is stored and where. Data is handled in line with Singapore's PDPA. | M | FEAT-13 | FEAT-13 verify.md (2026-11-16) |
 | NFR-15 | The server shall be set up from files in the repo (`server/`) with one deploy script, back up its data daily and keep 14 days of backups; a restore shall be tested once before v2.0. | M | FEAT-12 | FEAT-12 verify.md (2026-11-16; live backups and restore drill at AC-6) |
 | NFR-16 | Syncing a year of practice (about 20,000 attempts) for the first time shall finish within 60 seconds on home Wi-Fi, and later syncs shall send only what changed. | S | FEAT-14 | FEAT-14 verify.md (2026-11-16; live at AC-9) |
+| NFR-17 | On a phone (shorter side under 600 dp, down to 360 × 640 dp in either orientation), the answer controls of a question, with Check and Next, and every PIN key shall be in view without scrolling; parent pages shall use the phone's width. Tablet layouts stay as in NFR-02. (D18) | M | FEAT-19 | |

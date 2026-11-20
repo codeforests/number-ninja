@@ -2,7 +2,9 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../domain/question.dart';
 import '../../domain/quiz.dart';
+import '../../ui/layout.dart';
 import '../../ui/theme.dart';
+import 'answers/pinned_action.dart';
 
 /// Shown after Check in place of the answer buttons (PRC-05).
 class FeedbackPanel extends StatelessWidget {
@@ -23,7 +25,9 @@ class FeedbackPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final right = result.correct;
     final color = right ? AppColors.leaf : AppColors.berry;
-    return Column(
+    final small = compact(MediaQuery.sizeOf(context));
+    // Next stays in view on a phone; the explanation scrolls (FEAT-19).
+    final content = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Wraps on a narrow screen instead of overflowing (NFR-09).
@@ -72,13 +76,16 @@ class FeedbackPanel extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: AppSizes.gap * 2),
-        FilledButton(
-          key: const Key('next'),
-          onPressed: onNext,
-          child: Text(isLast ? 'See results' : 'Next'),
-        ),
       ],
+    );
+    return PinnedAction(
+      content: content,
+      gap: small ? AppSizes.gap : AppSizes.gap * 2,
+      action: FilledButton(
+        key: const Key('next'),
+        onPressed: onNext,
+        child: Text(isLast ? 'See results' : 'Next'),
+      ),
     );
   }
 }

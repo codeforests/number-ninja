@@ -50,6 +50,8 @@ class TopicLocksScreen extends ConsumerWidget {
               ),
               StatsCard(
                 child: Column(
+                  // Rows start at the left edge, not centred (FEAT-19).
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     for (final t in topics.where((t) => t.track == track))
                       _LockRow(topic: t, lock: value[t.id]!),

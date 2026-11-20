@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:number_ninja/app.dart';
@@ -10,37 +9,8 @@ import 'package:number_ninja/domain/question.dart';
 import 'package:number_ninja/features/quiz/quiz_screen.dart';
 
 import '../../ui/layout_checks.dart';
+import '../../ui/roboto.dart';
 import 'quiz_harness.dart';
-
-/// The SDK's bundled Roboto, so text has the widths the tablet draws
-/// (the default test font, Ahem, is wider).
-Directory _fonts() {
-  final root =
-      Platform.environment['FLUTTER_ROOT'] ??
-      '${Platform.environment['HOME']}/sdk/flutter';
-  return Directory('$root/bin/cache/artifacts/material_fonts');
-}
-
-Future<bool> _loadRoboto() async {
-  final dir = _fonts();
-  if (!File('${dir.path}/Roboto-Regular.ttf').existsSync()) return false;
-  final roboto = FontLoader('Roboto');
-  for (final w in ['Regular', 'Medium', 'Bold', 'Black']) {
-    final bytes = File('${dir.path}/Roboto-$w.ttf').readAsBytesSync();
-    roboto.addFont(Future.value(ByteData.sublistView(bytes)));
-  }
-  await roboto.load();
-  final icons = FontLoader('MaterialIcons')
-    ..addFont(
-      Future.value(
-        ByteData.sublistView(
-          File('${dir.path}/MaterialIcons-Regular.otf').readAsBytesSync(),
-        ),
-      ),
-    );
-  await icons.load();
-  return true;
-}
 
 /// AC-7 (NFR-02): on the 1280 × 800 dp tablet, the longest-prompt question
 /// of every template fits SCR-04 with nothing to scroll.
@@ -56,7 +26,7 @@ void main() {
   }
 
   var roboto = false;
-  setUpAll(() async => roboto = await _loadRoboto());
+  setUpAll(() async => roboto = await loadRoboto());
 
   test('covers every template', () {
     expect(longest, hasLength(greaterThan(100)));
@@ -65,7 +35,9 @@ void main() {
   for (final MapEntry(key: t, value: q) in longest.entries) {
     testWidgets(t, (tester) async {
       if (!roboto) {
-        markTestSkipped('Roboto not found in ${_fonts().path}: AC-7 needs it');
+        markTestSkipped(
+          'Roboto not found in ${robotoDir().path}: AC-7 needs it',
+        );
         return;
       }
       final h = QuizHarness(bank: QuestionBank(version: 1, questions: [q]));
