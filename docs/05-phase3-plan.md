@@ -27,7 +27,7 @@ Changed 2026-11-20 at Ken's request: **app features first**; the new server (ava
 | Milestone | What Ken gets | Features | Release |
 |---|---|---|---|
 | **M8 Family ready** | Siblings, the new parent setup, crash reports | FEAT-25, 26, 24 | `v2.2.0` (APK on GitHub) |
-| **M9 Free and Plus** | Server entitlements, free/Plus split in the app with complimentary grants, weekly parent report email | FEAT-29, 30, 36, 31 | `v2.3.0` (APK on GitHub) |
+| **M9 Free and Plus** | Server entitlements, free/Plus split in the app with complimentary grants, invitation codes for friends, weekly parent report email | FEAT-29, 30, 36, 31 | `v2.3.0` (APK on GitHub) |
 | **Parallel track** | Teacher review web page (`review.brainbubblz.com`), "Report this question"; fixes ship as new bank versions (no app release) | FEAT-28 | bank v3+ |
 | **M10 Store-ready** (after the new server and the seller decision) | Server on Ubuntu 24.04 with off-site backups, website with privacy policy, terms and account deletion, Play-ready AAB, real store purchases | FEAT-21, 22, 23, 35 | `v2.4.0`; **closed test starts here** (14 days, if a personal account) |
 | **M11 Android launch** | Store listing, Families declarations, production rollout | FEAT-32 | `v3.0.0` on Google Play |
@@ -164,8 +164,8 @@ Existing behaviour that moves behind Plus (revision, PDF, day view, server bank)
 9. **Sign in with Apple on iOS.** Apple's rule 4.8 asks for it when Google sign-in is offered. *Recommend:* add it on iOS (and allow it on Android later).
 10. **iPhone or iPad only.** *Recommend:* both; the phone layouts from FEAT-19 already exist.
 11. **Closed-test testers.** 12 people with Android devices who stay opted in for 14 days in a row. *Recommend:* line them up now (friends, family, school parents) so the test starts the day M10 is released (personal account only).
-13. **Invitation codes.** *Recommend:* each code gives 12 months of Plus, up to 5 uses per code unless Ken sets otherwise; the code redeems once per account; when it ends the family drops to free (nothing deleted) unless they subscribe.
 12. **Wider age range** (K2, P3, P4–P6): see §8. *Recommend:* P3 next, then P4; P5–P6 and K2 later.
+13. **Invitation codes.** *Recommend:* each code gives 12 months of Plus, up to 5 uses per code unless Ken sets otherwise; the code redeems once per account; when it ends the family drops to free (nothing deleted) unless they subscribe.
 
 ## 7. What needs Ken's hands, and costs
 
