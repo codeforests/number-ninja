@@ -234,13 +234,13 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| INV-01 | The server shall keep invitation codes (code, Plus length in months, use limit, uses, last redeem day, note, revoked) and their redemptions, readable and writable only by the admin. (D25) | M | FEAT-36 | |
-| INV-02 | A signed-in parent with a verified account shall be able to redeem a valid code, which counts one use and gives the account Plus from an invitation for the code's length. | M | FEAT-36 | |
-| INV-03 | The server shall refuse unknown, revoked, expired and used-up codes, a second use of a code by the same account, and a code for an account that already has Plus from a gift or a store, without counting a use; a code for an account with invitation Plus extends it from its end. | M | FEAT-36 | |
-| INV-04 | The server shall rate-limit redemption attempts. | M | FEAT-36 | |
-| INV-05 | The admin shall be able to make a batch of easy-to-type codes (no 0/O, 1/I), list and revoke them from the repo, and receive a new batch by email, without codes appearing in CI logs. | M | FEAT-36 | |
-| INV-06 | The Plus screen shall let a signed-in parent enter a code, show the new Plus end after redeeming, and explain each refusal in plain words. | M | FEAT-36 | |
-| INV-07 | The app shall not offer invitation codes on iOS. | M | FEAT-36 | |
+| INV-01 | The server shall keep invitation codes (code, Plus length in months, use limit, uses, last redeem day, note, revoked) and their redemptions, readable and writable only by the admin. (D25) | M | FEAT-36 || FEAT-36 AC-1: server `api_rules_test.dart` group `invites` |
+| INV-02 | A signed-in parent with a verified account shall be able to redeem a valid code, which counts one use and gives the account Plus from an invitation for the code's length. | M | FEAT-36 || FEAT-36 AC-2: server `invite_test.dart` |
+| INV-03 | The server shall refuse unknown, revoked, expired and used-up codes, a second use of a code by the same account, and a code for an account that already has Plus from a gift or a store, without counting a use; a code for an account with invitation Plus extends it from its end. | M | FEAT-36 || FEAT-36 AC-3, AC-4: server `invite_test.dart` |
+| INV-04 | The server shall rate-limit redemption attempts. | M | FEAT-36 || FEAT-36 AC-5: server `invite_test.dart` |
+| INV-05 | The admin shall be able to make a batch of easy-to-type codes (no 0/O, 1/I), list and revoke them from the repo, and receive a new batch by email, without codes appearing in CI logs. | M | FEAT-36 || FEAT-36 AC-6: server `invite_test.dart`, `make_invites_test.dart` |
+| INV-06 | The Plus screen shall let a signed-in parent enter a code, show the new Plus end after redeeming, and explain each refusal in plain words. | M | FEAT-36 || FEAT-36 AC-7: `invite_code_test.dart`, `domain/plus_test.dart` |
+| INV-07 | The app shall not offer invitation codes on iOS. | M | FEAT-36 || FEAT-36 AC-8: `invite_code_test.dart` |
 
 ## 5. Non-functional requirements
 
