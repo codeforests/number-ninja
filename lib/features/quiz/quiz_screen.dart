@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -95,6 +97,57 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     });
     final s = ref.watch(quizControllerProvider);
     final quiz = s.quiz;
+    final header = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.revision)
+          Text(
+            revisionHeader(widget.topicId),
+            key: const Key('quiz-revision'),
+            style: const TextStyle(
+              fontSize: AppText.small,
+              fontWeight: FontWeight.w600,
+              color: AppColors.revision,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        _TopBar(quiz: quiz),
+        const SizedBox(height: AppSizes.gap),
+      ],
+    );
+    final Widget? waiting = s.error != null
+        ? const Center(
+            child: Text(
+              'Something went wrong. Go home and try again.',
+              style: TextStyle(fontSize: AppText.body),
+            ),
+          )
+        : quiz == null || quiz.phase == QuizPhase.done
+        ? const Center(child: CircularProgressIndicator())
+        : null;
+    final size = MediaQuery.sizeOf(context);
+    final Widget page;
+    if (waiting == null && compact(size) && sideBySide(size)) {
+      // A landscape phone: the top bar sits over the question half, so the
+      // answer half has the full height (FEAT-19).
+      page = _Body(
+        quiz: quiz!,
+        saving: s.saving,
+        onNext: _next,
+        header: header,
+      );
+    } else {
+      page = Column(
+        children: [
+          header,
+          Expanded(
+            child:
+                waiting ?? _Body(quiz: quiz!, saving: s.saving, onNext: _next),
+          ),
+        ],
+      );
+    }
     return KidBackground(
       scene: KidScene.forTopic(widget.topicId),
       child: Scaffold(
@@ -102,36 +155,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(AppSizes.gap),
-            child: Column(
-              children: [
-                if (widget.revision)
-                  Text(
-                    revisionHeader(widget.topicId),
-                    key: const Key('quiz-revision'),
-                    style: const TextStyle(
-                      fontSize: AppText.small,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.revision,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                _TopBar(quiz: quiz),
-                const SizedBox(height: AppSizes.gap),
-                Expanded(
-                  child: s.error != null
-                      ? const Center(
-                          child: Text(
-                            'Something went wrong. Go home and try again.',
-                            style: TextStyle(fontSize: AppText.body),
-                          ),
-                        )
-                      : quiz == null || quiz.phase == QuizPhase.done
-                      ? const Center(child: CircularProgressIndicator())
-                      : _Body(quiz: quiz, saving: s.saving, onNext: _next),
-                ),
-              ],
-            ),
+            child: page,
           ),
         ),
       ),
@@ -227,14 +251,30 @@ class _TopBar extends StatelessWidget {
 /// The question and its answer area. Side by side, each half scrolls on
 /// its own; stacked, the whole body scrolls. Nothing overlaps (NFR-09).
 class _Body extends ConsumerWidget {
-  const _Body({required this.quiz, required this.saving, required this.onNext});
+  const _Body({
+    required this.quiz,
+    required this.saving,
+    required this.onNext,
+    this.header,
+  });
 
   final Quiz quiz;
   final bool saving;
   final VoidCallback onNext;
 
+  /// The top bar, given only on a landscape phone: it goes over the
+  /// question half.
+  final Widget? header;
+
   /// The smallest box a visual is drawn in.
   static const minVisual = 160.0;
+
+  /// On a phone (FEAT-19): the smallest visual box, and in portrait the
+  /// most the answer area may take: this share of the height, but never
+  /// less than the number pad needs.
+  static const minVisualCompact = 100.0;
+  static const answerShareCompact = 0.6;
+  static const minAnswerCompact = 300.0;
 
   static const promptStyle = TextStyle(
     fontSize: AppText.heading,
@@ -242,12 +282,22 @@ class _Body extends ConsumerWidget {
     color: AppColors.ink,
   );
 
+  /// A phone's prompt is a size smaller, leaving room for the picture.
+  static final promptStyleCompact = promptStyle.copyWith(
+    fontSize: AppText.body,
+  );
+
   /// The prompt's laid-out height at [width], as the Text below draws it.
-  static double promptHeight(BuildContext context, String text, double width) {
+  static double promptHeight(
+    BuildContext context,
+    String text,
+    double width, [
+    TextStyle style = promptStyle,
+  ]) {
     final painter = TextPainter(
       text: TextSpan(
         text: text,
-        style: DefaultTextStyle.of(context).style.merge(promptStyle),
+        style: DefaultTextStyle.of(context).style.merge(style),
       ),
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
@@ -260,7 +310,10 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final q = quiz.current;
-    final prompt = Text(q.prompt, key: const Key('prompt'), style: promptStyle);
+    final size = MediaQuery.sizeOf(context);
+    final small = compact(size);
+    final style = small ? promptStyleCompact : promptStyle;
+    final prompt = Text(q.prompt, key: const Key('prompt'), style: style);
     Widget visualBox(double height) => SizedBox(
       key: const Key('visual-box'),
       height: height,
@@ -292,7 +345,9 @@ class _Body extends ConsumerWidget {
             ),
     );
 
-    if (!sideBySide(MediaQuery.sizeOf(context))) {
+    if (small) return _compact(context, q, prompt, style, visualBox, answer);
+
+    if (!sideBySide(size)) {
       final screen = MediaQuery.sizeOf(context).height;
       return SingleChildScrollView(
         key: const Key('quiz-scroll'),
@@ -363,6 +418,80 @@ class _Body extends ConsumerWidget {
   }
 }
 
+extension on _Body {
+  /// The phone layout (FEAT-19): the answer area (with Check or Next) always
+  /// in view at its natural height, the question scrolling in what's left.
+  /// Stacked in portrait; in landscape, the question half carries [header].
+  Widget _compact(
+    BuildContext context,
+    Question q,
+    Widget prompt,
+    TextStyle style,
+    Widget Function(double height) visualBox,
+    Widget answer,
+  ) {
+    final question = LayoutBuilder(
+      builder: (context, c) {
+        final free =
+            c.maxHeight -
+            _Body.promptHeight(context, q.prompt, c.maxWidth, style) -
+            AppSizes.gap;
+        return SingleChildScrollView(
+          key: const Key('question-scroll'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              prompt,
+              if (q.visual != null) ...[
+                const SizedBox(height: AppSizes.gap),
+                visualBox(
+                  free > _Body.minVisualCompact ? free : _Body.minVisualCompact,
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+    if (header case final header?) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                header,
+                Expanded(child: question),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSizes.gap),
+          Expanded(child: Center(child: answer)),
+        ],
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, c) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: question),
+          const SizedBox(height: AppSizes.gap),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: math.max(
+                c.maxHeight * _Body.answerShareCompact,
+                _Body.minAnswerCompact,
+              ),
+            ),
+            child: Center(heightFactor: 1, child: answer),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AnswerArea extends StatelessWidget {
   const _AnswerArea({
     super.key,
@@ -375,15 +504,25 @@ class _AnswerArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => switch (question.format) {
-    QuestionFormat.mcq => McqAnswer(
-      options: question.options!,
-      onSubmit: onSubmit,
+    QuestionFormat.mcq => _scrollOnPhone(
+      context,
+      McqAnswer(options: question.options!, onSubmit: onSubmit),
     ),
-    QuestionFormat.number => NumberAnswer(onSubmit: onSubmit),
+    QuestionFormat.number => _scrollOnPhone(
+      context,
+      NumberAnswer(onSubmit: onSubmit),
+    ),
     QuestionFormat.drag => DragAnswer(
       items: question.drag!.items,
       slots: question.drag!.slots,
       onSubmit: onSubmit,
     ),
   };
+
+  /// On a phone the answer area has a bounded height: these answers scroll
+  /// in it if ever too tall (Check is in the keypad's top row).
+  static Widget _scrollOnPhone(BuildContext context, Widget child) =>
+      compact(MediaQuery.sizeOf(context))
+      ? SingleChildScrollView(child: child)
+      : child;
 }

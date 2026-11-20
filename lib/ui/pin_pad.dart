@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'layout.dart';
 import 'theme.dart';
 
 /// A big 4-digit keypad with dots. Calls [onCompleted] when 4 digits are in,
@@ -46,6 +47,9 @@ class _PinPadState extends State<PinPad> {
       ['7', '8', '9'],
       ['', '0', '<'],
     ];
+    // On a phone the keys are smaller and closer, so the pad fits a
+    // landscape phone's height (FEAT-19); keys stay at least 64 dp.
+    final small = compact(MediaQuery.sizeOf(context));
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -55,7 +59,7 @@ class _PinPadState extends State<PinPad> {
           children: [
             for (var i = 0; i < widget.length; i++)
               Container(
-                margin: const EdgeInsets.all(8),
+                margin: EdgeInsets.all(small ? 4 : 8),
                 width: 20,
                 height: 20,
                 decoration: BoxDecoration(
@@ -67,29 +71,30 @@ class _PinPadState extends State<PinPad> {
               ),
           ],
         ),
-        const SizedBox(height: AppSizes.gap),
+        SizedBox(height: small ? AppSizes.gap / 2 : AppSizes.gap),
         for (final row in keys)
           Row(
             mainAxisSize: MainAxisSize.min,
-            children: [for (final k in row) _key(k)],
+            children: [for (final k in row) _key(k, small)],
           ),
       ],
     );
   }
 
-  Widget _key(String k) {
-    const size = AppSizes.pinKey;
-    if (k.isEmpty) return const SizedBox(width: size + 16, height: size + 16);
+  Widget _key(String k, bool small) {
+    final size = small ? AppSizes.minTap : AppSizes.pinKey;
+    final pad = small ? 4.0 : 8.0;
+    if (k.isEmpty) return SizedBox(width: size + pad * 2, height: size);
     final isBack = k == '<';
     return Padding(
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.all(pad),
       child: SizedBox(
         width: size,
         height: size,
         child: FilledButton.tonal(
           key: Key(isBack ? 'pin-back' : 'pin-$k'),
           style: FilledButton.styleFrom(
-            minimumSize: const Size(size, size),
+            minimumSize: Size(size, size),
             padding: EdgeInsets.zero,
             shape: const CircleBorder(),
           ),

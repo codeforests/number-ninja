@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../ui/layout.dart';
 import '../../../ui/theme.dart';
+import 'pinned_action.dart';
 
 /// [slots] empty boxes and the [items] as chips (PRC-03). Drag a chip onto a
 /// box, or tap a chip to fill the first empty box; tap a filled box to send
@@ -51,7 +53,11 @@ class _DragAnswerState extends State<DragAnswer> {
   @override
   Widget build(BuildContext context) {
     final complete = !_filled.contains(null);
-    return Column(
+    // On a phone the gaps are smaller, and given a bounded height the boxes
+    // and chips scroll while Check stays in view (FEAT-19).
+    final small = compact(MediaQuery.sizeOf(context));
+    final gap = small ? AppSizes.gap : AppSizes.gap * 2;
+    final content = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Wrap(
@@ -60,7 +66,7 @@ class _DragAnswerState extends State<DragAnswer> {
           runSpacing: AppSizes.gap,
           children: [for (var s = 0; s < widget.slots; s++) _slot(s)],
         ),
-        const SizedBox(height: AppSizes.gap * 2),
+        SizedBox(height: gap),
         Wrap(
           alignment: WrapAlignment.center,
           spacing: AppSizes.gap,
@@ -91,16 +97,18 @@ class _DragAnswerState extends State<DragAnswer> {
                     ),
           ],
         ),
-        const SizedBox(height: AppSizes.gap * 2),
-        FilledButton(
-          key: const Key('check'),
-          onPressed: complete
-              ? () =>
-                    widget.onSubmit([for (final i in _filled) widget.items[i!]])
-              : null,
-          child: const Text('Check'),
-        ),
       ],
+    );
+    return PinnedAction(
+      content: content,
+      gap: gap,
+      action: FilledButton(
+        key: const Key('check'),
+        onPressed: complete
+            ? () => widget.onSubmit([for (final i in _filled) widget.items[i!]])
+            : null,
+        child: const Text('Check'),
+      ),
     );
   }
 

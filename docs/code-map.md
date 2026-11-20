@@ -44,7 +44,7 @@
 
 ## Shared UI (`lib/ui`)
 
-- `theme.dart` (`buildTheme`, all colours, radii and text sizes), `kid_background.dart` (`KidBackground`, `KidScene`, on SCR-02..07), `celebration.dart` (SCR-05 confetti), `layout.dart`, `screen_frame.dart`, `pin_pad.dart`, `trend_chart.dart`.
+- `layout.dart` (`sideBySide`, `compact` = phone, FEAT-19). `theme.dart` (`buildTheme`, all colours, radii and text sizes), `kid_background.dart` (`KidBackground`, `KidScene`, on SCR-02..07), `celebration.dart` (SCR-05 confetti), `layout.dart`, `screen_frame.dart`, `pin_pad.dart`, `trend_chart.dart`.
 - `visuals/`: `question_visual.dart` dispatches to one widget per visual kind (bar model, clock, coins, figure, fraction, groups, picture graph, ruler, shapes) inside `visual_frame.dart`.
 
 ## Question bank (`tool/`)
@@ -58,7 +58,8 @@
 - Helpers: `test/features/quiz/quiz_harness.dart` (`QuizHarness`: fake bank, fixed clock, `pumpApp`, `CountingRepository`, `lockTopics` false = every topic open), `test/ui/layout_checks.dart` (`setTextScale`, `expectNoOverlap`, `expectChildSizes`).
 
 ## Gotchas
-- `pumpApp` sets the surface to 2560×1600: in a layout test set `tester.view.physicalSize` after `openParent`/`pumpApp`, then `pumpAndSettle`, or the size is lost.
+
+- Phone layouts (FEAT-19) hang off `compact(size)`; keep tablet paths untouched. `ParentHarness.openParent` sets the view size itself: pass `size:`, don't set `tester.view.physicalSize` before it. `PinnedAction` only pins when its height is bounded.
 
 - FEAT-16 renamed the app to BrainBubblz for people only. Keep the old name in the application id `com.codeforests.number_ninja`, the Dart package `number_ninja`, the `numberninja://signin` scheme (manifest, nginx return page, `deploy.sh` check), the server unit and nginx file names, the keystore alias and badge id `ninja-master`: changing any of them breaks in-place updates, sign-in or synced badges.
 - FEAT-15 bank tests take versions relative to `bankVersion` (the bundled bank), never literal 1/2, so a `bankVersion` bump keeps them green.
