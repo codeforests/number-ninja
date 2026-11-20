@@ -1,10 +1,13 @@
 import 'package:drift/drift.dart';
 
 import '../domain/clock.dart';
+import '../domain/daily.dart';
 import '../domain/question.dart';
+import '../domain/screen_time.dart';
 import '../domain/stats.dart';
 import '../domain/topics.dart';
 import 'database.dart';
+import 'round_repository.dart';
 
 /// Reads attempts for the dashboard (PAR-05..08) and resets progress
 /// (PAR-10). Joins attempts to the bank by question id (design §4).
@@ -48,6 +51,80 @@ class StatsRepository {
     StatsPeriod period, {
     String? topicId,
   }) => records(since: period.since(clock()), topicId: topicId);
+
+  /// One local calendar day (`yyyy-MM-dd`) for SCR-16 (PAR-11): that day's
+  /// answers grouped by round, and screen time summed over her devices. An
+  /// answer whose question isn't in the bank counts for its round's topic.
+  Future<DayDetail> day(String day) async {
+    final b = dayBounds(day);
+    final rows =
+        await (db.select(db.attempts)
+              ..where(
+                (a) =>
+                    a.answeredAt.isBiggerOrEqualValue(b.start) &
+                    a.answeredAt.isSmallerThanValue(b.end),
+              )
+              ..orderBy([(a) => OrderingTerm.asc(a.answeredAt)]))
+            .get();
+    final ids = {for (final a in rows) a.roundId};
+    final rounds = ids.isEmpty
+        ? const <Round>[]
+        : await (db.select(db.rounds)..where((r) => r.id.isIn(ids))).get();
+    final byRound = <int, List<DayAnswer>>{};
+    final roundById = {for (final r in rounds) r.id: r};
+    for (final a in rows) {
+      byRound
+          .putIfAbsent(a.roundId, () => [])
+          .add(
+            DayAnswer(
+              record: AttemptRecord(
+                questionId: a.questionId,
+                topicId:
+                    _topicOf[a.questionId] ??
+                    roundById[a.roundId]?.topicId ??
+                    '',
+                correct: a.correct,
+                timeMs: a.timeMs,
+                answeredAt: a.answeredAt,
+              ),
+              given: a.answerGiven,
+            ),
+          );
+    }
+    final dayRounds = [
+      for (final r in rounds)
+        DayRound(
+          id: r.id,
+          topicId: r.topicId,
+          level: r.level,
+          revision: r.kind == roundKindRevision,
+          startedAt: r.startedAt,
+          finishedAt: r.finishedAt,
+          score: r.score,
+          stars: r.stars,
+          durationMs: r.durationMs,
+          answers: byRound[r.id] ?? const [],
+        ),
+    ]..sort((x, y) => x.startedAt.compareTo(y.startedAt));
+    final usage = await (db.select(
+      db.dailyUsage,
+    )..where((u) => u.day.equals(day))).get();
+    return DayDetail(
+      day: day,
+      rounds: dayRounds,
+      secondsUsed: usage.fold(0, (s, u) => s + u.secondsUsed),
+    );
+  }
+
+  /// The day of her first saved answer, or null with none.
+  Future<String?> firstDay() async {
+    final first =
+        await (db.select(db.attempts)
+              ..orderBy([(a) => OrderingTerm.asc(a.answeredAt)])
+              ..limit(1))
+            .getSingleOrNull();
+    return first == null ? null : dayKey(first.answeredAt);
+  }
 
   /// The School topic a School round of [roundTopic] mixes in from
   /// (design §5): the first 30-day needs-practice P1/P2 topic other than

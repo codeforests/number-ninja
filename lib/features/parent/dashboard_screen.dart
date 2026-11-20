@@ -3,9 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../app.dart';
+import '../../domain/daily.dart';
 import '../../domain/stats.dart';
 import '../../domain/topics.dart';
 import '../../ui/theme.dart';
+import 'day_screen.dart';
 import 'report_export.dart';
 import 'stats_view.dart';
 
@@ -106,6 +108,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       picker,
       const SizedBox(height: AppSizes.gap),
       _TrackSummary(tracks: tracks),
+      const SizedBox(height: AppSizes.gap),
+      _DailyCard(days: recentDays(data.all)),
       const SizedBox(height: AppSizes.gap),
       _NeedsPractice(ids: needsList, tallies: topicTallies, onOpen: open),
       const SizedBox(height: AppSizes.gap),
@@ -212,6 +216,50 @@ class _TrackSummary extends StatelessWidget {
           ),
         ),
     ],
+  );
+}
+
+/// The latest days with answers, each opening SCR-16 (PAR-11).
+class _DailyCard extends StatelessWidget {
+  const _DailyCard({required this.days});
+
+  final List<({String day, Tally tally})> days;
+
+  @override
+  Widget build(BuildContext context) => StatsCard(
+    key: const Key('daily-card'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: AppSizes.gap,
+          children: [
+            const Text('By day', style: StatsText.heading),
+            TextButton.icon(
+              key: const Key('open-day'),
+              onPressed: () => context.go(Routes.dayToday),
+              icon: const Icon(Icons.calendar_today),
+              label: const Text('Pick a day', style: StatsText.body),
+            ),
+          ],
+        ),
+        for (final d in days)
+          ListTile(
+            key: Key('daily-${d.day}'),
+            contentPadding: EdgeInsets.zero,
+            title: Text(dayLabel(d.day), style: StatsText.body),
+            subtitle: Text(
+              '${count(d.tally)} answers · ${pct(d.tally)} right · '
+              '${secs(d.tally)} avg',
+              style: StatsText.muted,
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go(Routes.day(d.day)),
+          ),
+      ],
+    ),
   );
 }
 
