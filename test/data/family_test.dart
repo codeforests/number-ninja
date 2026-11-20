@@ -5,6 +5,7 @@ import 'package:number_ninja/data/badge_repository.dart';
 import 'package:number_ninja/data/child_repository.dart';
 import 'package:number_ninja/data/database.dart';
 import 'package:number_ninja/data/profile_repository.dart';
+import 'package:number_ninja/data/revision_repository.dart';
 import 'package:number_ninja/data/round_repository.dart';
 import 'package:number_ninja/data/stats_repository.dart';
 import 'package:number_ninja/data/topic_lock_repository.dart';
@@ -124,6 +125,17 @@ void main() {
       // Leo needs practice in p2.times; Mia's p1.bonds round doesn't mix it in.
       expect(await stats(mia).mixInTopic('p1.bonds'), isNull);
       expect(await stats(leo).mixInTopic('p1.bonds'), 'p2.times');
+
+      // Revision history (verify): Leo's revision sees only his round.
+      RevisionRepository revision(int c) =>
+          RevisionRepository(stats(c), rounds(c), clock: () => now);
+      final leoHistory = await revision(leo).history();
+      expect(leoHistory.levels.keys, ['p2.times']);
+      expect(leoHistory.attempts.map((a) => a.questionId).toSet(), {
+        for (var i = 0; i < 10; i++) 't$i',
+      });
+      expect(leoHistory.recentCorrect, {'t0', 't1'});
+      expect((await revision(mia).history()).levels.keys, ['p1.bonds']);
     },
   );
 

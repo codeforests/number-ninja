@@ -133,13 +133,13 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 
 | ID | Requirement | Pri | Feature | Verified by |
 |---|---|---|---|---|
-| FAM-01 | In the parent area the parent shall be able to add up to 4 children (nickname, school year, starting levels, avatar), edit each, and remove one after confirming with the PIN; at least one child stays. (D20) | M | FEAT-25 | |
-| FAM-02 | With more than one child, the app shall show "Who's playing?" (avatar and nickname) at launch, after leaving the parent area and from the home screen; changing child needs no PIN unless the parent turns on "Ask for PIN to change child". | M | FEAT-25 | |
-| FAM-03 | Each child shall have her or his own levels, topic locks, badges, revision, stats, day view, PDF report and settings (daily limit, extra time, sound, parent-opened topics); PRO, PRC, REV, BDG and PAR rules apply per child. | M | FEAT-25 | |
-| FAM-04 | Each child shall have her or his own daily screen-time allowance; one child's used time shall never count for another, and a locked child's lock screen shall let a sibling take over. | M | FEAT-25 | |
-| FAM-05 | The parent dashboard, settings and day view shall show which child they are for and let the parent switch child. | M | FEAT-25 | |
-| FAM-06 | While signed in, each child shall sync as its own record (SYN-02..05 per child); the first sign-in on a device shall merge children with the same nickname and add the rest; a reset (PAR-10, SYN-06) applies to one child; removing a child removes her data on the server and her other devices. | M | FEAT-25 | |
-| FAM-07 | Updating from a one-child version shall make the existing progress, profile and settings the first child, with nothing lost. | M | FEAT-25 | |
+| FAM-01 | In the parent area the parent shall be able to add up to 4 children (nickname, school year, starting levels, avatar), edit each, and remove one after confirming with the PIN; at least one child stays. (D20) | M | FEAT-25 | FEAT-25 verify.md (2026-11-20) |
+| FAM-02 | With more than one child, the app shall show "Who's playing?" (avatar and nickname) at launch, after leaving the parent area and from the home screen; changing child needs no PIN unless the parent turns on "Ask for PIN to change child". | M | FEAT-25 | FEAT-25 verify.md (2026-11-20) |
+| FAM-03 | Each child shall have her or his own levels, topic locks, badges, revision, stats, day view, PDF report and settings (daily limit, extra time, sound, parent-opened topics); PRO, PRC, REV, BDG and PAR rules apply per child. | M | FEAT-25 | FEAT-25 verify.md (2026-11-20) |
+| FAM-04 | Each child shall have her or his own daily screen-time allowance; one child's used time shall never count for another, and a locked child's lock screen shall let a sibling take over. | M | FEAT-25 | FEAT-25 verify.md (2026-11-20) |
+| FAM-05 | The parent dashboard, settings and day view shall show which child they are for and let the parent switch child. | M | FEAT-25 | FEAT-25 verify.md (2026-11-20) |
+| FAM-06 | While signed in, each child shall sync as its own record (SYN-02..05 per child); the first sign-in on a device shall merge children with the same nickname and add the rest; a reset (PAR-10, SYN-06) applies to one child; removing a child removes her data on the server and her other devices. | M | FEAT-25 | FEAT-25 verify.md (2026-11-20; live at AC-10) |
+| FAM-07 | Updating from a one-child version shall make the existing progress, profile and settings the first child, with nothing lost. | M | FEAT-25 | FEAT-25 verify.md (2026-11-20) |
 
 ### Revision (REV)
 
