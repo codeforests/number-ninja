@@ -191,6 +191,14 @@ A second code adds its months to an invitation that hasn't ended. A family
 with Plus from a gift or a store subscription is told to keep the code for
 someone else (no use is spent). Redeeming is limited to 5 tries a minute.
 
+## Weekly progress email (FEAT-31)
+
+Parents with Plus and a verified email turn it on in the app (Parent area → Account). The hourly cron `weekly_email` sends each of them one email from their own Monday 08:00 (time zone taken from the tablet) until Wednesday 08:00, covering Monday to Sunday before, once per week. It needs nothing new on the server: mail goes the normal way (Resend), and the turn-off link uses a random token per account, so there is no secret to set.
+
+- **Who got what:** the admin's `weekly_emails` collection has a row per account and week (`sent`, or `skipped` when no child practised). Rows go after 180 days.
+- **See an email without sending it:** as the superuser, `POST /api/nn/admin/weekly-email` with `{"user": "<user id>", "preview": true}` (optional `"now": "2026-11-23T00:00:00Z"`) answers `{subject, html}`. Without `preview` it runs the job for that time (for one `user`, or everyone) and answers how many were sent, skipped, failed or not due.
+- **Turn-off link:** `/api/nn/weekly-email/off?u=…&t=…` shows a button; pressing it (or a mail app's own unsubscribe button) turns the email off.
+
 ## Admin UI (through an SSH tunnel only)
 
 `ssh -L 8090:127.0.0.1:8090 deploy@<droplet IP>`, then open `http://localhost:8090/_/`

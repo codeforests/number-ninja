@@ -11,6 +11,7 @@ import '../../providers.dart';
 import '../../ui/pin_pad.dart';
 import '../../ui/theme.dart';
 import 'account_forms.dart';
+import 'weekly_email_section.dart';
 
 /// SCR-13 sync error lines (SYN-07). An expired session signs out and shows
 /// the FEAT-13 "Please sign in again." instead.
@@ -85,7 +86,9 @@ const privacyNote =
     'ads, analytics or tracking. Deleting the account removes all of it from '
     'the server; this tablet keeps its copy. If crash reports are on, error '
     'details (app version, device model, the screen and the error) are sent '
-    'with no names or account; turn them off in Settings.';
+    'with no names or account; turn them off in Settings. With the weekly '
+    "email on, a summary of each child's practice is emailed to you each "
+    'Monday.';
 
 String authErrorText(AuthError e) => switch (e) {
   AuthError.offline =>
@@ -256,6 +259,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
         const SizedBox(height: AppSizes.gap),
         const SyncSection(),
         const SizedBox(height: AppSizes.gap),
+        WeeklyEmailSection(email: account.email),
+        const SizedBox(height: AppSizes.gap),
         Wrap(
           spacing: AppSizes.gap,
           runSpacing: AppSizes.gap,
@@ -295,7 +300,9 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
           child: ListView(
             // The PIN step starts at the top, so its message is in view
             // however far the list was scrolled (FEAT-24's longer note).
-            key: ValueKey(_confirmingDelete),
+            // Signing in starts at the top too, so the account shows above
+            // the longer signed-in page (FEAT-31).
+            key: ValueKey((_confirmingDelete, state.signedIn)),
             padding: const EdgeInsets.all(AppSizes.gap),
             children: [
               ...body,

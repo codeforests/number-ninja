@@ -61,7 +61,17 @@ bool plusActive(PlusCache? cache, DateTime now) {
 }
 
 /// The features that need Plus (PD-1). Everything else is free.
-enum PlusFeature { revision, pdfReport, dayView, trends, bankUpdates, siblings }
+enum PlusFeature {
+  revision,
+  pdfReport,
+  dayView,
+  trends,
+  bankUpdates,
+  siblings,
+
+  /// The weekly progress email (FEAT-31 WE-3).
+  weeklyEmail,
+}
 
 /// Whether [feature] is open. Every feature in [PlusFeature] needs Plus; a
 /// later split change is a line here.

@@ -183,6 +183,33 @@ class Account {
   int get hashCode => Object.hash(id, email, viaGoogle);
 }
 
+/// The account's weekly progress email setting (FEAT-31 WE-2, WE-13).
+class WeeklyEmailSetting {
+  const WeeklyEmailSetting({
+    required this.on,
+    required this.tzMinutes,
+    this.verified = true,
+  });
+
+  final bool on;
+
+  /// Minutes east of UTC that the family's week is counted in (WE-4).
+  final int tzMinutes;
+
+  /// Whether the account's email is verified (WE-3).
+  final bool verified;
+
+  @override
+  bool operator ==(Object other) =>
+      other is WeeklyEmailSetting &&
+      other.on == on &&
+      other.tzMinutes == tzMinutes &&
+      other.verified == verified;
+
+  @override
+  int get hashCode => Object.hash(on, tzMinutes, verified);
+}
+
 /// Which sign-in methods the server offers.
 class AuthMethods {
   const AuthMethods({required this.google});
@@ -289,6 +316,14 @@ abstract class ServerClient {
   /// Never throws: offline, 5xx and a lost session are
   /// [InviteFailure.offline].
   Future<InviteResult> redeemInvite(String code);
+
+  /// The signed-in account's weekly email setting (FEAT-31 WE-13). Throws
+  /// [SyncException].
+  Future<WeeklyEmailSetting> weeklyEmail();
+
+  /// Turns the weekly email on (with the device's [tzMinutes]) or off.
+  /// Throws [SyncException].
+  Future<void> setWeeklyEmail({required bool on, int? tzMinutes});
 }
 
 /// [ServerClient] over the `pocketbase` package. The session is persisted
@@ -786,4 +821,33 @@ class PocketBaseServerClient implements ServerClient {
       return const InviteResult.failed(InviteFailure.offline);
     }
   }
+
+  // Weekly progress email (FEAT-31).
+
+  String get _userId {
+    final id = _pb.authStore.record?.id;
+    if (id == null || id.isEmpty) {
+      throw const SyncException(SyncError.expired);
+    }
+    return id;
+  }
+
+  @override
+  Future<WeeklyEmailSetting> weeklyEmail() => _sync(() async {
+    final r = await _users.getOne(_userId);
+    return WeeklyEmailSetting(
+      on: r.getBoolValue('weekly_email'),
+      tzMinutes: r.getIntValue('weekly_email_tz'),
+      verified: r.getBoolValue('verified'),
+    );
+  });
+
+  @override
+  Future<void> setWeeklyEmail({required bool on, int? tzMinutes}) =>
+      _sync(() async {
+        await _users.update(
+          _userId,
+          body: {'weekly_email': on, 'weekly_email_tz': ?tzMinutes},
+        );
+      });
 }

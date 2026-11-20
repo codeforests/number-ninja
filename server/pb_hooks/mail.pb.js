@@ -24,6 +24,8 @@ onMailerSend((e) => {
   if (m.text) body.text = m.text;
   if (m.cc && m.cc.length) body.cc = list(m.cc);
   if (m.bcc && m.bcc.length) body.bcc = list(m.bcc);
+  // FEAT-31 (WE-10): List-Unsubscribe headers of the weekly email.
+  if (m.headers && Object.keys(m.headers).length) body.headers = m.headers;
 
   const res = $http.send({
     url: url,
