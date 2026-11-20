@@ -1,4 +1,4 @@
-package com.brainbubblz.app
+package com.brainbubblz.kids
 
 import android.app.Activity
 import android.content.Intent

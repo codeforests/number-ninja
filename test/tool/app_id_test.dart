@@ -7,14 +7,14 @@ import 'package:flutter_test/flutter_test.dart';
 String read(String path) => File(path).readAsStringSync();
 
 void main() {
-  const kotlin = 'android/app/src/main/kotlin/com/brainbubblz/app';
+  const kotlin = 'android/app/src/main/kotlin/com/brainbubblz/kids';
 
-  test('app id is com.brainbubblz.app', () {
+  test('app id is com.brainbubblz.kids', () {
     final gradle = read('android/app/build.gradle.kts');
-    expect(gradle, contains('applicationId = "com.brainbubblz.app"'));
-    expect(gradle, contains('namespace = "com.brainbubblz.app"'));
+    expect(gradle, contains('applicationId = "com.brainbubblz.kids"'));
+    expect(gradle, contains('namespace = "com.brainbubblz.kids"'));
     for (final f in ['MainActivity.kt', 'SignInReturnActivity.kt']) {
-      expect(read('$kotlin/$f'), startsWith('package com.brainbubblz.app\n'));
+      expect(read('$kotlin/$f'), startsWith('package com.brainbubblz.kids\n'));
     }
     expect(
       Directory('android/app/src/main/kotlin/com/codeforests').existsSync(),
