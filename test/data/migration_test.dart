@@ -40,6 +40,7 @@ int _secs(DateTime t) => t.millisecondsSinceEpoch ~/ 1000;
 
 void main() {
   group('v10', _v10Cases);
+  group('v11', _v11Cases);
 
   test('v1 -> v2 adds rounds.finished_at and backfills it (AC-2)', () async {
     final start = DateTime(2026, 11, 15, 9);
@@ -618,8 +619,10 @@ void _v10Cases() {
       NativeDatabase(
         file,
         setup: (raw) {
-          if (raw.userVersion != 10) return;
+          if (raw.userVersion != 11) return;
           raw.execute('ALTER TABLE app_settings DROP COLUMN setup_step');
+          raw.execute('ALTER TABLE app_settings DROP COLUMN crash_reports');
+          raw.execute('DROP TABLE crash_reports');
           raw.execute('UPDATE app_settings SET $settings');
           raw.userVersion = 9;
         },
@@ -633,7 +636,7 @@ void _v10Cases() {
     addTearDown(db.close);
     final s = await db.getSettings();
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 10);
+    expect(version.data.values.single, 11);
     return s.setupStep;
   }
 
@@ -659,5 +662,38 @@ void _v10Cases() {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     expect((await db.getSettings()).setupStep, 'welcome');
+  });
+}
+
+void _v11Cases() {
+  test('v10 -> v11: crash reports on, empty table (FEAT-24 AC-5)', () async {
+    final dir = await Directory.systemTemp.createTemp('mig11');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/db.sqlite');
+    final fresh = AppDatabase(NativeDatabase(file));
+    await fresh.getSettings();
+    await fresh.close();
+    final db = AppDatabase(
+      NativeDatabase(
+        file,
+        setup: (raw) {
+          if (raw.userVersion != 11) return;
+          raw.execute('ALTER TABLE app_settings DROP COLUMN crash_reports');
+          raw.execute('DROP TABLE crash_reports');
+          raw.userVersion = 10;
+        },
+      ),
+    );
+    addTearDown(db.close);
+    expect((await db.getSettings()).crashReports, isTrue);
+    expect(await db.select(db.crashReports).get(), isEmpty);
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.data.values.single, 11);
+  });
+
+  test('a fresh v11 database sends crash reports (AC-5)', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    expect((await db.getSettings()).crashReports, isTrue);
   });
 }

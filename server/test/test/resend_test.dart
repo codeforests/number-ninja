@@ -95,4 +95,29 @@ void main() {
     final s = await waitFor(email);
     expect(token(s, 'reset.html'), isNotNull, reason: s.body['html'] as String);
   });
+
+  // FEAT-24 AC-7 (CRS-07): this server has no CRASH_DIGEST_TO, so the
+  // digest sends nothing even with reports present.
+  test('no digest address: the crash digest sends no mail', () async {
+    final su = await superuser();
+    await su
+        .collection('crash_reports')
+        .create(
+          body: {
+            'signature': uniq('sig'),
+            'app_version': '2.2.0+22',
+            'error_type': 'StateError',
+            'count': 1,
+          },
+        );
+    final before = sent.length;
+    await su.crons.run('crash_digest');
+    await Future<void>.delayed(const Duration(seconds: 2));
+    expect(sent.skip(before), isEmpty);
+    expect(
+      (await su.collection('crash_reports').getList(perPage: 1)).totalItems,
+      greaterThan(0),
+      reason: 'kept for 90 days',
+    );
+  });
 }

@@ -294,6 +294,10 @@ void main() {
   testWidgets('privacy note is always shown', (tester) async {
     await open(tester);
     expect(textOf(tester, 'account-privacy'), privacyNote);
+    // FEAT-24 (CRS-05): the note names crash reports and how to stop them.
+    expect(privacyNote, contains('crash reports'));
+    expect(privacyNote, contains('turn them off in Settings'));
+    expect(privacyNote, isNot(contains(' her ')));
   });
 
   testWidgets('a build without a server shows no form', (tester) async {

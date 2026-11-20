@@ -215,9 +215,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-  void onRoute() => screenTime.setChildRoute(
-    Routes.counts(router.routerDelegate.currentConfiguration.uri.path),
-  );
+  final crash = ref.read(crashReporterProvider);
+  void onRoute() {
+    final match = router.routerDelegate.currentConfiguration;
+    screenTime.setChildRoute(Routes.counts(match.uri.path));
+    // The pattern, never the ids or query (FEAT-24 AD-6).
+    crash.screen = match.fullPath;
+  }
+
   router.routerDelegate.addListener(onRoute);
   ref.onDispose(() {
     router.routerDelegate.removeListener(onRoute);
@@ -243,16 +248,25 @@ class _NumberNinjaAppState extends ConsumerState<NumberNinjaApp> {
     super.initState();
     // Sync runs while signed in (FEAT-14): keep it alive, and sync on resume.
     ref.listenManual(syncProvider, (_, _) {});
+    // FEAT-24: saved errors need the database; send them at launch/resume.
+    ref
+        .read(crashReporterProvider)
+        .attach(
+          repo: ref.read(crashRepositoryProvider),
+          context: ref.read(crashContextProvider),
+        );
     _lifecycle = AppLifecycleListener(
       onResume: () {
         ref.read(syncProvider.notifier).requestSync();
         ref.read(bankCheckProvider)();
+        ref.read(crashSendProvider)();
       },
     );
     // FEAT-15 (BNK-08): look for a newer bank at launch, at most daily.
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => ref.read(bankCheckProvider)(),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(bankCheckProvider)();
+      ref.read(crashSendProvider)();
+    });
     _warnings = ref.read(screenTimeProvider).warnings.listen((_) {
       _messenger.currentState?.showSnackBar(
         const SnackBar(

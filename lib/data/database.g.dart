@@ -168,6 +168,21 @@ class $AppSettingsTable extends AppSettings
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _crashReportsMeta = const VerificationMeta(
+    'crashReports',
+  );
+  @override
+  late final GeneratedColumn<bool> crashReports = GeneratedColumn<bool>(
+    'crash_reports',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("crash_reports" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -183,6 +198,7 @@ class $AppSettingsTable extends AppSettings
     currentChildId,
     switchNeedsPin,
     setupStep,
+    crashReports,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -292,6 +308,15 @@ class $AppSettingsTable extends AppSettings
         setupStep.isAcceptableOrUnknown(data['setup_step']!, _setupStepMeta),
       );
     }
+    if (data.containsKey('crash_reports')) {
+      context.handle(
+        _crashReportsMeta,
+        crashReports.isAcceptableOrUnknown(
+          data['crash_reports']!,
+          _crashReportsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -353,6 +378,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.string,
         data['${effectivePrefix}setup_step'],
       ),
+      crashReports: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}crash_reports'],
+      )!,
     );
   }
 
@@ -393,6 +422,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   /// `SetupStep` name; null = setup finished. Fresh databases start at
   /// `welcome` (set in onCreate).
   final String? setupStep;
+
+  /// "Send crash reports" (schema v11, FEAT-24 AD-2, AD-3); device-only.
+  final bool crashReports;
   const AppSetting({
     required this.id,
     this.pinHash,
@@ -407,6 +439,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.currentChildId,
     required this.switchNeedsPin,
     this.setupStep,
+    required this.crashReports,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -434,6 +467,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     if (!nullToAbsent || setupStep != null) {
       map['setup_step'] = Variable<String>(setupStep);
     }
+    map['crash_reports'] = Variable<bool>(crashReports);
     return map;
   }
 
@@ -462,6 +496,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       setupStep: setupStep == null && nullToAbsent
           ? const Value.absent()
           : Value(setupStep),
+      crashReports: Value(crashReports),
     );
   }
 
@@ -484,6 +519,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       currentChildId: serializer.fromJson<int>(json['currentChildId']),
       switchNeedsPin: serializer.fromJson<bool>(json['switchNeedsPin']),
       setupStep: serializer.fromJson<String?>(json['setupStep']),
+      crashReports: serializer.fromJson<bool>(json['crashReports']),
     );
   }
   @override
@@ -503,6 +539,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'currentChildId': serializer.toJson<int>(currentChildId),
       'switchNeedsPin': serializer.toJson<bool>(switchNeedsPin),
       'setupStep': serializer.toJson<String?>(setupStep),
+      'crashReports': serializer.toJson<bool>(crashReports),
     };
   }
 
@@ -520,6 +557,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     int? currentChildId,
     bool? switchNeedsPin,
     Value<String?> setupStep = const Value.absent(),
+    bool? crashReports,
   }) => AppSetting(
     id: id ?? this.id,
     pinHash: pinHash.present ? pinHash.value : this.pinHash,
@@ -538,6 +576,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     currentChildId: currentChildId ?? this.currentChildId,
     switchNeedsPin: switchNeedsPin ?? this.switchNeedsPin,
     setupStep: setupStep.present ? setupStep.value : this.setupStep,
+    crashReports: crashReports ?? this.crashReports,
   );
   AppSetting copyWithCompanion(AppSettingsCompanion data) {
     return AppSetting(
@@ -568,6 +607,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ? data.switchNeedsPin.value
           : this.switchNeedsPin,
       setupStep: data.setupStep.present ? data.setupStep.value : this.setupStep,
+      crashReports: data.crashReports.present
+          ? data.crashReports.value
+          : this.crashReports,
     );
   }
 
@@ -586,7 +628,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('bankCheckNote: $bankCheckNote, ')
           ..write('currentChildId: $currentChildId, ')
           ..write('switchNeedsPin: $switchNeedsPin, ')
-          ..write('setupStep: $setupStep')
+          ..write('setupStep: $setupStep, ')
+          ..write('crashReports: $crashReports')
           ..write(')'))
         .toString();
   }
@@ -606,6 +649,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     currentChildId,
     switchNeedsPin,
     setupStep,
+    crashReports,
   );
   @override
   bool operator ==(Object other) =>
@@ -623,7 +667,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.bankCheckNote == this.bankCheckNote &&
           other.currentChildId == this.currentChildId &&
           other.switchNeedsPin == this.switchNeedsPin &&
-          other.setupStep == this.setupStep);
+          other.setupStep == this.setupStep &&
+          other.crashReports == this.crashReports);
 }
 
 class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
@@ -640,6 +685,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<int> currentChildId;
   final Value<bool> switchNeedsPin;
   final Value<String?> setupStep;
+  final Value<bool> crashReports;
   const AppSettingsCompanion({
     this.id = const Value.absent(),
     this.pinHash = const Value.absent(),
@@ -654,6 +700,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.currentChildId = const Value.absent(),
     this.switchNeedsPin = const Value.absent(),
     this.setupStep = const Value.absent(),
+    this.crashReports = const Value.absent(),
   });
   AppSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -669,6 +716,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.currentChildId = const Value.absent(),
     this.switchNeedsPin = const Value.absent(),
     this.setupStep = const Value.absent(),
+    this.crashReports = const Value.absent(),
   });
   static Insertable<AppSetting> custom({
     Expression<int>? id,
@@ -684,6 +732,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<int>? currentChildId,
     Expression<bool>? switchNeedsPin,
     Expression<String>? setupStep,
+    Expression<bool>? crashReports,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -699,6 +748,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (currentChildId != null) 'current_child_id': currentChildId,
       if (switchNeedsPin != null) 'switch_needs_pin': switchNeedsPin,
       if (setupStep != null) 'setup_step': setupStep,
+      if (crashReports != null) 'crash_reports': crashReports,
     });
   }
 
@@ -716,6 +766,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<int>? currentChildId,
     Value<bool>? switchNeedsPin,
     Value<String?>? setupStep,
+    Value<bool>? crashReports,
   }) {
     return AppSettingsCompanion(
       id: id ?? this.id,
@@ -731,6 +782,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       currentChildId: currentChildId ?? this.currentChildId,
       switchNeedsPin: switchNeedsPin ?? this.switchNeedsPin,
       setupStep: setupStep ?? this.setupStep,
+      crashReports: crashReports ?? this.crashReports,
     );
   }
 
@@ -776,6 +828,9 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (setupStep.present) {
       map['setup_step'] = Variable<String>(setupStep.value);
     }
+    if (crashReports.present) {
+      map['crash_reports'] = Variable<bool>(crashReports.value);
+    }
     return map;
   }
 
@@ -794,7 +849,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('bankCheckNote: $bankCheckNote, ')
           ..write('currentChildId: $currentChildId, ')
           ..write('switchNeedsPin: $switchNeedsPin, ')
-          ..write('setupStep: $setupStep')
+          ..write('setupStep: $setupStep, ')
+          ..write('crashReports: $crashReports')
           ..write(')'))
         .toString();
   }
@@ -5804,6 +5860,785 @@ class BankFilesCompanion extends UpdateCompanion<BankFileRow> {
   }
 }
 
+class $CrashReportsTable extends CrashReports
+    with TableInfo<$CrashReportsTable, CrashReport> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CrashReportsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _signatureMeta = const VerificationMeta(
+    'signature',
+  );
+  @override
+  late final GeneratedColumn<String> signature = GeneratedColumn<String>(
+    'signature',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _appVersionMeta = const VerificationMeta(
+    'appVersion',
+  );
+  @override
+  late final GeneratedColumn<String> appVersion = GeneratedColumn<String>(
+    'app_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bankVersionMeta = const VerificationMeta(
+    'bankVersion',
+  );
+  @override
+  late final GeneratedColumn<int> bankVersion = GeneratedColumn<int>(
+    'bank_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _osMeta = const VerificationMeta('os');
+  @override
+  late final GeneratedColumn<String> os = GeneratedColumn<String>(
+    'os',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deviceMeta = const VerificationMeta('device');
+  @override
+  late final GeneratedColumn<String> device = GeneratedColumn<String>(
+    'device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _screenMeta = const VerificationMeta('screen');
+  @override
+  late final GeneratedColumn<String> screen = GeneratedColumn<String>(
+    'screen',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _errorTypeMeta = const VerificationMeta(
+    'errorType',
+  );
+  @override
+  late final GeneratedColumn<String> errorType = GeneratedColumn<String>(
+    'error_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _messageMeta = const VerificationMeta(
+    'message',
+  );
+  @override
+  late final GeneratedColumn<String> message = GeneratedColumn<String>(
+    'message',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stackMeta = const VerificationMeta('stack');
+  @override
+  late final GeneratedColumn<String> stack = GeneratedColumn<String>(
+    'stack',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _countMeta = const VerificationMeta('count');
+  @override
+  late final GeneratedColumn<int> count = GeneratedColumn<int>(
+    'count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _firstAtMeta = const VerificationMeta(
+    'firstAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> firstAt = GeneratedColumn<DateTime>(
+    'first_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastAtMeta = const VerificationMeta('lastAt');
+  @override
+  late final GeneratedColumn<DateTime> lastAt = GeneratedColumn<DateTime>(
+    'last_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sentAtMeta = const VerificationMeta('sentAt');
+  @override
+  late final GeneratedColumn<DateTime> sentAt = GeneratedColumn<DateTime>(
+    'sent_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    signature,
+    appVersion,
+    bankVersion,
+    os,
+    device,
+    screen,
+    errorType,
+    message,
+    stack,
+    count,
+    firstAt,
+    lastAt,
+    sentAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'crash_reports';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CrashReport> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('signature')) {
+      context.handle(
+        _signatureMeta,
+        signature.isAcceptableOrUnknown(data['signature']!, _signatureMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_signatureMeta);
+    }
+    if (data.containsKey('app_version')) {
+      context.handle(
+        _appVersionMeta,
+        appVersion.isAcceptableOrUnknown(data['app_version']!, _appVersionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_appVersionMeta);
+    }
+    if (data.containsKey('bank_version')) {
+      context.handle(
+        _bankVersionMeta,
+        bankVersion.isAcceptableOrUnknown(
+          data['bank_version']!,
+          _bankVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_bankVersionMeta);
+    }
+    if (data.containsKey('os')) {
+      context.handle(_osMeta, os.isAcceptableOrUnknown(data['os']!, _osMeta));
+    } else if (isInserting) {
+      context.missing(_osMeta);
+    }
+    if (data.containsKey('device')) {
+      context.handle(
+        _deviceMeta,
+        device.isAcceptableOrUnknown(data['device']!, _deviceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceMeta);
+    }
+    if (data.containsKey('screen')) {
+      context.handle(
+        _screenMeta,
+        screen.isAcceptableOrUnknown(data['screen']!, _screenMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_screenMeta);
+    }
+    if (data.containsKey('error_type')) {
+      context.handle(
+        _errorTypeMeta,
+        errorType.isAcceptableOrUnknown(data['error_type']!, _errorTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_errorTypeMeta);
+    }
+    if (data.containsKey('message')) {
+      context.handle(
+        _messageMeta,
+        message.isAcceptableOrUnknown(data['message']!, _messageMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_messageMeta);
+    }
+    if (data.containsKey('stack')) {
+      context.handle(
+        _stackMeta,
+        stack.isAcceptableOrUnknown(data['stack']!, _stackMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_stackMeta);
+    }
+    if (data.containsKey('count')) {
+      context.handle(
+        _countMeta,
+        count.isAcceptableOrUnknown(data['count']!, _countMeta),
+      );
+    }
+    if (data.containsKey('first_at')) {
+      context.handle(
+        _firstAtMeta,
+        firstAt.isAcceptableOrUnknown(data['first_at']!, _firstAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_firstAtMeta);
+    }
+    if (data.containsKey('last_at')) {
+      context.handle(
+        _lastAtMeta,
+        lastAt.isAcceptableOrUnknown(data['last_at']!, _lastAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lastAtMeta);
+    }
+    if (data.containsKey('sent_at')) {
+      context.handle(
+        _sentAtMeta,
+        sentAt.isAcceptableOrUnknown(data['sent_at']!, _sentAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CrashReport map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CrashReport(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      signature: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}signature'],
+      )!,
+      appVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}app_version'],
+      )!,
+      bankVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bank_version'],
+      )!,
+      os: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}os'],
+      )!,
+      device: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device'],
+      )!,
+      screen: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}screen'],
+      )!,
+      errorType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error_type'],
+      )!,
+      message: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}message'],
+      )!,
+      stack: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stack'],
+      )!,
+      count: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}count'],
+      )!,
+      firstAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}first_at'],
+      )!,
+      lastAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_at'],
+      )!,
+      sentAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}sent_at'],
+      ),
+    );
+  }
+
+  @override
+  $CrashReportsTable createAlias(String alias) {
+    return $CrashReportsTable(attachedDatabase, alias);
+  }
+}
+
+class CrashReport extends DataClass implements Insertable<CrashReport> {
+  final int id;
+  final String signature;
+  final String appVersion;
+  final int bankVersion;
+  final String os;
+  final String device;
+  final String screen;
+  final String errorType;
+  final String message;
+  final String stack;
+  final int count;
+  final DateTime firstAt;
+  final DateTime lastAt;
+  final DateTime? sentAt;
+  const CrashReport({
+    required this.id,
+    required this.signature,
+    required this.appVersion,
+    required this.bankVersion,
+    required this.os,
+    required this.device,
+    required this.screen,
+    required this.errorType,
+    required this.message,
+    required this.stack,
+    required this.count,
+    required this.firstAt,
+    required this.lastAt,
+    this.sentAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['signature'] = Variable<String>(signature);
+    map['app_version'] = Variable<String>(appVersion);
+    map['bank_version'] = Variable<int>(bankVersion);
+    map['os'] = Variable<String>(os);
+    map['device'] = Variable<String>(device);
+    map['screen'] = Variable<String>(screen);
+    map['error_type'] = Variable<String>(errorType);
+    map['message'] = Variable<String>(message);
+    map['stack'] = Variable<String>(stack);
+    map['count'] = Variable<int>(count);
+    map['first_at'] = Variable<DateTime>(firstAt);
+    map['last_at'] = Variable<DateTime>(lastAt);
+    if (!nullToAbsent || sentAt != null) {
+      map['sent_at'] = Variable<DateTime>(sentAt);
+    }
+    return map;
+  }
+
+  CrashReportsCompanion toCompanion(bool nullToAbsent) {
+    return CrashReportsCompanion(
+      id: Value(id),
+      signature: Value(signature),
+      appVersion: Value(appVersion),
+      bankVersion: Value(bankVersion),
+      os: Value(os),
+      device: Value(device),
+      screen: Value(screen),
+      errorType: Value(errorType),
+      message: Value(message),
+      stack: Value(stack),
+      count: Value(count),
+      firstAt: Value(firstAt),
+      lastAt: Value(lastAt),
+      sentAt: sentAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sentAt),
+    );
+  }
+
+  factory CrashReport.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CrashReport(
+      id: serializer.fromJson<int>(json['id']),
+      signature: serializer.fromJson<String>(json['signature']),
+      appVersion: serializer.fromJson<String>(json['appVersion']),
+      bankVersion: serializer.fromJson<int>(json['bankVersion']),
+      os: serializer.fromJson<String>(json['os']),
+      device: serializer.fromJson<String>(json['device']),
+      screen: serializer.fromJson<String>(json['screen']),
+      errorType: serializer.fromJson<String>(json['errorType']),
+      message: serializer.fromJson<String>(json['message']),
+      stack: serializer.fromJson<String>(json['stack']),
+      count: serializer.fromJson<int>(json['count']),
+      firstAt: serializer.fromJson<DateTime>(json['firstAt']),
+      lastAt: serializer.fromJson<DateTime>(json['lastAt']),
+      sentAt: serializer.fromJson<DateTime?>(json['sentAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'signature': serializer.toJson<String>(signature),
+      'appVersion': serializer.toJson<String>(appVersion),
+      'bankVersion': serializer.toJson<int>(bankVersion),
+      'os': serializer.toJson<String>(os),
+      'device': serializer.toJson<String>(device),
+      'screen': serializer.toJson<String>(screen),
+      'errorType': serializer.toJson<String>(errorType),
+      'message': serializer.toJson<String>(message),
+      'stack': serializer.toJson<String>(stack),
+      'count': serializer.toJson<int>(count),
+      'firstAt': serializer.toJson<DateTime>(firstAt),
+      'lastAt': serializer.toJson<DateTime>(lastAt),
+      'sentAt': serializer.toJson<DateTime?>(sentAt),
+    };
+  }
+
+  CrashReport copyWith({
+    int? id,
+    String? signature,
+    String? appVersion,
+    int? bankVersion,
+    String? os,
+    String? device,
+    String? screen,
+    String? errorType,
+    String? message,
+    String? stack,
+    int? count,
+    DateTime? firstAt,
+    DateTime? lastAt,
+    Value<DateTime?> sentAt = const Value.absent(),
+  }) => CrashReport(
+    id: id ?? this.id,
+    signature: signature ?? this.signature,
+    appVersion: appVersion ?? this.appVersion,
+    bankVersion: bankVersion ?? this.bankVersion,
+    os: os ?? this.os,
+    device: device ?? this.device,
+    screen: screen ?? this.screen,
+    errorType: errorType ?? this.errorType,
+    message: message ?? this.message,
+    stack: stack ?? this.stack,
+    count: count ?? this.count,
+    firstAt: firstAt ?? this.firstAt,
+    lastAt: lastAt ?? this.lastAt,
+    sentAt: sentAt.present ? sentAt.value : this.sentAt,
+  );
+  CrashReport copyWithCompanion(CrashReportsCompanion data) {
+    return CrashReport(
+      id: data.id.present ? data.id.value : this.id,
+      signature: data.signature.present ? data.signature.value : this.signature,
+      appVersion: data.appVersion.present
+          ? data.appVersion.value
+          : this.appVersion,
+      bankVersion: data.bankVersion.present
+          ? data.bankVersion.value
+          : this.bankVersion,
+      os: data.os.present ? data.os.value : this.os,
+      device: data.device.present ? data.device.value : this.device,
+      screen: data.screen.present ? data.screen.value : this.screen,
+      errorType: data.errorType.present ? data.errorType.value : this.errorType,
+      message: data.message.present ? data.message.value : this.message,
+      stack: data.stack.present ? data.stack.value : this.stack,
+      count: data.count.present ? data.count.value : this.count,
+      firstAt: data.firstAt.present ? data.firstAt.value : this.firstAt,
+      lastAt: data.lastAt.present ? data.lastAt.value : this.lastAt,
+      sentAt: data.sentAt.present ? data.sentAt.value : this.sentAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CrashReport(')
+          ..write('id: $id, ')
+          ..write('signature: $signature, ')
+          ..write('appVersion: $appVersion, ')
+          ..write('bankVersion: $bankVersion, ')
+          ..write('os: $os, ')
+          ..write('device: $device, ')
+          ..write('screen: $screen, ')
+          ..write('errorType: $errorType, ')
+          ..write('message: $message, ')
+          ..write('stack: $stack, ')
+          ..write('count: $count, ')
+          ..write('firstAt: $firstAt, ')
+          ..write('lastAt: $lastAt, ')
+          ..write('sentAt: $sentAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    signature,
+    appVersion,
+    bankVersion,
+    os,
+    device,
+    screen,
+    errorType,
+    message,
+    stack,
+    count,
+    firstAt,
+    lastAt,
+    sentAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CrashReport &&
+          other.id == this.id &&
+          other.signature == this.signature &&
+          other.appVersion == this.appVersion &&
+          other.bankVersion == this.bankVersion &&
+          other.os == this.os &&
+          other.device == this.device &&
+          other.screen == this.screen &&
+          other.errorType == this.errorType &&
+          other.message == this.message &&
+          other.stack == this.stack &&
+          other.count == this.count &&
+          other.firstAt == this.firstAt &&
+          other.lastAt == this.lastAt &&
+          other.sentAt == this.sentAt);
+}
+
+class CrashReportsCompanion extends UpdateCompanion<CrashReport> {
+  final Value<int> id;
+  final Value<String> signature;
+  final Value<String> appVersion;
+  final Value<int> bankVersion;
+  final Value<String> os;
+  final Value<String> device;
+  final Value<String> screen;
+  final Value<String> errorType;
+  final Value<String> message;
+  final Value<String> stack;
+  final Value<int> count;
+  final Value<DateTime> firstAt;
+  final Value<DateTime> lastAt;
+  final Value<DateTime?> sentAt;
+  const CrashReportsCompanion({
+    this.id = const Value.absent(),
+    this.signature = const Value.absent(),
+    this.appVersion = const Value.absent(),
+    this.bankVersion = const Value.absent(),
+    this.os = const Value.absent(),
+    this.device = const Value.absent(),
+    this.screen = const Value.absent(),
+    this.errorType = const Value.absent(),
+    this.message = const Value.absent(),
+    this.stack = const Value.absent(),
+    this.count = const Value.absent(),
+    this.firstAt = const Value.absent(),
+    this.lastAt = const Value.absent(),
+    this.sentAt = const Value.absent(),
+  });
+  CrashReportsCompanion.insert({
+    this.id = const Value.absent(),
+    required String signature,
+    required String appVersion,
+    required int bankVersion,
+    required String os,
+    required String device,
+    required String screen,
+    required String errorType,
+    required String message,
+    required String stack,
+    this.count = const Value.absent(),
+    required DateTime firstAt,
+    required DateTime lastAt,
+    this.sentAt = const Value.absent(),
+  }) : signature = Value(signature),
+       appVersion = Value(appVersion),
+       bankVersion = Value(bankVersion),
+       os = Value(os),
+       device = Value(device),
+       screen = Value(screen),
+       errorType = Value(errorType),
+       message = Value(message),
+       stack = Value(stack),
+       firstAt = Value(firstAt),
+       lastAt = Value(lastAt);
+  static Insertable<CrashReport> custom({
+    Expression<int>? id,
+    Expression<String>? signature,
+    Expression<String>? appVersion,
+    Expression<int>? bankVersion,
+    Expression<String>? os,
+    Expression<String>? device,
+    Expression<String>? screen,
+    Expression<String>? errorType,
+    Expression<String>? message,
+    Expression<String>? stack,
+    Expression<int>? count,
+    Expression<DateTime>? firstAt,
+    Expression<DateTime>? lastAt,
+    Expression<DateTime>? sentAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (signature != null) 'signature': signature,
+      if (appVersion != null) 'app_version': appVersion,
+      if (bankVersion != null) 'bank_version': bankVersion,
+      if (os != null) 'os': os,
+      if (device != null) 'device': device,
+      if (screen != null) 'screen': screen,
+      if (errorType != null) 'error_type': errorType,
+      if (message != null) 'message': message,
+      if (stack != null) 'stack': stack,
+      if (count != null) 'count': count,
+      if (firstAt != null) 'first_at': firstAt,
+      if (lastAt != null) 'last_at': lastAt,
+      if (sentAt != null) 'sent_at': sentAt,
+    });
+  }
+
+  CrashReportsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? signature,
+    Value<String>? appVersion,
+    Value<int>? bankVersion,
+    Value<String>? os,
+    Value<String>? device,
+    Value<String>? screen,
+    Value<String>? errorType,
+    Value<String>? message,
+    Value<String>? stack,
+    Value<int>? count,
+    Value<DateTime>? firstAt,
+    Value<DateTime>? lastAt,
+    Value<DateTime?>? sentAt,
+  }) {
+    return CrashReportsCompanion(
+      id: id ?? this.id,
+      signature: signature ?? this.signature,
+      appVersion: appVersion ?? this.appVersion,
+      bankVersion: bankVersion ?? this.bankVersion,
+      os: os ?? this.os,
+      device: device ?? this.device,
+      screen: screen ?? this.screen,
+      errorType: errorType ?? this.errorType,
+      message: message ?? this.message,
+      stack: stack ?? this.stack,
+      count: count ?? this.count,
+      firstAt: firstAt ?? this.firstAt,
+      lastAt: lastAt ?? this.lastAt,
+      sentAt: sentAt ?? this.sentAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (signature.present) {
+      map['signature'] = Variable<String>(signature.value);
+    }
+    if (appVersion.present) {
+      map['app_version'] = Variable<String>(appVersion.value);
+    }
+    if (bankVersion.present) {
+      map['bank_version'] = Variable<int>(bankVersion.value);
+    }
+    if (os.present) {
+      map['os'] = Variable<String>(os.value);
+    }
+    if (device.present) {
+      map['device'] = Variable<String>(device.value);
+    }
+    if (screen.present) {
+      map['screen'] = Variable<String>(screen.value);
+    }
+    if (errorType.present) {
+      map['error_type'] = Variable<String>(errorType.value);
+    }
+    if (message.present) {
+      map['message'] = Variable<String>(message.value);
+    }
+    if (stack.present) {
+      map['stack'] = Variable<String>(stack.value);
+    }
+    if (count.present) {
+      map['count'] = Variable<int>(count.value);
+    }
+    if (firstAt.present) {
+      map['first_at'] = Variable<DateTime>(firstAt.value);
+    }
+    if (lastAt.present) {
+      map['last_at'] = Variable<DateTime>(lastAt.value);
+    }
+    if (sentAt.present) {
+      map['sent_at'] = Variable<DateTime>(sentAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CrashReportsCompanion(')
+          ..write('id: $id, ')
+          ..write('signature: $signature, ')
+          ..write('appVersion: $appVersion, ')
+          ..write('bankVersion: $bankVersion, ')
+          ..write('os: $os, ')
+          ..write('device: $device, ')
+          ..write('screen: $screen, ')
+          ..write('errorType: $errorType, ')
+          ..write('message: $message, ')
+          ..write('stack: $stack, ')
+          ..write('count: $count, ')
+          ..write('firstAt: $firstAt, ')
+          ..write('lastAt: $lastAt, ')
+          ..write('sentAt: $sentAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5819,6 +6654,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SyncFieldsTable syncFields = $SyncFieldsTable(this);
   late final $SyncStateTable syncState = $SyncStateTable(this);
   late final $BankFilesTable bankFiles = $BankFilesTable(this);
+  late final $CrashReportsTable crashReports = $CrashReportsTable(this);
   late final Index roundsUuid = Index(
     'rounds_uuid',
     'CREATE UNIQUE INDEX rounds_uuid ON rounds (uuid)',
@@ -5844,6 +6680,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     syncFields,
     syncState,
     bankFiles,
+    crashReports,
     roundsUuid,
     attemptsUuid,
   ];
@@ -5864,6 +6701,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<int> currentChildId,
       Value<bool> switchNeedsPin,
       Value<String?> setupStep,
+      Value<bool> crashReports,
     });
 typedef $$AppSettingsTableUpdateCompanionBuilder =
     AppSettingsCompanion Function({
@@ -5880,6 +6718,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<int> currentChildId,
       Value<bool> switchNeedsPin,
       Value<String?> setupStep,
+      Value<bool> crashReports,
     });
 
 class $$AppSettingsTableFilterComposer
@@ -5953,6 +6792,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<String> get setupStep => $composableBuilder(
     column: $table.setupStep,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get crashReports => $composableBuilder(
+    column: $table.crashReports,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -6030,6 +6874,11 @@ class $$AppSettingsTableOrderingComposer
     column: $table.setupStep,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get crashReports => $composableBuilder(
+    column: $table.crashReports,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AppSettingsTableAnnotationComposer
@@ -6093,6 +6942,11 @@ class $$AppSettingsTableAnnotationComposer
 
   GeneratedColumn<String> get setupStep =>
       $composableBuilder(column: $table.setupStep, builder: (column) => column);
+
+  GeneratedColumn<bool> get crashReports => $composableBuilder(
+    column: $table.crashReports,
+    builder: (column) => column,
+  );
 }
 
 class $$AppSettingsTableTableManager
@@ -6139,6 +6993,7 @@ class $$AppSettingsTableTableManager
                 Value<int> currentChildId = const Value.absent(),
                 Value<bool> switchNeedsPin = const Value.absent(),
                 Value<String?> setupStep = const Value.absent(),
+                Value<bool> crashReports = const Value.absent(),
               }) => AppSettingsCompanion(
                 id: id,
                 pinHash: pinHash,
@@ -6153,6 +7008,7 @@ class $$AppSettingsTableTableManager
                 currentChildId: currentChildId,
                 switchNeedsPin: switchNeedsPin,
                 setupStep: setupStep,
+                crashReports: crashReports,
               ),
           createCompanionCallback:
               ({
@@ -6169,6 +7025,7 @@ class $$AppSettingsTableTableManager
                 Value<int> currentChildId = const Value.absent(),
                 Value<bool> switchNeedsPin = const Value.absent(),
                 Value<String?> setupStep = const Value.absent(),
+                Value<bool> crashReports = const Value.absent(),
               }) => AppSettingsCompanion.insert(
                 id: id,
                 pinHash: pinHash,
@@ -6183,6 +7040,7 @@ class $$AppSettingsTableTableManager
                 currentChildId: currentChildId,
                 switchNeedsPin: switchNeedsPin,
                 setupStep: setupStep,
+                crashReports: crashReports,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -9281,6 +10139,384 @@ typedef $$BankFilesTableProcessedTableManager =
       BankFileRow,
       PrefetchHooks Function()
     >;
+typedef $$CrashReportsTableCreateCompanionBuilder =
+    CrashReportsCompanion Function({
+      Value<int> id,
+      required String signature,
+      required String appVersion,
+      required int bankVersion,
+      required String os,
+      required String device,
+      required String screen,
+      required String errorType,
+      required String message,
+      required String stack,
+      Value<int> count,
+      required DateTime firstAt,
+      required DateTime lastAt,
+      Value<DateTime?> sentAt,
+    });
+typedef $$CrashReportsTableUpdateCompanionBuilder =
+    CrashReportsCompanion Function({
+      Value<int> id,
+      Value<String> signature,
+      Value<String> appVersion,
+      Value<int> bankVersion,
+      Value<String> os,
+      Value<String> device,
+      Value<String> screen,
+      Value<String> errorType,
+      Value<String> message,
+      Value<String> stack,
+      Value<int> count,
+      Value<DateTime> firstAt,
+      Value<DateTime> lastAt,
+      Value<DateTime?> sentAt,
+    });
+
+class $$CrashReportsTableFilterComposer
+    extends Composer<_$AppDatabase, $CrashReportsTable> {
+  $$CrashReportsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get signature => $composableBuilder(
+    column: $table.signature,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get appVersion => $composableBuilder(
+    column: $table.appVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bankVersion => $composableBuilder(
+    column: $table.bankVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get os => $composableBuilder(
+    column: $table.os,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get device => $composableBuilder(
+    column: $table.device,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get screen => $composableBuilder(
+    column: $table.screen,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get errorType => $composableBuilder(
+    column: $table.errorType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stack => $composableBuilder(
+    column: $table.stack,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get count => $composableBuilder(
+    column: $table.count,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get firstAt => $composableBuilder(
+    column: $table.firstAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastAt => $composableBuilder(
+    column: $table.lastAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CrashReportsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CrashReportsTable> {
+  $$CrashReportsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get signature => $composableBuilder(
+    column: $table.signature,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get appVersion => $composableBuilder(
+    column: $table.appVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bankVersion => $composableBuilder(
+    column: $table.bankVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get os => $composableBuilder(
+    column: $table.os,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get device => $composableBuilder(
+    column: $table.device,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get screen => $composableBuilder(
+    column: $table.screen,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get errorType => $composableBuilder(
+    column: $table.errorType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get message => $composableBuilder(
+    column: $table.message,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stack => $composableBuilder(
+    column: $table.stack,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get count => $composableBuilder(
+    column: $table.count,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get firstAt => $composableBuilder(
+    column: $table.firstAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastAt => $composableBuilder(
+    column: $table.lastAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CrashReportsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CrashReportsTable> {
+  $$CrashReportsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get signature =>
+      $composableBuilder(column: $table.signature, builder: (column) => column);
+
+  GeneratedColumn<String> get appVersion => $composableBuilder(
+    column: $table.appVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get bankVersion => $composableBuilder(
+    column: $table.bankVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get os =>
+      $composableBuilder(column: $table.os, builder: (column) => column);
+
+  GeneratedColumn<String> get device =>
+      $composableBuilder(column: $table.device, builder: (column) => column);
+
+  GeneratedColumn<String> get screen =>
+      $composableBuilder(column: $table.screen, builder: (column) => column);
+
+  GeneratedColumn<String> get errorType =>
+      $composableBuilder(column: $table.errorType, builder: (column) => column);
+
+  GeneratedColumn<String> get message =>
+      $composableBuilder(column: $table.message, builder: (column) => column);
+
+  GeneratedColumn<String> get stack =>
+      $composableBuilder(column: $table.stack, builder: (column) => column);
+
+  GeneratedColumn<int> get count =>
+      $composableBuilder(column: $table.count, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get firstAt =>
+      $composableBuilder(column: $table.firstAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastAt =>
+      $composableBuilder(column: $table.lastAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get sentAt =>
+      $composableBuilder(column: $table.sentAt, builder: (column) => column);
+}
+
+class $$CrashReportsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CrashReportsTable,
+          CrashReport,
+          $$CrashReportsTableFilterComposer,
+          $$CrashReportsTableOrderingComposer,
+          $$CrashReportsTableAnnotationComposer,
+          $$CrashReportsTableCreateCompanionBuilder,
+          $$CrashReportsTableUpdateCompanionBuilder,
+          (
+            CrashReport,
+            BaseReferences<_$AppDatabase, $CrashReportsTable, CrashReport>,
+          ),
+          CrashReport,
+          PrefetchHooks Function()
+        > {
+  $$CrashReportsTableTableManager(_$AppDatabase db, $CrashReportsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CrashReportsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CrashReportsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CrashReportsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> signature = const Value.absent(),
+                Value<String> appVersion = const Value.absent(),
+                Value<int> bankVersion = const Value.absent(),
+                Value<String> os = const Value.absent(),
+                Value<String> device = const Value.absent(),
+                Value<String> screen = const Value.absent(),
+                Value<String> errorType = const Value.absent(),
+                Value<String> message = const Value.absent(),
+                Value<String> stack = const Value.absent(),
+                Value<int> count = const Value.absent(),
+                Value<DateTime> firstAt = const Value.absent(),
+                Value<DateTime> lastAt = const Value.absent(),
+                Value<DateTime?> sentAt = const Value.absent(),
+              }) => CrashReportsCompanion(
+                id: id,
+                signature: signature,
+                appVersion: appVersion,
+                bankVersion: bankVersion,
+                os: os,
+                device: device,
+                screen: screen,
+                errorType: errorType,
+                message: message,
+                stack: stack,
+                count: count,
+                firstAt: firstAt,
+                lastAt: lastAt,
+                sentAt: sentAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String signature,
+                required String appVersion,
+                required int bankVersion,
+                required String os,
+                required String device,
+                required String screen,
+                required String errorType,
+                required String message,
+                required String stack,
+                Value<int> count = const Value.absent(),
+                required DateTime firstAt,
+                required DateTime lastAt,
+                Value<DateTime?> sentAt = const Value.absent(),
+              }) => CrashReportsCompanion.insert(
+                id: id,
+                signature: signature,
+                appVersion: appVersion,
+                bankVersion: bankVersion,
+                os: os,
+                device: device,
+                screen: screen,
+                errorType: errorType,
+                message: message,
+                stack: stack,
+                count: count,
+                firstAt: firstAt,
+                lastAt: lastAt,
+                sentAt: sentAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CrashReportsTable, CrashReport>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $CrashReportsTable,
+                    CrashReport
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CrashReportsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CrashReportsTable,
+      CrashReport,
+      $$CrashReportsTableFilterComposer,
+      $$CrashReportsTableOrderingComposer,
+      $$CrashReportsTableAnnotationComposer,
+      $$CrashReportsTableCreateCompanionBuilder,
+      $$CrashReportsTableUpdateCompanionBuilder,
+      (
+        CrashReport,
+        BaseReferences<_$AppDatabase, $CrashReportsTable, CrashReport>,
+      ),
+      CrashReport,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9309,4 +10545,6 @@ class $AppDatabaseManager {
       $$SyncStateTableTableManager(_db, _db.syncState);
   $$BankFilesTableTableManager get bankFiles =>
       $$BankFilesTableTableManager(_db, _db.bankFiles);
+  $$CrashReportsTableTableManager get crashReports =>
+      $$CrashReportsTableTableManager(_db, _db.crashReports);
 }

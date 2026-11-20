@@ -202,6 +202,10 @@ abstract class ServerClient {
 
   /// The bank file of [info]. Throws [SyncException].
   Future<List<int>> downloadBank(BankInfo info);
+
+  /// Posts one crash report (FEAT-24 AD-4) with no auth header, even when
+  /// signed in. Throws [SyncException].
+  Future<void> sendCrashReport(Map<String, dynamic> body);
 }
 
 /// [ServerClient] over the `pocketbase` package. The session is persisted
@@ -644,4 +648,21 @@ class PocketBaseServerClient implements ServerClient {
       client.close();
     }
   }, limit: const Duration(seconds: 30));
+
+  @override
+  Future<void> sendCrashReport(Map<String, dynamic> body) => _sync(() async {
+    final client = httpClientFactory?.call() ?? http.Client();
+    try {
+      final r = await client.post(
+        config.url!.resolve('/api/collections/crash_reports/records'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+      if (r.statusCode != 200) {
+        throw SyncException(SyncError.server, status: r.statusCode);
+      }
+    } finally {
+      client.close();
+    }
+  });
 }

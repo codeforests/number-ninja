@@ -142,6 +142,19 @@ A bank that needs a newer app (new topic, visual kind or question format) also b
 `ssh -L 8090:127.0.0.1:8090 deploy@<droplet IP>`, then open `http://localhost:8090/_/`
 and sign in with the superuser email and password.
 
+## Crash reports (FEAT-24)
+
+The app sends Dart errors, with no names or account, to the `crash_reports`
+collection (create-only; nobody but a superuser can read them). Read them in
+the admin UI above: Collections → `crash_reports`, newest first; `count` is how
+many times the same error (`signature`) happened on one device. Reports are
+deleted after 90 days.
+
+Optional daily digest: add the repo secret `CRASH_DIGEST_TO` (your email) and
+run "Deploy server". Every day at 9 am Singapore it emails one line per kind
+of error from the last 24 hours; with no reports it sends nothing. To see one
+now, run the `crash_digest` job from the admin UI (Settings → Crons).
+
 ## Backups and restore
 
 PocketBase makes a backup every day at 03:00 Singapore time and keeps 14

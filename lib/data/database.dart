@@ -48,8 +48,30 @@ class AppSettings extends Table {
   /// `welcome` (set in onCreate).
   TextColumn get setupStep => text().nullable()();
 
+  /// "Send crash reports" (schema v11, FEAT-24 AD-2, AD-3); device-only.
+  BoolColumn get crashReports => boolean().withDefault(const Constant(true))();
+
   @override
   Set<Column> get primaryKey => {id};
+}
+
+/// Captured app errors waiting to be sent (schema v11, FEAT-24 AD-8). The
+/// same [signature] and [appVersion] on an unsent row bumps [count].
+class CrashReports extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get signature => text()();
+  TextColumn get appVersion => text()();
+  IntColumn get bankVersion => integer()();
+  TextColumn get os => text()();
+  TextColumn get device => text()();
+  TextColumn get screen => text()();
+  TextColumn get errorType => text()();
+  TextColumn get message => text()();
+  TextColumn get stack => text()();
+  IntColumn get count => integer().withDefault(const Constant(1))();
+  DateTimeColumn get firstAt => dateTime()();
+  DateTimeColumn get lastAt => dateTime()();
+  DateTimeColumn get sentAt => dateTime().nullable()();
 }
 
 /// The children of the family (schema v9, FEAT-25, FAM-01). There is always
@@ -268,6 +290,7 @@ const syncFieldNames = [
     SyncFields,
     SyncState,
     BankFiles,
+    CrashReports,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -275,7 +298,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'number_ninja'));
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -312,6 +335,11 @@ class AppDatabase extends _$AppDatabase {
       if (from < 9) await _v9Columns(m);
       // v10 column before _from6To7 too (code-map gotcha).
       if (from < 10) await m.addColumn(appSettings, appSettings.setupStep);
+      // v11 (FEAT-24) before _from6To7 too.
+      if (from < 11) {
+        await m.addColumn(appSettings, appSettings.crashReports);
+        await m.createTable(crashReports);
+      }
       if (from < 7) await _from6To7(m);
       if (from < 9) await _from8To9(m);
       if (from < 10) await _from9To10();
