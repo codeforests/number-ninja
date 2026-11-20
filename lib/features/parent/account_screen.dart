@@ -79,11 +79,13 @@ class SyncSection extends ConsumerWidget {
 
 /// What's stored and where (NFR-14, ADR-07); always shown on SCR-13.
 const privacyNote =
-    "What's stored: your email, her nickname and school year, and her "
-    'practice records (answers, times, stars, badges and settings). '
-    "It's kept on our own server, used only by this app, with no ads, "
-    'analytics or tracking. Deleting the account removes all of it from '
-    'the server; this tablet keeps its copy.';
+    "What's stored: your email, your child's nickname and school year, and "
+    "your child's practice records (answers, times, stars, badges and "
+    "settings). It's kept on our own server, used only by this app, with no "
+    'ads, analytics or tracking. Deleting the account removes all of it from '
+    'the server; this tablet keeps its copy. If crash reports are on, error '
+    'details (app version, device model, the screen and the error) are sent '
+    'with no names or account; turn them off in Settings.';
 
 String authErrorText(AuthError e) => switch (e) {
   AuthError.offline =>
@@ -291,6 +293,9 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppSizes.minTap * 10),
           child: ListView(
+            // The PIN step starts at the top, so its message is in view
+            // however far the list was scrolled (FEAT-24's longer note).
+            key: ValueKey(_confirmingDelete),
             padding: const EdgeInsets.all(AppSizes.gap),
             children: [
               ...body,

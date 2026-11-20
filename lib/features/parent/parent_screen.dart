@@ -79,6 +79,7 @@ class ParentScreen extends ConsumerWidget {
           const _AccountTile(),
           const _ServerSection(),
           const _BankTile(),
+          const _CrashReportsTile(),
           const Divider(height: AppSizes.gap * 2),
           ListTile(
             key: const Key('change-pin'),
@@ -276,6 +277,44 @@ class _SwitchPinSectionState extends ConsumerState<_SwitchPinSection> {
       onChanged: _on == null ? null : _set,
     );
   }
+}
+
+/// "Send crash reports" (FEAT-24 AD-2, CRS-05): on by default, this device
+/// only; off deletes unsent reports.
+class _CrashReportsTile extends ConsumerStatefulWidget {
+  const _CrashReportsTile();
+
+  @override
+  ConsumerState<_CrashReportsTile> createState() => _CrashReportsTileState();
+}
+
+class _CrashReportsTileState extends ConsumerState<_CrashReportsTile> {
+  bool? _on;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(crashRepositoryProvider).enabled().then((on) {
+      if (mounted) setState(() => _on = on);
+    });
+  }
+
+  Future<void> _set(bool on) async {
+    setState(() => _on = on);
+    await ref.read(crashRepositoryProvider).setEnabled(on);
+  }
+
+  @override
+  Widget build(BuildContext context) => SwitchListTile(
+    key: const Key('crash-reports-switch'),
+    secondary: const Icon(Icons.bug_report_outlined),
+    title: const Text('Send crash reports'),
+    subtitle: const Text(
+      'Helps us fix problems. No names or account details are sent.',
+    ),
+    value: _on ?? true,
+    onChanged: _on == null ? null : _set,
+  );
 }
 
 /// Opens SCR-12; shows the nickname and year (PRO-01, PRO-02).
