@@ -1,5 +1,5 @@
 # Handoff: FEAT-25 — Siblings
-Branch: feat/FEAT-25-siblings · PR: see STATE (draft) · Updated: 2026-11-20 by build
+Branch: feat/FEAT-25-siblings · PR: https://github.com/codeforests/number-ninja/pull/32 (draft) · Updated: 2026-11-20 by build
 Stage done: build (T1–T6 of 6)
 Next: verify — kickoff: "Verify FEAT-25 on branch feat/FEAT-25-siblings. Read docs/STATE.md and the feature's handoff.md, then do the Verify stage in AGENTS.md."
 
