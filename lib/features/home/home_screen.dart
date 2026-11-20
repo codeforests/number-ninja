@@ -12,6 +12,7 @@ import '../../domain/revision.dart' show mixedScopeId;
 import '../../domain/topics.dart';
 import '../../providers.dart';
 import '../../ui/avatars.dart';
+import '../../ui/layout.dart';
 import '../../ui/theme.dart';
 import '../family/change_child.dart';
 import '../screen_time/screen_time_controller.dart';
@@ -150,20 +151,42 @@ class _ChildChip extends ConsumerWidget {
     final current = ref.watch(currentChildProvider);
     final i = children.indexWhere((c) => c.id == current);
     final child = children[i < 0 ? 0 : i];
+    final name = displayName(child.nickname, i < 0 ? 0 : i);
+    // On a phone the greeting already names her: the avatar alone fits
+    // (FEAT-25 AC-9).
+    final narrow = compact(MediaQuery.sizeOf(context));
     return Padding(
       padding: const EdgeInsets.only(right: AppSizes.gap),
       child: SizedBox(
         height: AppSizes.minTap,
-        child: OutlinedButton.icon(
-          key: const Key('child-chip'),
-          onPressed: () => changeChild(context, ref),
-          icon: AvatarCircle(child.avatar),
-          label: Text(
-            displayName(child.nickname, i < 0 ? 0 : i),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
+        child: narrow
+            ? Tooltip(
+                message: name,
+                child: OutlinedButton(
+                  key: const Key('child-chip'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(AppSizes.minTap, AppSizes.minTap),
+                    padding: EdgeInsets.zero,
+                  ),
+                  onPressed: () => changeChild(context, ref),
+                  child: AvatarCircle(child.avatar),
+                ),
+              )
+            : OutlinedButton.icon(
+                key: const Key('child-chip'),
+                onPressed: () => changeChild(context, ref),
+                icon: AvatarCircle(child.avatar),
+                label: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppSizes.minTap * 2.5,
+                  ),
+                  child: Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
       ),
     );
   }

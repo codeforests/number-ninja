@@ -61,8 +61,8 @@ The School track shows P1 and P2 topics; the Olympiad track shows `oly.*`.
 
 | Table | Columns | Notes |
 |---|---|---|
-| `app_settings` | id = 1, pin_hash, pin_salt, daily_limit_min (20), bank_version, sound_on (true), profile_pending (true), device_id | One row, created on first open; `sound_on` schema v3 (FEAT-09); `profile_pending` schema v4, false on upgrade (FEAT-10, PRO-02); `device_id` schema v7 (FEAT-14) |
-| `child_profile` | id = 1, nickname, school_year (1–6), school_start_level, olympiad_start_level (nullable), updated_at | Schema v4 (FEAT-10, PRO-01); kept by the PAR-10 reset |
+| `app_settings` | id = 1, pin_hash, pin_salt, daily_limit_min (20), bank_version, sound_on (true), profile_pending (true), device_id, current_child_id (1), switch_needs_pin (false) | One row, created on first open; `sound_on` schema v3 (FEAT-09); `profile_pending` schema v4, false on upgrade (FEAT-10, PRO-02); `device_id` schema v7 (FEAT-14); `current_child_id`, `switch_needs_pin` schema v9 (FEAT-25); limit and sound are per child in `children` since v9 |
+| `children` | id, nickname, school_year, school_start_level, olympiad_start_level, avatar, daily_limit_min (20), sound_on (true), created_at, updated_at, remote_id, reset_epoch, pending_reset, pending_delete | Schema v9 (FEAT-25, ADR-12): one row per child, up to 4 (AD-1), always at least one (AD-2); replaced `child_profile` (v4), whose row became child 1 together with `app_settings` limit/sound and `sync_state` child/epoch/pending (FAM-07, AD-12) |
 | `play_sessions` | id, started_at, ended_at | One per app opening |
 | `rounds` | id, session_id, topic_id, level, started_at, score, duration_ms, stars, finished_at, kind, uuid, dirty, remote_id | `finished_at` is null until the last answer is saved (schema v2, FEAT-04); `kind` `normal` or `revision` (schema v6, FEAT-11), a mixed revision round has `topic_id = 'mixed'`; `uuid`/`dirty`/`remote_id` schema v7 (FEAT-14 sync) |
 | `attempts` | id, round_id, question_id, answer_given, correct, time_ms, answered_at, uuid, dirty | Saved before the next question shows (NFR-05); `uuid`, `dirty` schema v7 |
@@ -72,6 +72,8 @@ The School track shows P1 and P2 topics; the Olympiad track shows `oly.*`.
 | `topic_unlocks` | topic_id (primary key), opened_at | Schema v5 (FEAT-17): topics the parent opened (PRC-14); kept by the PAR-10 reset |
 | `sync_fields` | field (primary key), changed_at, dirty | Schema v7 (FEAT-14): when each synced profile/settings field last changed here (last change wins) |
 | `sync_state` | id = 1, account_id, child_id, reset_epoch, pending_reset, cursors (json), last_sync_at, last_error | Schema v7 (FEAT-14) |
+
+Since schema v9 `rounds`, `attempts`, `daily_usage` (key child + day + device), `badges_earned` (key child + badge), `topic_unlocks` (key child + topic) and `sync_fields` (key child + field) carry `child_id`, and every repository is scoped to the current child (FEAT-25). `sync_state.child_id`/`reset_epoch`/`pending_reset` are no longer read; pull cursors are per child (`<server child>/<collection>`).
 
 Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored twice. Schema changes bump `schemaVersion` with a migration and a migration test.
 
@@ -91,17 +93,17 @@ Stats (PAR-05..08) are computed from `attempts` joined to the bank, never stored
 | ID | Screen | Requirements |
 |---|---|---|
 | SCR-01 | First-run PIN setup | PAR-01 |
-| SCR-02 | Home: two track cards, minutes left, latest badge, small parent button | PRC-01, TIM-06 |
+| SCR-02 | Home: two track cards, minutes left, latest badge, small parent button; FEAT-25 adds the child chip (2+ children, avatar only on a phone) | PRC-01, TIM-06 |
 | SCR-03 | Topic map: tiles with stars, grouped P1 / P2 or Olympiad | PRC-01, PRC-07 |
 | SCR-04 | Quiz: question, visual, answer area, progress dots | PRC-02..05, PRC-10 |
 | SCR-05 | Round result: score, time, stars, new badge | PRC-06, BDG-02 |
 | SCR-06 | Badge shelf | BDG-03 |
-| SCR-07 | Time's up lock | TIM-02 |
+| SCR-07 | Time's up lock; FEAT-25 adds "Change child" (2+ children) | TIM-02 |
 | SCR-08 | PIN entry | PAR-02, PAR-03 |
-| SCR-09 | Parent dashboard; FEAT-18 adds the "By day" card | PAR-05..07, PAR-11 |
+| SCR-09 | Parent dashboard; FEAT-18 adds the "By day" card; FEAT-25 the child switcher (also on SCR-11, SCR-16) | PAR-05..07, PAR-11 |
 | SCR-10 | Topic detail | PAR-08 |
 | SCR-11 | Parent settings: daily limit, extra time, change PIN, export PDF, reset; FEAT-15 adds the "Question bank" row (version in use, built in or downloaded, last check, Check now) | TIM-04, PAR-04, PAR-09, PAR-10, BNK-12 |
-| SCR-12 | Phase 2: child profile; see [04-architecture.md](04-architecture.md) §3 | PRO |
+| SCR-12 | Phase 2: child profile; see [04-architecture.md](04-architecture.md) §3. FEAT-25: `?child=<id>` or `new`, avatar row, "Remove this child" (PIN) | PRO |
 | SCR-13 | Account (`/parent/account`, from SCR-11's "Account" row): create, sign in (email or Google), verify/resend, forgot password, sign out, delete with PIN, privacy note (FEAT-13); FEAT-14 adds the sync section (last sync, "Syncing…", error line, Sync now) | ACC-01..07, NFR-14, SYN |
 | SCR-14 | Revision start (`/revise/<topic or mixed>`): mistakes count, tricky kinds, Go (FEAT-11) | REV-03, REV-04 |
 | SCR-15 | School topics: lock state of each P1/P2 topic, parent opens one (FEAT-17) | PRC-14 |
@@ -149,3 +151,4 @@ First Round · Perfect 10 · 3-Day Streak · 7-Day Streak · 30-Day Streak · 10
 | 2026-11-16 | FEAT-14: progress sync (`lib/data/sync/sync_service.dart`, `sync_controller.dart`, merge rules in `lib/domain/sync_merge.dart`); schema v7 (ids, dirty counters, per-device `daily_usage`, `sync_fields`, `sync_state`); server reset route `POST /api/nn/children/{id}/reset` (`pb_hooks/reset.pb.js`), migration `1763251203_sync.js` (`children.reset_at`, batch API on, create limit 5000/5 s and batch 10/s for signed-in users, sign-ups still 20/5 s); SCR-13 sync section; SCR-11 reset note while signed in. |
 | 2026-11-17 | FEAT-15: server question bank. Bank file renamed `bank.json` with `format` and `retired`; "Publish bank" workflow (`tool/publish_bank.dart`); `banks.version` a number (migration `1763251204_banks.js`); schema v8 (`bank_files`, `app_settings.bank_checked_at`/`bank_check_note`); `BankStore` + `BankUpdater` check at launch and resume at most daily, a new bank applies at launch or before the next round; SCR-11 "Question bank" row. |
 | 2026-11-20 | FEAT-18: per-day progress on new SCR-16, reached from a "By day" card on SCR-09. A day is a local calendar day of `answered_at`, as screen time's `day_key`; screen time is `daily_usage` summed over devices. Read on demand, no schema change. |
+| 2026-11-20 | FEAT-25 build (auto mode): schema v9 `children` + `child_id` (§4); SCR-17, SCR-18, SCR-12 avatar row and remove, parent switcher on SCR-09/11/16 (§6); per-child sync with nickname matching, removal and reset (design AD-9..11, AD-14..16). |
