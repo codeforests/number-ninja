@@ -46,6 +46,7 @@ BrainBubblz (formerly Number Ninja) is an offline Android tablet app that helps 
 | D20 | Siblings (plan §6 decision 5, auto mode 2026-11-20): up to 4 children per family on one device and account, each with own progress, settings and daily screen-time limit; a "Who's playing?" picker, switching needs no PIN unless the parent turns that on; removing a child deletes her data on every device. Details: FEAT-25 design AD-1..16. | 2026-11-20 |
 | D21 | Parent first-run setup (plan FEAT-26, auto mode 2026-11-20): a fresh install opens a step-by-step setup for parents (welcome, PIN, optional sign-in that brings an existing family back, children, daily time and sound, how to reach the parent area) that resumes where it stopped; installs already set up never see it. Replaces the first-run SCR-01 and SCR-12. Details: FEAT-26 design AD-1..13. | 2026-11-20 |
 | D22 | Crash reports (plan FEAT-24, ADR-11, auto mode 2026-11-20): Dart errors are sent to our own server, on by default with a parent switch, anonymous (no account, device id or child data), no third-party SDK; native crashes come from the stores' vitals. | 2026-11-20 |
+| D23 | Plus entitlement on the server (plan FEAT-29, ADR-09/10, auto mode 2026-11-20): one record per parent account and source (complimentary, invite, Google Play, App Store); Plus is active while a record's expiry is in the future; the server bank needs Plus; a RevenueCat webhook (off until FEAT-35) updates store records; complimentary grants by the admin, and every account existing at deploy (Ken's family) gets Plus with no end. Details: FEAT-29 design AD-1..11. | 2026-11-20 |
 
 ## 4. Functional requirements
 
@@ -67,6 +68,7 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | BNK-10 | A newer bank shall keep every question id of the previous one (BNK-05); a question that should no longer be served is marked retired, so old results stay readable. | M | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
 | BNK-11 | The app shall ignore a published bank whose format needs a newer app version. | S | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
 | BNK-12 | The parent area shall show the bank version in use and when the app last checked for a new one. | C | FEAT-15 | FEAT-15 verify.md (2026-11-17) |
+| BNK-13 | Listing and downloading a published server bank shall need a signed-in parent with active Plus (ENT-01); without it the app keeps the bundled or last downloaded bank. (D23; amends BNK-08) | M | FEAT-29 | |
 
 ### Practice (PRC)
 
@@ -201,6 +203,17 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | CRS-05 | A "Send crash reports" switch in the parent settings, on by default, shall stop recording and sending and delete unsent reports when turned off; the privacy note shall say what reports hold. | M | FEAT-24 | FEAT-24 verify.md (2026-11-20) |
 | CRS-06 | The server shall accept crash reports from anyone but let only the admin read, change or delete them, refuse oversized fields and rate-limit each IP. | M | FEAT-24 | FEAT-24 verify.md (2026-11-20) |
 | CRS-07 | The server shall keep reports 90 days and, when a recipient is configured, email a daily digest of the last day's reports. | C | FEAT-24 | FEAT-24 verify.md (2026-11-20) |
+
+### Plus entitlement (ENT)
+
+| ID | Requirement | Pri | Feature | Verified by |
+|---|---|---|---|---|
+| ENT-01 | The server shall keep Plus entitlement records per parent account, each with source (complimentary, invite, Google Play, App Store), status and expiry; Plus is active while any of the account's records expires in the future. (D23) | M | FEAT-29 | |
+| ENT-02 | A parent shall be able to read only their own entitlement records; only the admin and the server shall create, change or delete them; deleting the account deletes them. | M | FEAT-29 | |
+| ENT-03 | The server shall tell a signed-in parent whether Plus is active, until when, from which source, whether it renews, when it last ended, and the server time. | M | FEAT-29 | |
+| ENT-04 | A billing webhook protected by a shared secret shall update store entitlements from billing events, refuse a wrong or missing secret, stay off while no secret is set, and ignore repeated, out-of-order, test and unknown-account events. | M | FEAT-29 | |
+| ENT-05 | The admin shall be able to grant, extend and revoke complimentary Plus for an account by email from the repo, without the email appearing in logs. | M | FEAT-29 | |
+| ENT-06 | Every parent account that exists when entitlements are first deployed shall get complimentary Plus with no end date. | M | FEAT-29 | |
 
 ## 5. Non-functional requirements
 
