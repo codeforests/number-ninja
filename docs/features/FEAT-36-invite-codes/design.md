@@ -1,7 +1,7 @@
 # FEAT-36: Invitation codes that unlock Plus for friends
 
 > Implements: INV-01..07 (D25; plan row FEAT-36 in `05-phase3-plan.md`) · Uses: ENT-01/03 (`entitlements` with `source = invite`, `GET /api/nn/entitlement`, FEAT-29), PLS-01/07 (SCR-20, `PlusController`, FEAT-30) · Fixes: FEAT-30 verify follow-up (launch bank check sees Plus late) · Screens: SCR-20 gains "Have an invitation code?"
-> Status: designed · Branch: `feat/FEAT-36-invite-codes` · 2026-11-20 (auto mode: decisions below taken by Claude on Ken's standing instruction)
+> Status: built (T1–T6), to verify · Branch: `feat/FEAT-36-invite-codes` · 2026-11-20 (auto mode: decisions below taken by Claude on Ken's standing instruction)
 
 ## Scope
 
@@ -48,6 +48,12 @@ Auto mode (Ken, 2026-11-20): each takes the recommended option; the reason follo
 - **AC-9** (IC-10): `plusStatusLine` unit tests: invite source → "Plus until <date>, from an invitation"; free with `ended_at` → free line plus "Plus ended on <date>."
 - **AC-10** (IC-12, BNK-13): with Plus in the cache, a launch `checkBank` started before the cache has loaded calls the server (not `noPlus`); free → `noPlus` without a server call (FEAT-30 AC-8 still holds).
 - **AC-11** (live, with the M9 release, not needed to merge): Ken makes one code with the workflow on `api.brainbubblz.com`, receives it by email (or reads it in the admin), and a test account redeems it on a tablet.
+
+## Build notes (deviations, auto mode)
+
+- **IC-5 label:** the rate-limit rule is `POST /api/nn/invite/`, not `/api/nn/invite/`. PocketBase takes the first matching rule and tries the `METHOD path` label first; a bare path prefix loses to the earlier `/api/` rule (300/10 s), so it never applied. Found by AC-5. The FEAT-29 rule `/api/nn/billing/` has the same problem (follow-up for FEAT-35, the webhook is off until then).
+- **IC-6 email:** the admin endpoint mails only when asked: `send_to` is an address, or `"default"` for `INVITE_MAIL_TO` (else `CRASH_DIGEST_TO`). Otherwise the codes come back in the answer (for `--print`). The tool has `--send-to EMAIL` and `--email` (server default); the workflow always passes one of them, never `--print` or `--list`. Without any address on the server the codes stay in the admin and the tool says so. Reason: a server-wide fallback that always mails would make `--print` impossible locally and in tests.
+- **Tests:** server redeem tests send a random `X-Real-IP` per call (trusted proxy header) so the 5/60 s limit only bites in AC-5. App widget tests use `QuizHarness.realPlus` (new) so `plusProvider` follows the real cache after a redeem.
 
 ## Tasks
 
