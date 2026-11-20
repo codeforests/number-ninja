@@ -11,7 +11,7 @@ Next: verify — kickoff: "Verify FEAT-26 on branch feat/FEAT-26-first-run-setup
 - `scripts/check.sh` all PASS at the end of build.
 
 ## Left to CI or later
-- APK build in CI only (no Android SDK here). AC-7 is Ken's optional tablet check.
+- CI has not run on PR #33 yet (every build push carried [skip ci]): verify runs it, incl. the APK build (no Android SDK here). AC-7 is Ken's optional tablet check.
 
 ## Pending for Ken
 - none
