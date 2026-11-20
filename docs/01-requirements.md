@@ -107,7 +107,7 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | PAR-08 | The parent shall be able to open a topic and see its most-missed and slowest questions. | S | FEAT-06 | FEAT-06 verify.md (2026-11-15) |
 | PAR-09 | The parent shall be able to export a PDF report (period, per-track summary, per-topic table, trend charts, needs-practice list) and share or save it through Android's share sheet. | M | FEAT-07 | FEAT-07 verify.md (2026-11-15) |
 | PAR-10 | The parent shall be able to reset all progress after confirming with the PIN. | C | FEAT-06 | FEAT-06 verify.md (2026-11-15) |
-| PAR-11 | The parent shall be able to pick a calendar day and see, for that day: answers, accuracy, average seconds per question and screen time used; the same per topic; each round played (time, topic, level, score); and each question with her answer and the right answer. | S | FEAT-18 | |
+| PAR-11 | The parent shall be able to pick a calendar day and see, for that day: answers, accuracy, average seconds per question and screen time used; the same per topic; each round played (time, topic, level, score); and each question with her answer and the right answer. | S | FEAT-18 | FEAT-18 verify.md (2026-11-20) |
 
 ### Badges (BDG)
 

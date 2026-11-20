@@ -86,6 +86,16 @@ void main() {
     tester,
   ) async {
     await seedDays();
+    // Screen time on a day with no answers still shows (AC-3).
+    await h.db
+        .into(h.db.dailyUsage)
+        .insert(
+          DailyUsageCompanion.insert(
+            day: '2027-01-04',
+            deviceId: 'a',
+            secondsUsed: const Value(120),
+          ),
+        );
     await h.openParent(tester, Routes.day(today));
     final next = tester.widget<IconButton>(find.byKey(const Key('day-next')));
     expect(next.onPressed, isNull);
@@ -93,7 +103,7 @@ void main() {
     await press(tester, 'day-prev');
     expect(find.text('Mon 4 Jan 2027'), findsOneWidget);
     expect(find.byKey(const Key('day-empty')), findsOneWidget);
-    expect(text(tester, 'day-minutes'), '0 min');
+    expect(text(tester, 'day-minutes'), '2 min');
 
     await press(tester, 'day-prev');
     expect(find.text('Sun 3 Jan 2027'), findsOneWidget);

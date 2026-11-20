@@ -58,6 +58,7 @@
 - Helpers: `test/features/quiz/quiz_harness.dart` (`QuizHarness`: fake bank, fixed clock, `pumpApp`, `CountingRepository`, `lockTopics` false = every topic open), `test/ui/layout_checks.dart` (`setTextScale`, `expectNoOverlap`, `expectChildSizes`).
 
 ## Gotchas
+- `pumpApp` sets the surface to 2560×1600: in a layout test set `tester.view.physicalSize` after `openParent`/`pumpApp`, then `pumpAndSettle`, or the size is lost.
 
 - FEAT-16 renamed the app to BrainBubblz for people only. Keep the old name in the application id `com.codeforests.number_ninja`, the Dart package `number_ninja`, the `numberninja://signin` scheme (manifest, nginx return page, `deploy.sh` check), the server unit and nginx file names, the keystore alias and badge id `ninja-master`: changing any of them breaks in-place updates, sign-in or synced badges.
 - FEAT-15 bank tests take versions relative to `bankVersion` (the bundled bank), never literal 1/2, so a `bankVersion` bump keeps them green.
