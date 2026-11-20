@@ -38,7 +38,7 @@ SERVER_HOSTNAME=$PB_TEST_HOST SMTP_HOST=127.0.0.1 SMTP_PORT=$PB_SMTP_PORT \
   PB_PORT=8090 "$root/scripts/server-local.sh" start "$work/main"
 PB_URL=http://127.0.0.1:8090 PB_BACKUP_OUT="$work/backup.zip" \
   CRASH_DIGEST_TO=crashes@example.test \
-  dart test --concurrency=1 test/api_rules_test.dart test/auth_test.dart test/sync_test.dart test/bank_publish_test.dart test/grant_plus_test.dart test/invite_test.dart test/make_invites_test.dart test/backup_test.dart test/crash_digest_test.dart
+  dart test --concurrency=1 test/api_rules_test.dart test/auth_test.dart test/sync_test.dart test/bank_publish_test.dart test/grant_plus_test.dart test/invite_test.dart test/make_invites_test.dart test/weekly_email_test.dart test/backup_test.dart test/crash_digest_test.dart
 
 # Email through Resend's HTTPS API (mail.pb.js): a second PocketBase with
 # RESEND_API_KEY and the API URL on resend_test.dart's sink. The SMTP host

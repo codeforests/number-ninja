@@ -35,7 +35,7 @@ The app stays offline-first: screens read and write only the Drift database, as 
 
 | Collection | Fields | API rule |
 |---|---|---|
-| `users` (auth) | email, verified, name; Google linked as OAuth2 | own record only |
+| `users` (auth) | email, verified, name; Google linked as OAuth2; weekly_email, weekly_email_tz (minutes east of UTC), email_token (hidden) (FEAT-31) | own record only; `email_token` is never returned |
 | `children` | owner → users, nickname, school_year, start_level_school, start_level_olympiad, unlocked_topics (parent-opened, FEAT-17), daily_limit_min, sound_on, field_times (json: last change per field), reset_epoch | `owner = @request.auth.id` |
 | `rounds` | child, uuid (unique), topic_id, level, kind (`normal` / `revision`), started_at, finished_at, score, duration_ms, stars, device_id | via `child.owner` |
 | `attempts` | child, uuid (unique), round_uuid, question_id, answer_given, correct, time_ms, answered_at | via `child.owner`; create only |
@@ -45,6 +45,7 @@ The app stays offline-first: screens read and write only the Drift database, as 
 | `entitlements` | user → users (cascade), plan, source (complimentary, invite, google_play, app_store; unique per user), status (display only), expires_at, note, product_id, environment, last_event_id, last_event_at | read: own records; write: server only (superuser, hooks, `tool/grant_plus.dart`). Plus ⇔ some record has `expires_at > now` (FEAT-29) |
 | `invite_codes` | code (8 chars, unique), months, max_uses, uses, redeem_by, note, revoked | superuser only; parents redeem through `POST /api/nn/invite/redeem`, which writes the `invite` entitlement (FEAT-36) |
 | `invite_redemptions` | code → invite_codes (cascade), user → users (cascade), plus_until; unique (code, user) | superuser only (FEAT-36) |
+| `weekly_emails` | user → users (cascade), week (local Monday, `yyyy-MM-dd`), status (`sent`/`skipped`), children; unique (user, week) | superuser only; written by the `weekly_email` job, rows kept 180 days (FEAT-31) |
 
 Each record also has PocketBase's own `updated` time, which the sync uses as its cursor.
 

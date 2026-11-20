@@ -120,4 +120,38 @@ void main() {
       reason: 'kept for 90 days',
     );
   });
+
+  // FEAT-31 AC-5 (WE-10): the weekly email's List-Unsubscribe headers reach
+  // Resend.
+  test('weekly email headers go to Resend', () async {
+    final p = await Parent.signUp('weekly');
+    await grant(p.id, expiresAt: forever);
+    await p.pb
+        .collection('users')
+        .update(p.id, body: {'weekly_email': true, 'weekly_email_tz': 480});
+    final child = await p.pb
+        .collection('children')
+        .create(body: {'owner': p.id, 'nickname': 'Mei', 'school_year': 2});
+    await p.pb
+        .collection('daily_usage')
+        .create(body: {...usageBody(child.id), 'day': '2026-11-18'});
+    final su = await superuser();
+    final r = await su.send(
+      '/api/nn/admin/weekly-email',
+      method: 'POST',
+      body: {'now': '2026-11-23T00:00:00Z', 'user': p.id},
+    );
+    expect((r as Map)['sent'], 1);
+    final s = await waitFor(p.email);
+    final headers = Map<String, dynamic>.from(s.body['headers'] as Map);
+    expect(
+      headers['List-Unsubscribe'],
+      matches(
+        RegExp(
+          '^<https://${RegExp.escape(host)}/api/nn/weekly-email/off\\?u=${p.id}&t=[A-Za-z0-9]{32}>\$',
+        ),
+      ),
+    );
+    expect(headers['List-Unsubscribe-Post'], 'List-Unsubscribe=One-Click');
+  });
 }
