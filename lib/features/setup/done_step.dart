@@ -42,7 +42,10 @@ class _DoneStepState extends ConsumerState<DoneStep> {
     setState(() => _busy = true);
     await ref.read(setupControllerProvider.notifier).finish();
     await familyChanged(ref);
-    final choose = await pickerShows(ref.read(childRepositoryProvider));
+    final choose = await pickerShows(
+      ref.read(childRepositoryProvider),
+      plus: ref.read(plusProvider),
+    );
     final session = ref.read(appSessionProvider);
     if (choose) session.chooseChild();
     // The router now leaves /setup: SCR-17 with 2+ children, else home.

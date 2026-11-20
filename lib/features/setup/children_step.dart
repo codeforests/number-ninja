@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../data/profile_repository.dart';
 import '../../domain/family.dart';
+import '../../domain/plus.dart';
 import '../../domain/profile.dart';
 import '../../domain/setup.dart';
 import '../../providers.dart';
@@ -126,6 +127,9 @@ class _ChildrenStepState extends ConsumerState<ChildrenStep> {
 
   @override
   Widget build(BuildContext context) {
+    // FEAT-30 PD-7: one child on free, four with Plus.
+    final plus = ref.watch(plusProvider);
+    final limit = childLimit(plus);
     final controller = ref.read(setupControllerProvider.notifier);
     final kids = _kids;
     final editing = _editing != null;
@@ -215,7 +219,7 @@ class _ChildrenStepState extends ConsumerState<ChildrenStep> {
                 ),
               ),
             ),
-          if (kids.length < maxChildren)
+          if (kids.length < limit)
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: SizedBox(
@@ -229,6 +233,11 @@ class _ChildrenStepState extends ConsumerState<ChildrenStep> {
                   ),
                 ),
               ),
+            )
+          else if (!plus)
+            const Text(
+              'More children come with Plus.',
+              key: Key('setup-more-with-plus'),
             ),
         ],
       );
@@ -240,7 +249,7 @@ class _ChildrenStepState extends ConsumerState<ChildrenStep> {
           ? (_editing == 0 ? 'Add a child' : 'Edit child')
           : 'Your children',
       subtitle:
-          'Add each child who will play (up to $maxChildren). '
+          'Add each child who will play (up to $limit). '
           'You can change this later in the parent area.',
       // With no child yet the form is the whole step, so Back stays on
       // (verify R1); with children, Cancel returns to the list first.

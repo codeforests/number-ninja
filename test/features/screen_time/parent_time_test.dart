@@ -35,6 +35,8 @@ void main() {
 
   Future<void> tap(WidgetTester tester, String key) async {
     await tester.ensureVisible(find.byKey(Key(key)));
+    // Lay out after the scroll (FEAT-30's Plus row moved this one down).
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(Key(key)));
     await tester.pumpAndSettle();
   }

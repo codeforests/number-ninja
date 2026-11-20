@@ -8,8 +8,10 @@ import 'data/device_info.dart';
 import 'data/database.dart';
 import 'features/family/change_child.dart';
 import 'data/pin_repository.dart';
+import 'data/plus_repository.dart';
 import 'data/setup_repository.dart';
 import 'domain/clock.dart';
+import 'domain/plus.dart';
 import 'providers.dart';
 
 Future<void> main() async {
@@ -23,7 +25,12 @@ Future<void> main() async {
   final pinSet = await PinRepository(db, clock: systemClock).hasPin();
   final children = ChildRepository(db, clock: systemClock);
   final childId = await children.current();
-  final choosing = await pickerShows(children);
+  // FEAT-30 PD-6: siblings take turns only with Plus (cached answer).
+  final plusCache = await readPlusCache(db);
+  final choosing = await pickerShows(
+    children,
+    plus: plusActive(plusCache, systemClock()),
+  );
   runApp(
     ProviderScope(
       overrides: [

@@ -8,6 +8,26 @@ import 'sync/account_repository.dart';
 import 'sync/server_client.dart';
 import 'sync/sync_controller.dart';
 
+/// The cached row, or null (also read by `main.dart` before the app runs).
+Future<PlusCache?> readPlusCache(AppDatabase db) async {
+  final r = await (db.select(
+    db.plusState,
+  )..where((t) => t.id.equals(1))).getSingleOrNull();
+
+  if (r == null) return null;
+  return PlusCache(
+    plus: r.plus,
+    until: r.until?.toUtc(),
+    source: r.source,
+    status: r.status,
+    willRenew: r.willRenew,
+    endedAt: r.endedAt?.toUtc(),
+    serverCheckedAt: r.serverCheckedAt.toUtc(),
+    deviceCheckedAt: r.deviceCheckedAt,
+    accountId: r.accountId,
+  );
+}
+
 /// What a [PlusRepository.refresh] did (FEAT-30 PD-5).
 enum PlusRefresh { updated, kept, cleared }
 
@@ -19,23 +39,7 @@ class PlusRepository {
   final ServerClient client;
   final Clock clock;
 
-  Future<PlusCache?> cached() async {
-    final r = await (_db.select(
-      _db.plusState,
-    )..where((t) => t.id.equals(1))).getSingleOrNull();
-    if (r == null) return null;
-    return PlusCache(
-      plus: r.plus,
-      until: r.until?.toUtc(),
-      source: r.source,
-      status: r.status,
-      willRenew: r.willRenew,
-      endedAt: r.endedAt?.toUtc(),
-      serverCheckedAt: r.serverCheckedAt.toUtc(),
-      deviceCheckedAt: r.deviceCheckedAt,
-      accountId: r.accountId,
-    );
-  }
+  Future<PlusCache?> cached() => readPlusCache(_db);
 
   /// Asks the server for [accountId]'s Plus. Another account's cache is
   /// cleared first; offline or a server error keeps the cache (the grace

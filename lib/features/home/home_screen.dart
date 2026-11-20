@@ -147,7 +147,10 @@ class _ChildChip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final children = ref.watch(childrenProvider).value ?? const [];
-    if (children.length < 2) return const SizedBox.shrink();
+    // Siblings take turns only with Plus (FEAT-30 PD-6).
+    if (children.length < 2 || !ref.watch(plusProvider)) {
+      return const SizedBox.shrink();
+    }
     final current = ref.watch(currentChildProvider);
     final i = children.indexWhere((c) => c.id == current);
     final child = children[i < 0 ? 0 : i];
