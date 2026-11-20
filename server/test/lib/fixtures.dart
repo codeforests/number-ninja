@@ -175,3 +175,32 @@ Future<int> statusOf(Future<Object?> Function() call) async {
     return e.statusCode;
   }
 }
+
+/// FEAT-29: the server's "no end" date for Plus.
+const forever = '2099-12-31 23:59:59.000Z';
+
+/// A PocketBase date string [offset] from now.
+/// Milliseconds only, as PocketBase stores dates.
+String pbDateIn(Duration offset) => DateTime.fromMillisecondsSinceEpoch(
+  DateTime.now().add(offset).millisecondsSinceEpoch,
+  isUtc: true,
+).toIso8601String().replaceFirst('T', ' ');
+
+/// Gives [userId] an entitlement through the superuser (only the server
+/// writes them, FEAT-29 AD-2).
+Future<RecordModel> grant(
+  String userId, {
+  String source = 'complimentary',
+  String status = 'active',
+  String? expiresAt,
+}) async => (await superuser())
+    .collection('entitlements')
+    .create(
+      body: {
+        'user': userId,
+        'plan': 'plus',
+        'source': source,
+        'status': status,
+        'expires_at': expiresAt ?? pbDateIn(const Duration(days: 1)),
+      },
+    );

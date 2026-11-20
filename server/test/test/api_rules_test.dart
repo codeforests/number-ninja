@@ -1,5 +1,6 @@
 // FEAT-12 AC-2 (NFR-13): API rules keep each family's records to itself.
 // Needs a running PocketBase: server/test/run.sh starts one.
+import 'package:http/http.dart' as http;
 import 'package:number_ninja_server_test/fixtures.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:test/test.dart';
@@ -315,8 +316,9 @@ void main() {
     });
   });
 
+  // FEAT-29 AC-2, AC-3 (BNK-13): the server bank needs active Plus.
   group('banks', () {
-    test('anyone lists banks; only a superuser creates one', () async {
+    test('only a superuser creates a bank', () async {
       // FEAT-15: version is a number; a high one no publish test uses.
       final body = {
         'version': 900000 + DateTime.now().microsecond,
@@ -332,10 +334,6 @@ void main() {
       final su = await superuser();
       final bank = await su.collection('banks').create(body: body);
       expect(
-        (await anon.collection('banks').getFullList()).map((r) => r.id),
-        contains(bank.id),
-      );
-      expect(
         await statusOf(() => a.pb.collection('banks').delete(bank.id)),
         403,
       );
@@ -345,6 +343,152 @@ void main() {
         reason: 'version is unique',
       );
       await su.collection('banks').delete(bank.id);
+    });
+
+    test('a guest and a free parent list none; Plus lists and downloads '
+        'with a file token; expiry ends it', () async {
+      final su = await superuser();
+      final bank = await su
+          .collection('banks')
+          .create(
+            body: {
+              'version': 800000 + DateTime.now().microsecond,
+              'format': 1,
+              'min_app_build': 1,
+              'sha256': 'x',
+            },
+            files: [
+              http.MultipartFile.fromString(
+                'file',
+                '{"bank":1}',
+                filename: 'bank.json',
+              ),
+            ],
+          );
+      addTearDown(() => su.collection('banks').delete(bank.id));
+      final p = await Parent.signUp('plus');
+      Future<List<String>> ids(PocketBase pb) async => [
+        for (final r in await pb.collection('banks').getFullList()) r.id,
+      ];
+
+      expect(await ids(anon), isNot(contains(bank.id)));
+      expect(await ids(p.pb), isEmpty, reason: 'no entitlement');
+
+      final e = await grant(p.id);
+      expect(await ids(p.pb), contains(bank.id));
+      final file = bank.getStringValue('file');
+      final token = await p.pb.files.getToken();
+      final withToken = await http.get(
+        p.pb.files.getURL(bank, file, token: token),
+      );
+      expect(withToken.statusCode, 200);
+      expect(withToken.body, '{"bank":1}');
+      final bare = await http.get(p.pb.files.getURL(bank, file));
+      expect(bare.statusCode, isNot(200), reason: 'the file is protected');
+      final freeParent = await Parent.signUp('free');
+      final freeToken = await freeParent.pb.files.getToken();
+      final free = await http.get(
+        freeParent.pb.files.getURL(bank, file, token: freeToken),
+      );
+      expect(free.statusCode, isNot(200), reason: "a free parent's token");
+
+      await su
+          .collection('entitlements')
+          .update(
+            e.id,
+            body: {'expires_at': pbDateIn(const Duration(minutes: -1))},
+          );
+      expect(await ids(p.pb), isEmpty, reason: 'expired');
+    });
+
+    test("one parent's active record doesn't open the bank for another "
+        '(AC-3)', () async {
+      final su = await superuser();
+      final bank = await su
+          .collection('banks')
+          .create(
+            body: {
+              'version': 700000 + DateTime.now().microsecond,
+              'format': 1,
+              'min_app_build': 1,
+            },
+          );
+      addTearDown(() => su.collection('banks').delete(bank.id));
+      final pa = await Parent.signUp('expired');
+      final pb = await Parent.signUp('active');
+      await grant(pa.id, expiresAt: pbDateIn(const Duration(days: -1)));
+      await grant(pb.id);
+      expect(await pa.pb.collection('banks').getFullList(), isEmpty);
+      expect(
+        (await pb.pb.collection('banks').getFullList()).map((r) => r.id),
+        contains(bank.id),
+      );
+    });
+  });
+
+  // FEAT-29 AC-1 (ENT-01, ENT-02): own entitlements, read-only.
+  group('entitlements', () {
+    test('a parent reads only their own; a guest none', () async {
+      final mine = await grant(a.id, source: 'invite');
+      final theirs = await grant(b.id, source: 'invite');
+      final listed = await a.pb.collection('entitlements').getFullList();
+      expect(listed.map((r) => r.id), contains(mine.id));
+      expect(listed.map((r) => r.id), isNot(contains(theirs.id)));
+      expect(
+        await statusOf(() => a.pb.collection('entitlements').getOne(theirs.id)),
+        404,
+      );
+      expect(await anon.collection('entitlements').getFullList(), isEmpty);
+      expect(
+        await statusOf(() => anon.collection('entitlements').getOne(mine.id)),
+        404,
+      );
+    });
+
+    test(
+      "parents can't create, update or delete one; a superuser can",
+      () async {
+        final mine = await grant(a.id, source: 'google_play');
+        final body = {
+          'user': a.id,
+          'plan': 'plus',
+          'source': 'app_store',
+          'status': 'active',
+          'expires_at': forever,
+        };
+        for (final pb in [a.pb, b.pb, anon]) {
+          final c = pb.collection('entitlements');
+          expect(await statusOf(() => c.create(body: body)), 403);
+          expect(
+            await statusOf(
+              () => c.update(mine.id, body: {'expires_at': forever}),
+            ),
+            anyOf(403, 404),
+          );
+          expect(await statusOf(() => c.delete(mine.id)), anyOf(403, 404));
+        }
+        final su = (await superuser()).collection('entitlements');
+        await su.update(mine.id, body: {'status': 'cancelled'});
+        expect(
+          await statusOf(
+            () => su.create(body: {...body, 'source': 'google_play'}),
+          ),
+          400,
+          reason: '(user, source) is unique',
+        );
+        await su.delete(mine.id);
+      },
+    );
+
+    test("deleting the user deletes their entitlements", () async {
+      final p = await Parent.signUp('gone');
+      final e = await grant(p.id);
+      final su = await superuser();
+      await su.collection('users').delete(p.id);
+      expect(
+        await statusOf(() => su.collection('entitlements').getOne(e.id)),
+        404,
+      );
     });
   });
 
