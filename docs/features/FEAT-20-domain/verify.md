@@ -1,6 +1,6 @@
 # FEAT-20: Verify
 
-> Verdict: **accepted** (2026-11-20). Code verified at `eee96d2`; this stage only fixed the stale app-id note in `README.md`. AC-5 is live-only and waits for Ken's steps.
+> Verdict: **accepted** (2026-11-20). CI run 44693882955 green on 0cfca2a (build + manifest check, server + nginx). Code verified at `eee96d2`; this stage only fixed the stale app-id note in `README.md`. AC-5 is live-only and waits for Ken's steps.
 
 ## Checks re-run here
 
