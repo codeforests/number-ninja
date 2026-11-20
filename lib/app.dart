@@ -14,6 +14,7 @@ import 'features/topics/topic_map_screen.dart';
 import 'features/quiz/result_screen.dart';
 import 'domain/stats.dart';
 import 'features/parent/account_screen.dart';
+import 'features/parent/plus_screen.dart';
 import 'features/parent/change_pin_screen.dart';
 import 'features/parent/dashboard_screen.dart';
 import 'features/parent/day_screen.dart';
@@ -40,6 +41,7 @@ abstract final class Routes {
       '/parent/remove-child?child=$id'; // SCR-12 remove, PIN confirm
   static const topicLocks = '/parent/topics'; // SCR-15
   static const account = '/parent/account'; // SCR-13
+  static const plus = '/parent/plus'; // SCR-20, FEAT-30
   static const home = '/'; // SCR-02
   static const pinEntry = '/parent/pin'; // SCR-08
   static const parent = '/parent'; // SCR-11
@@ -184,6 +186,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'account',
             builder: (context, state) => const AccountScreen(),
+          ),
+          GoRoute(
+            path: 'plus',
+            builder: (context, state) => const PlusScreen(),
           ),
           GoRoute(
             path: 'change-pin',

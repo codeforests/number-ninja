@@ -48,6 +48,7 @@ class ParentScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.gap),
         children: [
+          const _PlusTile(),
           const _ProfileTile(),
           const _ChildrenTile(),
           const _TopicLocksTile(),
@@ -341,6 +342,28 @@ class _ProfileTile extends ConsumerWidget {
 
 /// Opens SCR-18, where the parent adds, edits and removes children
 /// (FEAT-25, FAM-01).
+/// Opens SCR-20 (FEAT-30 PD-9).
+class _PlusTile extends ConsumerWidget {
+  const _PlusTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final plus = ref.watch(plusProvider);
+    return ListTile(
+      key: const Key('open-plus'),
+      minTileHeight: AppSizes.minTap,
+      leading: const Icon(Icons.workspace_premium, color: AppColors.sun),
+      title: const Text('BrainBubblz Plus'),
+      subtitle: Text(
+        plus ? 'Plus is on' : 'Free plan: see what Plus adds',
+        key: const Key('plus-subtitle'),
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.go(Routes.plus),
+    );
+  }
+}
+
 class _ChildrenTile extends ConsumerWidget {
   const _ChildrenTile();
 
