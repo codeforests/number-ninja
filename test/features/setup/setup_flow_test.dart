@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:number_ninja/data/pin_repository.dart';
+import 'package:number_ninja/data/sync/server_client.dart';
 import 'package:number_ninja/domain/setup.dart';
 import 'package:number_ninja/features/family/who_screen.dart';
 import 'package:number_ninja/features/home/home_screen.dart';
@@ -230,6 +231,60 @@ void main() {
       await tester.pump(restoreWait);
     }
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('AC-3: a one-off server error is retried (verify)', (
+    tester,
+  ) async {
+    final server = FakeSyncServer();
+    await familyOnServer(server, ['Mia']);
+    h.useServer(server);
+    h.client.syncFail = const SyncException(SyncError.server, status: 500);
+    await h.pastPin(SetupStep.account);
+    await h.start(tester);
+    await h.enter(tester, '2468');
+    await tester.enterText(find.byKey(const Key('account-email')), 'a@b.co');
+    await tester.enterText(find.byKey(const Key('account-password')), 'x' * 8);
+    await h.tapKey(tester, 'account-signin');
+    expect(h.client.syncLog.take(2), ['listChildren', 'listChildren']);
+    expect(find.byType(DoneStep), findsOneWidget);
+    expect((await h.named()).map((c) => c.nickname), ['Mia']);
+  });
+
+  testWidgets('AC-1: Back works on every step (verify)', (tester) async {
+    await h.start(tester);
+    await h.tapKey(tester, 'setup-next');
+    await h.tapKey(tester, 'setup-back');
+    expect(find.byType(WelcomeStep), findsOneWidget);
+    await h.tapKey(tester, 'setup-next');
+    await h.enter(tester, '2468');
+    await h.enter(tester, '2468');
+    await h.tapKey(tester, 'setup-skip-account');
+    await h.addChild(tester, 'Mia');
+    await h.tapKey(tester, 'setup-next');
+    await h.tapKey(tester, 'setup-back');
+    expect(find.byType(ChildrenStep), findsOneWidget);
+    expect(find.byKey(const Key('setup-child-1')), findsOneWidget);
+    await h.tapKey(tester, 'setup-back');
+    expect(find.byType(AccountStep), findsOneWidget);
+    // Back from PIN to Welcome after the PIN is set keeps that PIN.
+    await h.tapKey(tester, 'setup-back');
+    await h.tapKey(tester, 'setup-back');
+    expect(find.byType(WelcomeStep), findsOneWidget);
+    await h.tapKey(tester, 'setup-next');
+    expect(find.byKey(const Key('setup-pin-set')), findsOneWidget);
+    expect(await h.pins().verify('2468'), isA<PinOk>());
+    expect((await h.named()).map((c) => c.nickname), ['Mia']);
+  });
+
+  testWidgets('AC-1: Back on an empty Children step (verify)', (tester) async {
+    // A parent who skipped the Account step by mistake must be able to go
+    // back and sign in before adding a child.
+    await h.pastPin(SetupStep.children);
+    await h.start(tester, unlocked: true);
+    expect(find.byKey(const Key('setup-save-child')), findsOneWidget);
+    await h.tapKey(tester, 'setup-back');
+    expect(find.byType(AccountStep), findsOneWidget);
   });
 
   testWidgets('AC-4: add up to 4, edit, remove; Next needs a child', (
