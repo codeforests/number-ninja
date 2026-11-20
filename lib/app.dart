@@ -26,13 +26,12 @@ import 'features/parent/children_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/screen_time/lock_screen.dart';
 import 'features/screen_time/screen_time_controller.dart';
-import 'features/setup/setup_pin_screen.dart';
+import 'features/setup/setup_screen.dart';
 import 'providers.dart';
 import 'ui/theme.dart';
 
 abstract final class Routes {
-  static const setup = '/setup'; // SCR-01
-  static const setupProfile = '/setup/profile'; // SCR-12, first run
+  static const setup = '/setup'; // SCR-19, first-run setup (FEAT-26)
   static const profile = '/parent/profile'; // SCR-12 from SCR-11
   static const children = '/parent/children'; // SCR-18, FEAT-25
   static const newChild = '$profile?child=new'; // SCR-12, add a child
@@ -79,13 +78,8 @@ abstract final class Routes {
 /// Where a location should go instead, or null to stay (design: Routing).
 /// [locked] is [ScreenTimeController.locked]; `/parent*` is never locked.
 String? redirectFor(AppSession session, bool locked, String location) {
-  if (!session.hasPin) return location == Routes.setup ? null : Routes.setup;
-  if (session.profilePending) {
-    return location == Routes.setupProfile ? null : Routes.setupProfile;
-  }
-  if (location == Routes.setup || location == Routes.setupProfile) {
-    return Routes.home;
-  }
+  if (session.inSetup) return location == Routes.setup ? null : Routes.setup;
+  if (location == Routes.setup) return Routes.home;
   final isParent = location.startsWith(Routes.parent);
   if (isParent && location != Routes.pinEntry && !session.parentUnlocked) {
     return Routes.pinEntry;
@@ -111,13 +105,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: Routes.setup,
-        builder: (context, state) => const SetupPinScreen(),
-        routes: [
-          GoRoute(
-            path: 'profile',
-            builder: (context, state) => const ProfileScreen(firstRun: true),
-          ),
-        ],
+        builder: (context, state) => const SetupScreen(),
       ),
       GoRoute(
         path: Routes.home,
@@ -175,10 +163,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'profile',
-            builder: (context, state) => ProfileScreen(
-              firstRun: false,
-              child: state.uri.queryParameters['child'],
-            ),
+            builder: (context, state) =>
+                ProfileScreen(child: state.uri.queryParameters['child']),
           ),
           GoRoute(
             path: 'children',

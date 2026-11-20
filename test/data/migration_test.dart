@@ -1,4 +1,7 @@
 import 'package:drift/drift.dart' show Variable;
+
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:number_ninja/data/database.dart';
@@ -36,6 +39,8 @@ const _v8 = [
 int _secs(DateTime t) => t.millisecondsSinceEpoch ~/ 1000;
 
 void main() {
+  group('v10', _v10Cases);
+
   test('v1 -> v2 adds rounds.finished_at and backfills it (AC-2)', () async {
     final start = DateTime(2026, 11, 15, 9);
     final last = start.add(const Duration(minutes: 2));
@@ -595,4 +600,64 @@ void main() {
       expect(fields.map((f) => f.childId), everyElement(1));
     },
   );
+}
+
+void _v10Cases() {
+  /// A v9 database: a current one made v9 again (no `setup_step`, user
+  /// version 9) with [settings] applied to `app_settings`, opened so that
+  /// it migrates to v10.
+  Future<(File, AppDatabase)> v9File(String settings) async {
+    final dir = await Directory.systemTemp.createTemp('mig10');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/db.sqlite');
+    final fresh = AppDatabase(NativeDatabase(file));
+    await fresh.getSettings();
+    await fresh.close();
+    // Turn it back into v9 before the next open migrates it again.
+    final back = AppDatabase(
+      NativeDatabase(
+        file,
+        setup: (raw) {
+          if (raw.userVersion != 10) return;
+          raw.execute('ALTER TABLE app_settings DROP COLUMN setup_step');
+          raw.execute('UPDATE app_settings SET $settings');
+          raw.userVersion = 9;
+        },
+      ),
+    );
+    return (file, back);
+  }
+
+  Future<String?> stepAfterUpgrade(String settings) async {
+    final (_, db) = await v9File(settings);
+    addTearDown(db.close);
+    final s = await db.getSettings();
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.data.values.single, 10);
+    return s.setupStep;
+  }
+
+  test('v9 -> v10: no PIN starts setup at welcome (FEAT-26 AC-5)', () async {
+    expect(await stepAfterUpgrade('pin_hash = NULL'), 'welcome');
+  });
+
+  test('v9 -> v10: PIN but no profile resumes at children (AC-5)', () async {
+    expect(
+      await stepAfterUpgrade("pin_hash = 'h', profile_pending = 1"),
+      'children',
+    );
+  });
+
+  test('v9 -> v10: a set-up install never sees the wizard (AC-5)', () async {
+    expect(
+      await stepAfterUpgrade("pin_hash = 'h', profile_pending = 0"),
+      isNull,
+    );
+  });
+
+  test('a fresh v10 database starts setup at welcome (AC-5)', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    expect((await db.getSettings()).setupStep, 'welcome');
+  });
 }

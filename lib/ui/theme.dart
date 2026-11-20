@@ -84,6 +84,10 @@ abstract final class AppSizes {
   static const avatarSmall = 40.0;
   static const pinKey = 72.0;
 
+  /// First-run setup (SCR-19): progress dots and the Welcome icons.
+  static const setupDot = 14.0;
+  static const setupIcon = 88.0;
+
   /// Depth of a quiz key's bottom edge, and the progress bar's step heights.
   static const keyEdge = 5.0;
   static const step = 16.0;
@@ -123,6 +127,9 @@ abstract final class AppText {
   /// Parent screens only: chart axis labels and table details.
   static const chartLabel = 14.0;
   static const parentBody = 16.0;
+
+  /// First-run setup (SCR-19, FEAT-26 AD-13): body text for parents.
+  static const setupBody = 20.0;
 }
 
 /// PDF progress report (FEAT-07) sizes, in points. Colours come from

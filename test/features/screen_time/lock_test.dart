@@ -106,7 +106,7 @@ void main() {
   });
 
   test('redirects: a lock sends child routes to SCR-07, never parent ones', () {
-    final session = AppSession(hasPin: true, clock: () => DateTime(2027));
+    final session = AppSession(clock: () => DateTime(2027));
     for (final loc in [Routes.home, '/play/school', '/quiz/x', Routes.result]) {
       expect(redirectFor(session, true, loc), Routes.locked, reason: loc);
       expect(redirectFor(session, false, loc), isNull, reason: loc);

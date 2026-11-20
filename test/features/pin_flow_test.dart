@@ -11,7 +11,10 @@ import 'package:number_ninja/features/home/home_screen.dart';
 import 'package:number_ninja/features/parent/parent_screen.dart';
 import 'package:number_ninja/features/parent/pin_entry_screen.dart';
 import 'package:number_ninja/features/screen_time/screen_time_controller.dart';
-import 'package:number_ninja/features/setup/setup_pin_screen.dart';
+import 'package:number_ninja/data/setup_repository.dart';
+import 'package:number_ninja/domain/setup.dart';
+import 'package:number_ninja/features/setup/account_step.dart';
+import 'package:number_ninja/features/setup/pin_step.dart';
 import 'package:number_ninja/providers.dart';
 
 /// Widget tests for AC-1..AC-4 on a 12-inch landscape tablet size, an
@@ -36,6 +39,9 @@ void main() {
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
     final hasPin = await repo().hasPin();
+    // A PIN set before the app opens stands for a finished setup.
+    if (hasPin) await SetupRepository(db).finish();
+    final step = await SetupRepository(db).step();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -44,7 +50,7 @@ void main() {
           pinRepositoryProvider.overrideWithValue(repo()),
           elapsedProvider.overrideWithValue(() => Duration.zero),
           appSessionProvider.overrideWithValue(
-            AppSession(hasPin: hasPin, clock: clock),
+            AppSession(setupStep: step, pinSet: hasPin, clock: clock),
           ),
         ],
         child: const NumberNinjaApp(),
@@ -64,28 +70,39 @@ void main() {
   String message(WidgetTester tester) =>
       tester.widget<Text>(find.byKey(const Key('screen-message'))).data!;
 
+  // Since FEAT-26 the PIN is setup's step 2 (SCR-19), after Welcome.
+  Future<void> openPinStep(WidgetTester tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.byKey(const Key('setup-next')));
+    await tester.pumpAndSettle();
+    expect(find.byType(PinStep), findsOneWidget);
+  }
+
+  String setupMessage(WidgetTester tester) =>
+      tester.widget<Text>(find.byKey(const Key('setup-pin-message'))).data!;
+
   testWidgets('AC-1: fresh install opens PIN setup; mismatch saves nothing', (
     tester,
   ) async {
-    await pumpApp(tester);
-    expect(find.byType(SetupPinScreen), findsOneWidget);
+    await openPinStep(tester);
 
     await enter(tester, '2468');
     expect(find.text('Enter the PIN again'), findsOneWidget);
     await enter(tester, '1357');
-    expect(message(tester), "PINs don't match. Try again.");
-    expect(find.byType(SetupPinScreen), findsOneWidget);
+    expect(setupMessage(tester), "PINs don't match. Try again.");
+    expect(find.byType(PinStep), findsOneWidget);
     expect(await repo().hasPin(), isFalse);
   });
 
-  testWidgets('AC-1: matching PINs save a salted hash and open home', (
+  testWidgets('AC-1: matching PINs save a salted hash and go on', (
     tester,
   ) async {
-    await pumpApp(tester);
+    await openPinStep(tester);
     await enter(tester, '2468');
     await enter(tester, '2468');
 
-    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.byType(AccountStep), findsOneWidget);
+    expect(await SetupRepository(db).step(), SetupStep.account);
     final s = await db.select(db.appSettings).getSingle();
     expect(s.pinHash, isNotNull);
     expect(s.pinHash, isNot(contains('2468')));
@@ -195,13 +212,13 @@ void main() {
     expect(await repo().verify('2468'), isA<PinWrong>());
   });
 
-  test('redirects: setup until a PIN exists, parent routes need unlock', () {
-    final session = AppSession(hasPin: false, clock: clock);
+  test('redirects: setup until finished, parent routes need unlock', () {
+    final session = AppSession(setupStep: SetupStep.pin, clock: clock);
     expect(redirectFor(session, false, Routes.home), Routes.setup);
     expect(redirectFor(session, false, Routes.parent), Routes.setup);
     expect(redirectFor(session, false, Routes.setup), isNull);
 
-    session.pinCreated();
+    session.setupFinished();
     expect(redirectFor(session, false, Routes.setup), Routes.home);
     expect(redirectFor(session, false, Routes.home), isNull);
     expect(redirectFor(session, false, Routes.parent), Routes.pinEntry);

@@ -195,7 +195,7 @@ class QuizHarness {
     elapsedProvider.overrideWithValue(() => elapsed),
     soundPlayerProvider.overrideWithValue(sounds),
     appSessionProvider.overrideWithValue(
-      AppSession(hasPin: true, clock: clock, choosingChild: choosingChild),
+      AppSession(clock: clock, choosingChild: choosingChild),
     ),
     startChildProvider.overrideWithValue(startChild),
     if (!lockTopics)

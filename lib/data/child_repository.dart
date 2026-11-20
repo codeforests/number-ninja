@@ -87,6 +87,13 @@ class ChildRepository {
     }
   });
 
+  /// Empties child [id]'s profile, back to a fresh install's blank child
+  /// (FEAT-25 AD-2): first-run setup removing its only child (FEAT-26 AD-8).
+  Future<void> blank(int id) =>
+      (db.update(db.children)..where((c) => c.id.equals(id))).write(
+        ChildrenCompanion(nickname: const Value(''), updatedAt: Value(clock())),
+      );
+
   /// Deletes every row of child [id] except her `children` row.
   Future<void> deleteRows(int id) async {
     for (final t in [

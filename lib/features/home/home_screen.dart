@@ -96,14 +96,9 @@ class HomeScreen extends ConsumerWidget {
                               style: theme.displaySmall,
                             ),
                           ),
-                          SizedBox(
-                            height: AppSizes.minTap,
-                            child: OutlinedButton.icon(
-                              key: const Key('parent-button'),
-                              onPressed: () => context.go(Routes.parent),
-                              icon: const Icon(Icons.lock_outline),
-                              label: const Text('Parent'),
-                            ),
+                          ParentButton(
+                            key: const Key('parent-button'),
+                            onPressed: () => context.go(Routes.parent),
                           ),
                         ],
                       ),
@@ -357,4 +352,22 @@ class _TrackCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The home screen's Parent button (PAR-02); setup's Done step shows the
+/// same widget so the parent knows what to look for (FEAT-26 AD-11).
+class ParentButton extends StatelessWidget {
+  const ParentButton({super.key, required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: AppSizes.minTap,
+    child: OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.lock_outline),
+      label: const Text('Parent'),
+    ),
+  );
 }
