@@ -36,6 +36,16 @@ abstract final class AppColors {
   static const revisionLight = Color(0xFFDFF5F2);
   static const chartGrid = Color(0xFFDDDDE6);
 
+  // Child avatars (FEAT-25 AD-7), one per id in `avatarIds`.
+  static const avatarFox = Color(0xFFF4511E);
+  static const avatarOwl = Color(0xFF6D4C41);
+  static const avatarCat = Color(0xFF8E24AA);
+  static const avatarBear = Color(0xFF795548);
+  static const avatarBunny = Color(0xFFEC407A);
+  static const avatarFrog = Color(0xFF43A047);
+  static const avatarPanda = Color(0xFF37474F);
+  static const avatarTiger = Color(0xFFFB8C00);
+
   // Child screen backgrounds, top and bottom of the gradient (NFR-10).
   // Light enough that ink text keeps its contrast.
   static const bgHomeTop = Color(0xFFFFF3C4); // sunny yellow
@@ -68,6 +78,10 @@ abstract final class AppRadii {
 abstract final class AppSizes {
   /// Minimum tap target on child screens (NFR-03).
   static const minTap = 64.0;
+
+  /// Avatar circle on SCR-17 cards, and in the home chip (FEAT-25).
+  static const avatarLarge = 96.0;
+  static const avatarSmall = 40.0;
   static const pinKey = 72.0;
 
   /// Depth of a quiz key's bottom edge, and the progress bar's step heights.

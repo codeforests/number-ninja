@@ -4,7 +4,7 @@
 
 ## Entry and wiring
 
-- `lib/main.dart` → `lib/app.dart`: `NumberNinjaApp`, `routerProvider` (go_router). Routes: `/setup`, `/setup/profile` (SCR-12 first run, while `AppSession.profilePending`), `/play/:track`, `/quiz/:topicId`, `/locked`, parent area under `/parent`: `pin`, `change-pin`, `dashboard`, `topic/:topicId`, `reset`, `profile`, `topics` (SCR-15), `account` (SCR-13), `day?d=yyyy-MM-dd` (SCR-16, `Routes.day`, `Routes.dayToday`). `/revise/:scopeId` (SCR-14) and `/revise/:scopeId/quiz` (revision round).
+- `lib/main.dart` → `lib/app.dart`: `NumberNinjaApp`, `routerProvider` (go_router). Routes: `/setup`, `/setup/profile` (SCR-12 first run, while `AppSession.profilePending`), `/play/:track`, `/quiz/:topicId`, `/locked`, parent area under `/parent`: `pin`, `change-pin`, `dashboard`, `topic/:topicId`, `reset`, `profile`, `topics` (SCR-15), `account` (SCR-13), `day?d=yyyy-MM-dd` (SCR-16, `Routes.day`, `Routes.dayToday`). `/revise/:scopeId` (SCR-14) and `/revise/:scopeId/quiz` (revision round). `/who` (SCR-17, `Routes.who`, while `AppSession.choosingChild`; FEAT-25) and `Routes.pinForChild` (`/parent/pin?next=who`: the PIN opens SCR-17, not the parent area).
 - `lib/providers.dart`: `databaseProvider`, `bankProvider`, `clockProvider`, the repository providers, `topicProgressProvider`. Tests override these.
 
 ## Server (`server/`, FEAT-12)
@@ -38,6 +38,7 @@
 ## Features (`lib/features`)
 
 - `revision/revision_start_screen.dart` (SCR-14, `revisionPreviewProvider`).
+- `family/who_screen.dart` (SCR-17), `family/change_child.dart` (`changeChild` for the home `child-chip` and SCR-07 `lock-change-child`, `leaveParentArea` for SCR-11 Done, `pickerShows`; FEAT-25). SCR-11 `_SwitchPinSection` (`switch-needs-pin`).
 - `home/home_screen.dart`, `topics/topic_map_screen.dart` (+ `topic_icons.dart`), `setup/setup_pin_screen.dart`, `profile/profile_screen.dart` (SCR-12).
 - `quiz/`: `quiz_controller.dart` (`QuizController`, `RoundState`, `RoundSummary`), `quiz_screen.dart`, `result_screen.dart`, `feedback_panel.dart`, `answers/` (`mcq_answer`, `number_answer`, `drag_answer`).
 - `screen_time/`: `screen_time_controller.dart` (`ScreenTimeController`, `screenTimeProvider`), `lock_screen.dart`.
@@ -45,7 +46,7 @@
 
 ## Shared UI (`lib/ui`)
 
-- `layout.dart` (`sideBySide`, `compact` = phone, FEAT-19). `theme.dart` (`buildTheme`, all colours, radii and text sizes), `kid_background.dart` (`KidBackground`, `KidScene`, on SCR-02..07), `celebration.dart` (SCR-05 confetti), `layout.dart`, `screen_frame.dart`, `pin_pad.dart`, `trend_chart.dart`.
+- `avatars.dart` (`avatarLooks`, `AvatarCircle`; FEAT-25 AD-7). `layout.dart` (`sideBySide`, `compact` = phone, FEAT-19). `theme.dart` (`buildTheme`, all colours, radii and text sizes), `kid_background.dart` (`KidBackground`, `KidScene`, on SCR-02..07), `celebration.dart` (SCR-05 confetti), `layout.dart`, `screen_frame.dart`, `pin_pad.dart`, `trend_chart.dart`.
 - `visuals/`: `question_visual.dart` dispatches to one widget per visual kind (bar model, clock, coins, figure, fraction, groups, picture graph, ruler, shapes) inside `visual_frame.dart`.
 
 ## Question bank (`tool/`)
@@ -67,6 +68,8 @@
 
 - Google sign-in doesn't use PocketBase's realtime `authWithOAuth2` (some networks cut the quiet SSE connection after ~1 min, so the result never arrived). The app opens the provider's `authURL` with redirect `https://<host>/signin/google`; that nginx page opens `brainbubblz://signin/google?state&code`, `SignInReturnActivity` (Android) passes it on the `brainbubblz/sign_in` channel to `SignInBrowser.open` and brings back the existing MainActivity (NEW_TASK|CLEAR_TOP|SINGLE_TOP; MainActivity must keep the default task affinity, or a second copy opens signed out), and `ServerClient` checks state and calls `authWithOAuth2Code`. nginx also answers `/_/` with a result page for the old flow (admin files under `/_/` stay 404).
 - The Ahem test font is wider than Roboto: `QuizHarness.tap` calls `ensureVisible` first.
+- `screenTimeProvider` reads (not watches) `usageRepositoryProvider` and calls `switchChild` when it changes: the router watches the controller, so a child switch must not rebuild it. Await `screenTime.settled` before acting on the new child's lock (FEAT-25).
+- `QuizHarness.repo` (rounds) is child 1's whatever the current child; family widget tests seed rounds through `RoundRepository(childId:)`. `QuizHarness.choosingChild`/`startChild` set the launch state (FEAT-25).
 - The router refreshes only on the session and `ScreenTimeController.lockedListenable` (FEAT-05); don't make it watch other providers.
 - Call `forgetSession()` after a reset (FEAT-06).
 - Widget tests of async PDF work need `tester.runAsync` and a poll loop with `tester.pump()` (FEAT-07).

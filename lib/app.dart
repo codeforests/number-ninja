@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'features/revision/revision_start_screen.dart';
 import 'features/badges/badge_shelf_screen.dart';
+import 'features/family/who_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/quiz/quiz_controller.dart';
 import 'features/quiz/quiz_screen.dart';
@@ -53,6 +54,10 @@ abstract final class Routes {
   static const result = '/result'; // SCR-05, the RoundSummary as extra
   static const locked = '/locked'; // SCR-07
   static const badges = '/badges'; // SCR-06
+  static const who = '/who'; // SCR-17, FEAT-25
+
+  /// SCR-08 for changing child when the parent asked for the PIN (AD-4).
+  static const pinForChild = '$pinEntry?next=who';
 
   /// The routes whose time counts as screen time (TIM-01). SCR-07 itself
   /// doesn't, so extra time a parent grants isn't used up on the lock.
@@ -79,6 +84,11 @@ String? redirectFor(AppSession session, bool locked, String location) {
   if (isParent && location != Routes.pinEntry && !session.parentUnlocked) {
     return Routes.pinEntry;
   }
+  // FEAT-25 AD-4: pick the child first; the parent area stays reachable.
+  if (session.choosingChild && !isParent && location != Routes.who) {
+    return Routes.who;
+  }
+  if (!session.choosingChild && location == Routes.who) return Routes.home;
   if (locked && Routes.counts(location)) return Routes.locked;
   if (!locked && location == Routes.locked) return Routes.home;
   return null;
@@ -146,13 +156,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.locked,
         builder: (context, state) => const LockScreen(),
       ),
+      GoRoute(path: Routes.who, builder: (context, state) => const WhoScreen()),
       GoRoute(
         path: Routes.parent,
         builder: (context, state) => const ParentScreen(),
         routes: [
           GoRoute(
             path: 'pin',
-            builder: (context, state) => const PinEntryScreen(),
+            builder: (context, state) => PinEntryScreen(
+              forChildChange: state.uri.queryParameters['next'] == 'who',
+            ),
           ),
           GoRoute(
             path: 'profile',

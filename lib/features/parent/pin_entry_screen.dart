@@ -10,9 +10,12 @@ import '../../providers.dart';
 import '../../ui/pin_pad.dart';
 import '../../ui/screen_frame.dart';
 
-/// SCR-08: PIN entry with lockout (PAR-02, PAR-03).
+/// SCR-08: PIN entry with lockout (PAR-02, PAR-03). With [forChildChange]
+/// the right PIN opens SCR-17 instead of the parent area (FEAT-25 AD-4).
 class PinEntryScreen extends ConsumerStatefulWidget {
-  const PinEntryScreen({super.key});
+  const PinEntryScreen({super.key, this.forChildChange = false});
+
+  final bool forChildChange;
 
   @override
   ConsumerState<PinEntryScreen> createState() => _PinEntryScreenState();
@@ -57,6 +60,9 @@ class _PinEntryScreenState extends ConsumerState<PinEntryScreen> {
     final result = await ref.read(pinRepositoryProvider).verify(pin);
     if (!mounted) return;
     switch (result) {
+      case PinOk() when widget.forChildChange:
+        ref.read(appSessionProvider).chooseChild();
+        context.go(Routes.who);
       case PinOk():
         ref.read(appSessionProvider).unlockParent();
         context.go(Routes.parent);

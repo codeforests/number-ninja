@@ -400,6 +400,7 @@ class AppSession extends ChangeNotifier {
     required this._hasPin,
     this._profilePending = false,
     required this.clock,
+    this._choosingChild = false,
   });
 
   static const unlockFor = Duration(minutes: 5);
@@ -407,7 +408,23 @@ class AppSession extends ChangeNotifier {
   final Clock clock;
   bool _hasPin;
   bool _profilePending;
+  bool _choosingChild;
   DateTime? _unlockedAt;
+
+  /// SCR-17 must pick the child before play (FEAT-25 AD-4).
+  bool get choosingChild => _choosingChild;
+
+  void chooseChild() {
+    if (_choosingChild) return;
+    _choosingChild = true;
+    notifyListeners();
+  }
+
+  void childChosen() {
+    if (!_choosingChild) return;
+    _choosingChild = false;
+    notifyListeners();
+  }
 
   bool get hasPin => _hasPin;
 

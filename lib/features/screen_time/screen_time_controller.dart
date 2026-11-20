@@ -18,12 +18,15 @@ final elapsedProvider = Provider<Duration Function()>((ref) {
 /// Screen time for the app (TIM-01..06). The router and the screens listen
 /// to it.
 final screenTimeProvider = Provider<ScreenTimeController>((ref) {
+  // Read, not watched: the router watches this controller, so it must
+  // outlive a change of child; it switches stores instead (FEAT-25).
   final c = ScreenTimeController(
-    ref.watch(usageRepositoryProvider),
+    ref.read(usageRepositoryProvider),
     clock: ref.watch(clockProvider),
     elapsed: ref.watch(elapsedProvider),
   );
   ref.onDispose(c.dispose);
+  ref.listen(usageRepositoryProvider, (_, next) => c.switchChild(next));
   // Screen time synced from her other tablets counts today (FEAT-14).
   ref.listen(syncDataVersionProvider, (_, _) => c.flush());
   return c;
@@ -36,7 +39,7 @@ class ScreenTimeController extends ChangeNotifier {
     this._repo, {
     required this.clock,
     required Duration Function() elapsed,
-  }) {
+  }) : _elapsed = elapsed {
     _clock = ScreenTimeClock(_repo, now: clock, elapsed: elapsed);
     _timer = Timer.periodic(flushEvery, (_) => flush());
     _lifecycle = AppLifecycleListener(
@@ -53,9 +56,11 @@ class ScreenTimeController extends ChangeNotifier {
     flush();
   }
 
-  final UsageRepository _repo;
+  UsageRepository _repo;
   final Clock clock;
-  late final ScreenTimeClock _clock;
+  final Duration Function() _elapsed;
+  late ScreenTimeClock _clock;
+  Future<void> _settled = Future.value();
   late final Timer _timer;
   late final AppLifecycleListener _lifecycle;
   final _warnings = StreamController<void>.broadcast();
@@ -117,6 +122,29 @@ class ScreenTimeController extends ChangeNotifier {
   Future<void> flush() async {
     final s = await _clock.flush();
     _apply(s);
+  }
+
+  /// Completes once a change of child ([switchChild]) has finished.
+  Future<void> get settled => _settled;
+
+  /// The current child changed (FEAT-25 AD-5): counted seconds go to the
+  /// child who used them, then status, warning and lock are the new
+  /// child's.
+  Future<void> switchChild(UsageRepository repo) =>
+      _settled = _settled.then((_) => _switch(repo));
+
+  Future<void> _switch(UsageRepository repo) async {
+    if (_disposed || identical(repo, _repo)) return;
+    final running = _clock.running;
+    _clock.stop();
+    await _clock.flush();
+    _repo = repo;
+    _clock = ScreenTimeClock(repo, now: clock, elapsed: _elapsed);
+    if (running) _clock.start();
+    _timeUpAt = null;
+    _graceGranted = false;
+    _warned = false;
+    await flush();
   }
 
   /// A screen with a question open calls this; pair with [releaseHold].

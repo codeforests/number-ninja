@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'app.dart';
 import 'data/child_repository.dart';
 import 'data/database.dart';
+import 'features/family/change_child.dart';
 import 'data/pin_repository.dart';
 import 'data/profile_repository.dart';
 import 'domain/clock.dart';
@@ -17,7 +18,9 @@ Future<void> main() async {
     db,
     clock: systemClock,
   ).pending();
-  final childId = await ChildRepository(db, clock: systemClock).current();
+  final children = ChildRepository(db, clock: systemClock);
+  final childId = await children.current();
+  final choosing = await pickerShows(children);
   runApp(
     ProviderScope(
       overrides: [
@@ -28,6 +31,7 @@ Future<void> main() async {
             hasPin: hasPin,
             profilePending: profilePending,
             clock: systemClock,
+            choosingChild: choosing,
           ),
         ),
       ],

@@ -8,6 +8,7 @@ import '../../data/bank_store.dart';
 import '../../data/sync/server_client.dart';
 import '../../domain/screen_time.dart';
 import '../../providers.dart';
+import '../family/change_child.dart';
 import '../../ui/layout.dart';
 import '../../ui/theme.dart';
 import '../screen_time/screen_time_controller.dart';
@@ -35,10 +36,7 @@ class ParentScreen extends ConsumerWidget {
                       minimumSize: const Size(AppSizes.minTap * 1.5, 48),
                     )
                   : null,
-              onPressed: () {
-                ref.read(appSessionProvider).lockParent();
-                context.go(Routes.home);
-              },
+              onPressed: () => leaveParentArea(context, ref),
               child: const Text('Done'),
             ),
           ),
@@ -72,6 +70,7 @@ class ParentScreen extends ConsumerWidget {
           const _ScreenTimeSection(),
           const Divider(height: AppSizes.gap * 2),
           const _SoundSection(),
+          const _SwitchPinSection(),
           const Divider(height: AppSizes.gap * 2),
           const _AccountTile(),
           const _ServerSection(),
@@ -231,6 +230,46 @@ class _SoundSectionState extends ConsumerState<_SoundSection> {
       subtitle: const Text('Short sounds for answers and finished rounds'),
       value: on ?? true,
       onChanged: on == null ? null : _set,
+    );
+  }
+}
+
+/// "Ask for PIN to change child" (FEAT-25 AD-4), only with 2+ children.
+/// Device-only, like the PIN.
+class _SwitchPinSection extends ConsumerStatefulWidget {
+  const _SwitchPinSection();
+
+  @override
+  ConsumerState<_SwitchPinSection> createState() => _SwitchPinSectionState();
+}
+
+class _SwitchPinSectionState extends ConsumerState<_SwitchPinSection> {
+  bool? _on;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(childRepositoryProvider).switchNeedsPin().then((on) {
+      if (mounted) setState(() => _on = on);
+    });
+  }
+
+  Future<void> _set(bool on) async {
+    setState(() => _on = on);
+    await ref.read(childRepositoryProvider).setSwitchNeedsPin(on);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = ref.watch(childrenProvider).value?.length ?? 0;
+    if (count < 2) return const SizedBox.shrink();
+    return SwitchListTile(
+      key: const Key('switch-needs-pin'),
+      secondary: const Icon(Icons.switch_account),
+      title: const Text('Ask for PIN to change child'),
+      subtitle: const Text('Otherwise each child picks herself or himself'),
+      value: _on ?? false,
+      onChanged: _on == null ? null : _set,
     );
   }
 }

@@ -174,6 +174,11 @@ class QuizHarness {
   /// as in the app, so a download can replace it (FEAT-15).
   bool useBankStore = false;
 
+  /// FEAT-25: the app starts on SCR-17 ([AppSession.choosingChild]) and
+  /// with child [startChild]. Rounds still go through [repo] (child 1).
+  bool choosingChild = false;
+  int startChild = 1;
+
   /// More overrides for one test, added after the defaults.
   List<Override> more = [];
 
@@ -190,8 +195,9 @@ class QuizHarness {
     elapsedProvider.overrideWithValue(() => elapsed),
     soundPlayerProvider.overrideWithValue(sounds),
     appSessionProvider.overrideWithValue(
-      AppSession(hasPin: true, clock: clock),
+      AppSession(hasPin: true, clock: clock, choosingChild: choosingChild),
     ),
+    startChildProvider.overrideWithValue(startChild),
     if (!lockTopics)
       topicLocksProvider.overrideWith(
         (ref) async => {

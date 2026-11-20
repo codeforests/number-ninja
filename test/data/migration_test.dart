@@ -2,7 +2,6 @@ import 'package:drift/drift.dart' show Variable;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:number_ninja/data/database.dart';
-import 'package:sqlite3/sqlite3.dart' show Database;
 
 /// The schema v1 tables, as Drift created them in FEAT-01..03.
 const _v1 = [
@@ -32,12 +31,6 @@ const _v8 = [
   'CREATE UNIQUE INDEX rounds_uuid ON rounds (uuid)',
   'CREATE UNIQUE INDEX attempts_uuid ON attempts (uuid)',
 ];
-
-void _createV8(Database raw) {
-  for (final sql in _v8) {
-    raw.execute(sql);
-  }
-}
 
 /// Unix seconds, as Drift v1 stored DateTimes.
 int _secs(DateTime t) => t.millisecondsSinceEpoch ~/ 1000;
@@ -409,7 +402,7 @@ void main() {
       final db = AppDatabase(
         NativeDatabase.memory(
           setup: (raw) {
-            _createV8(raw);
+            _v8.forEach(raw.execute);
             raw.execute('DROP TABLE bank_files');
             raw.execute('ALTER TABLE app_settings DROP COLUMN bank_checked_at');
             raw.execute('ALTER TABLE app_settings DROP COLUMN bank_check_note');
@@ -437,7 +430,7 @@ void main() {
     final db = AppDatabase(
       NativeDatabase.memory(
         setup: (raw) {
-          _createV8(raw);
+          _v8.forEach(raw.execute);
           raw.execute(
             'INSERT INTO app_settings (id, pin_hash, device_id, '
             "daily_limit_min, sound_on, profile_pending) VALUES (1, 'h', "
@@ -568,7 +561,7 @@ void main() {
     final db = AppDatabase(
       NativeDatabase.memory(
         setup: (raw) {
-          _createV8(raw);
+          _v8.forEach(raw.execute);
           raw.execute(
             "INSERT INTO app_settings (id, device_id) VALUES (1, 'dev1')",
           );

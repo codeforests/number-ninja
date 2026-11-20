@@ -6,11 +6,14 @@ import '../../ui/kid_background.dart';
 import '../../app.dart';
 import '../../ui/badge_icons.dart';
 import '../badges/badge_shelf_screen.dart';
+import '../../domain/family.dart';
 import '../../domain/progress.dart';
 import '../../domain/revision.dart' show mixedScopeId;
 import '../../domain/topics.dart';
 import '../../providers.dart';
+import '../../ui/avatars.dart';
 import '../../ui/theme.dart';
+import '../family/change_child.dart';
 import '../screen_time/screen_time_controller.dart';
 import '../topics/topic_map_screen.dart';
 
@@ -80,6 +83,7 @@ class HomeScreen extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
+                          const _ChildChip(),
                           Expanded(
                             child: Text(
                               nickname == null
@@ -127,6 +131,37 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Top-left chip with the current child's avatar and name, only with 2+
+/// children; opens SCR-17 (FEAT-25 AD-4, PIN first when asked for).
+class _ChildChip extends ConsumerWidget {
+  const _ChildChip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final children = ref.watch(childrenProvider).value ?? const [];
+    if (children.length < 2) return const SizedBox.shrink();
+    final current = ref.watch(currentChildProvider);
+    final i = children.indexWhere((c) => c.id == current);
+    final child = children[i < 0 ? 0 : i];
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSizes.gap),
+      child: SizedBox(
+        height: AppSizes.minTap,
+        child: OutlinedButton.icon(
+          key: const Key('child-chip'),
+          onPressed: () => changeChild(context, ref),
+          icon: AvatarCircle(child.avatar),
+          label: Text(
+            displayName(child.nickname, i < 0 ? 0 : i),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ),
