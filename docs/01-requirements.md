@@ -48,6 +48,7 @@ BrainBubblz (formerly Number Ninja) is an offline Android tablet app that helps 
 | D22 | Crash reports (plan FEAT-24, ADR-11, auto mode 2026-11-20): Dart errors are sent to our own server, on by default with a parent switch, anonymous (no account, device id or child data), no third-party SDK; native crashes come from the stores' vitals. | 2026-11-20 |
 | D23 | Plus entitlement on the server (plan FEAT-29, ADR-09/10, auto mode 2026-11-20): one record per parent account and source (complimentary, invite, Google Play, App Store); Plus is active while a record's expiry is in the future; the server bank needs Plus; a RevenueCat webhook (off until FEAT-35) updates store records; complimentary grants by the admin, and every account existing at deploy (Ken's family) gets Plus with no end. Details: FEAT-29 design AD-1..11. | 2026-11-20 |
 | D24 | Free tier and Plus in the app (plan FEAT-30, §4, ADR-10, auto mode 2026-11-20): Plus = revision, PDF report, day view, trend charts, server question updates and more than one child; everything else free. Plus needs a signed-in account, is cached on the device with a 7-day offline grace, is managed on SCR-20 inside the PIN area; a child only ever sees one gentle "ask a grown-up" lock; losing Plus hides features and deletes nothing (extra children paused). Buying waits for FEAT-35. Details: FEAT-30 design PD-1..12. | 2026-11-20 |
+| D25 | Invitation codes (plan FEAT-36, auto mode 2026-11-20): Ken makes 8-character codes (no 0/O, 1/I; default 12 months of Plus, 5 families, redeemable for a year) with a repo tool or workflow that emails them, never printing them in the public CI log; a signed-in, verified parent enters one on SCR-20; the server counts uses and writes the family's `invite` entitlement, which extends another invitation but never stacks on a gift or a store subscription; afterwards the family is free again with nothing deleted; hidden on iOS (Apple offer codes in FEAT-34). Details: FEAT-36 design IC-1..12. | 2026-11-20 |
 
 ## 4. Functional requirements
 
@@ -228,6 +229,18 @@ Priority: **M** = must for v1, **S** = should, **C** = could.
 | PLS-06 | A child meeting a Plus feature shall see at most one friendly lock (home screen, revision) that asks her to talk to a grown-up, with no price, store or parent-area link. | M | FEAT-30 || FEAT-30 AC-5: `revision_free_test.dart` |
 | PLS-07 | The PIN-protected parent area shall have a Plus screen showing the Plus state and its end or renewal, what Plus adds, a way to check again and to sign in; parent-side locked features lead to it. | M | FEAT-30 || FEAT-30 AC-6: `plus_screen_test.dart`, `domain/plus_test.dart` |
 | PLS-08 | Buying, restoring and managing Plus shall sit behind one purchase interface; until store purchases exist (FEAT-35) the Plus screen says buying is coming soon. | S | FEAT-30 || FEAT-30 AC-7: `plus_screen_test.dart` |
+
+### Invitation codes (INV)
+
+| ID | Requirement | Pri | Feature | Verified by |
+|---|---|---|---|---|
+| INV-01 | The server shall keep invitation codes (code, Plus length in months, use limit, uses, last redeem day, note, revoked) and their redemptions, readable and writable only by the admin. (D25) | M | FEAT-36 | |
+| INV-02 | A signed-in parent with a verified account shall be able to redeem a valid code, which counts one use and gives the account Plus from an invitation for the code's length. | M | FEAT-36 | |
+| INV-03 | The server shall refuse unknown, revoked, expired and used-up codes, a second use of a code by the same account, and a code for an account that already has Plus from a gift or a store, without counting a use; a code for an account with invitation Plus extends it from its end. | M | FEAT-36 | |
+| INV-04 | The server shall rate-limit redemption attempts. | M | FEAT-36 | |
+| INV-05 | The admin shall be able to make a batch of easy-to-type codes (no 0/O, 1/I), list and revoke them from the repo, and receive a new batch by email, without codes appearing in CI logs. | M | FEAT-36 | |
+| INV-06 | The Plus screen shall let a signed-in parent enter a code, show the new Plus end after redeeming, and explain each refusal in plain words. | M | FEAT-36 | |
+| INV-07 | The app shall not offer invitation codes on iOS. | M | FEAT-36 | |
 
 ## 5. Non-functional requirements
 
